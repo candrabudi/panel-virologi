@@ -132,23 +132,22 @@ Route::middleware(['auth', 'throttle:300,1'])->group(function () {
             Route::delete('/rules/{id}', [AiRuleController::class, 'destroy']);
         });
 
-    Route::prefix('article-categories')
-        ->middleware('throttle:120,1')
-        ->group(function () {
-            Route::get('/', [ArticleCategoryController::class, 'index']);
-            Route::post('/', [ArticleCategoryController::class, 'store']);
-            Route::put('/{id}', [ArticleCategoryController::class, 'update']);
-            Route::delete('/{id}', [ArticleCategoryController::class, 'destroy']);
-        });
-
-    Route::prefix('article-tags')
-        ->middleware('throttle:120,1')
-        ->group(function () {
-            Route::get('/', [ArticleTagController::class, 'index']);
-            Route::post('/', [ArticleTagController::class, 'store']);
-            Route::put('/{id}', [ArticleTagController::class, 'update']);
-            Route::delete('/{id}', [ArticleTagController::class, 'destroy']);
-        });
+    Route::prefix('articles/categories')->middleware(['auth'])->group(function () {
+        Route::get('/', [ArticleCategoryController::class, 'index']);
+        Route::get('/list', [ArticleCategoryController::class, 'list']);
+        Route::post('/', [ArticleCategoryController::class, 'store']);
+        Route::put('/{id}', [ArticleCategoryController::class, 'update']);
+        Route::delete('/{id}', [ArticleCategoryController::class, 'destroy']);
+    });
+    Route::prefix('articles/tags')
+            ->middleware('throttle:120,1')
+            ->group(function () {
+                Route::get('/', [ArticleTagController::class, 'index']);
+                Route::get('/list', [ArticleTagController::class, 'list']);
+                Route::post('/', [ArticleTagController::class, 'store']);
+                Route::put('/{id}', [ArticleTagController::class, 'update']);
+                Route::delete('/{id}', [ArticleTagController::class, 'destroy']);
+            });
 
     Route::prefix('articles')
         ->middleware('throttle:120,1')

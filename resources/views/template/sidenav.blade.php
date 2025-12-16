@@ -77,8 +77,8 @@
                 </li>
 
                 <li class="side-nav-item">
-                    <a href="/article-categories"
-                        class="side-nav-link {{ request()->is('article-categories*') ? 'active' : '' }}">
+                    <a href="/articles/categories"
+                        class="side-nav-link {{ request()->is('articles/categories*') ? 'active' : '' }}">
                         <span class="menu-icon">
                             <i class="ri ri-folder-line"></i>
                         </span>
@@ -87,7 +87,7 @@
                 </li>
 
                 <li class="side-nav-item">
-                    <a href="/article-tags" class="side-nav-link {{ request()->is('article-tags*') ? 'active' : '' }}">
+                    <a href="/articles/tags" class="side-nav-link {{ request()->is('articles/tags*') ? 'active' : '' }}">
                         <span class="menu-icon">
                             <i class="ri ri-price-tag-3-line"></i>
                         </span>
