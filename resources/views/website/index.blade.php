@@ -1,62 +1,78 @@
 @extends('template.app')
-
+@section('title', 'Pengaturan Website')
 @section('content')
     <div class="container-fluid">
 
         <div class="page-title-head d-flex align-items-center mb-4">
             <div class="flex-grow-1">
                 <h4 class="page-main-title m-0">Pengaturan Website</h4>
+                <small class="text-muted">Kelola identitas & branding website</small>
             </div>
-            <div class="text-end">
-                <ol class="breadcrumb m-0 py-0">
-                    <li class="breadcrumb-item">Virologi</li>
-                    <li class="breadcrumb-item">CMS</li>
-                    <li class="breadcrumb-item active">Website</li>
-                </ol>
-            </div>
+            <ol class="breadcrumb m-0">
+                <li class="breadcrumb-item">Virologi</li>
+                <li class="breadcrumb-item">CMS</li>
+                <li class="breadcrumb-item active">Website</li>
+            </ol>
         </div>
 
         <div class="row g-4">
 
-            <!-- KIRI -->
+            <!-- LEFT -->
             <div class="col-lg-6">
 
-                <!-- INFORMASI -->
-                <div class="card">
-                    <div class="card-header fw-semibold">Informasi Website</div>
+                <!-- WEBSITE INFO -->
+                <div class="card shadow-sm rounded-3">
+                    <div class="card-header bg-white fw-semibold">
+                        <i class="ri ri-global-line me-1"></i> Informasi Website
+                    </div>
                     <div class="card-body">
-                        <div class="alert-area"></div>
+                        <div class="alert-area mb-3"></div>
 
                         <form class="ajax-form" data-url="{{ route('website.general') }}" onsubmit="return false;">
-                            <input name="name" class="form-control mb-2" placeholder="Nama Website"
-                                value="{{ $website->name ?? '' }}">
-                            <input name="tagline" class="form-control mb-2" placeholder="Tagline"
-                                value="{{ $website->tagline ?? '' }}">
-                            <textarea name="description" class="form-control mb-2" placeholder="Deskripsi Singkat">{{ $website->description ?? '' }}</textarea>
-                            <textarea name="long_description" class="form-control mb-3" placeholder="Deskripsi Panjang">{{ $website->long_description ?? '' }}</textarea>
+                            <div class="mb-3">
+                                <label class="form-label">Nama Website</label>
+                                <input name="name" class="form-control" value="{{ $website->name ?? '' }}">
+                            </div>
 
-                            <button type="button" class="btn btn-primary btn-save">
-                                <span class="btn-text">Simpan</span>
+                            <div class="mb-3">
+                                <label class="form-label">Tagline</label>
+                                <input name="tagline" class="form-control" value="{{ $website->tagline ?? '' }}">
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label">Deskripsi Singkat</label>
+                                <textarea name="description" class="form-control" rows="4">{{ $website->description ?? '' }}</textarea>
+                            </div>
+
+                            <button type="button" class="btn btn-primary w-100 btn-save">
+                                <span class="btn-text">Simpan Perubahan</span>
                                 <span class="spinner-border spinner-border-sm d-none"></span>
                             </button>
                         </form>
                     </div>
                 </div>
 
-                <!-- KONTAK -->
-                <div class="card mt-4">
-                    <div class="card-header fw-semibold">Kontak</div>
+                <!-- CONTACT -->
+                <div class="card shadow-sm rounded-3 mt-4">
+                    <div class="card-header bg-white fw-semibold">
+                        <i class="ri ri-phone-line me-1"></i> Kontak
+                    </div>
                     <div class="card-body">
-                        <div class="alert-area"></div>
+                        <div class="alert-area mb-3"></div>
 
                         <form class="ajax-form" data-url="{{ route('website.contact') }}" onsubmit="return false;">
-                            <input name="phone_number" class="form-control mb-2" placeholder="Nomor Handphone"
-                                value="{{ $website->phone_number ?? '' }}">
-                            <input name="email" class="form-control mb-3" placeholder="Email"
-                                value="{{ $website->email ?? '' }}">
+                            <div class="mb-3">
+                                <label class="form-label">Nomor Telepon</label>
+                                <input name="phone" class="form-control" value="{{ $website->phone ?? '' }}">
+                            </div>
 
-                            <button type="button" class="btn btn-primary btn-save">
-                                <span class="btn-text">Simpan</span>
+                            <div class="mb-4">
+                                <label class="form-label">Email</label>
+                                <input name="email" class="form-control" value="{{ $website->email ?? '' }}">
+                            </div>
+
+                            <button type="button" class="btn btn-primary w-100 btn-save">
+                                <span class="btn-text">Simpan Kontak</span>
                                 <span class="spinner-border spinner-border-sm d-none"></span>
                             </button>
                         </form>
@@ -65,48 +81,48 @@
 
             </div>
 
-            <!-- KANAN -->
+            <!-- RIGHT -->
             <div class="col-lg-6">
 
                 <!-- BRANDING -->
-                <div class="card">
-                    <div class="card-header fw-semibold">Branding</div>
+                <div class="card shadow-sm rounded-3">
+                    <div class="card-header bg-white fw-semibold">
+                        <i class="ri ri-palette-line me-1"></i> Branding
+                    </div>
                     <div class="card-body">
-                        <div class="alert-area"></div>
+                        <div class="alert-area mb-3"></div>
 
                         <form class="ajax-form" data-url="{{ route('website.branding') }}" enctype="multipart/form-data"
                             onsubmit="return false;">
-                            <input type="file" name="logo_rectangle" class="form-control mb-2">
-                            <input type="file" name="logo_square" class="form-control mb-2">
-                            <input type="file" name="favicon" class="form-control mb-3">
 
-                            <button type="button" class="btn btn-primary btn-save">
-                                <span class="btn-text">Simpan</span>
-                                <span class="spinner-border spinner-border-sm d-none"></span>
-                            </button>
-                        </form>
-                    </div>
-                </div>
+                            <div class="mb-3">
+                                <label class="form-label">Logo Rectangle</label>
+                                <input type="file" name="logo_rectangle" class="form-control">
+                                @if ($website?->logo_rectangle)
+                                    <img src="{{ $website->logo_rectangle }}" class="mt-2 rounded"
+                                        height="40">
+                                @endif
+                            </div>
 
-                <!-- SEO -->
-                <div class="card mt-4">
-                    <div class="card-header fw-semibold">SEO & Open Graph</div>
-                    <div class="card-body">
-                        <div class="alert-area"></div>
+                            <div class="mb-3">
+                                <label class="form-label">Logo Square</label>
+                                <input type="file" name="logo_square" class="form-control">
+                                @if ($website?->logo_square)
+                                    <img src="{{ $website->logo_square }}" class="mt-2 rounded"
+                                        height="40">
+                                @endif
+                            </div>
 
-                        <form class="ajax-form" data-url="{{ route('website.seo') }}" enctype="multipart/form-data"
-                            onsubmit="return false;">
-                            <input name="meta_title" class="form-control mb-2" placeholder="Meta Title"
-                                value="{{ $website->meta_title ?? '' }}">
-                            <textarea name="meta_description" class="form-control mb-2" placeholder="Meta Description">{{ $website->meta_description ?? '' }}</textarea>
-                            <textarea name="meta_keywords" class="form-control mb-2" placeholder="Meta Keywords">{{ $website->meta_keywords ?? '' }}</textarea>
-                            <input name="og_title" class="form-control mb-2" placeholder="OG Title"
-                                value="{{ $website->og_title ?? '' }}">
-                            <textarea name="og_description" class="form-control mb-2" placeholder="OG Description">{{ $website->og_description ?? '' }}</textarea>
-                            <input type="file" name="og_image" class="form-control mb-3">
+                            <div class="mb-4">
+                                <label class="form-label">Favicon</label>
+                                <input type="file" name="favicon" class="form-control">
+                                @if ($website?->favicon)
+                                    <img src="{{ $website->favicon }}" class="mt-2 rounded" height="24">
+                                @endif
+                            </div>
 
-                            <button type="button" class="btn btn-primary btn-save">
-                                <span class="btn-text">Simpan</span>
+                            <button type="button" class="btn btn-primary w-100 btn-save">
+                                <span class="btn-text">Simpan Branding</span>
                                 <span class="spinner-border spinner-border-sm d-none"></span>
                             </button>
                         </form>
@@ -118,77 +134,69 @@
         </div>
     </div>
 @endsection
-
 @push('scripts')
-<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', () => {
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
-    axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest'
-    axios.defaults.headers.common['X-CSRF-TOKEN'] =
-        document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
 
-    const forms = document.querySelectorAll('.ajax-form')
+            axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest'
+            axios.defaults.headers.common['X-CSRF-TOKEN'] =
+                document.querySelector('meta[name="csrf-token"]').getAttribute('content')
 
-    console.log('Ajax forms found:', forms.length)
+            document.querySelectorAll('.ajax-form').forEach(form => {
 
-    forms.forEach(form => {
-        const btn = form.querySelector('.btn-save')
-        const spinner = btn.querySelector('.spinner-border')
-        const text = btn.querySelector('.btn-text')
-        const alertArea = form.closest('.card-body').querySelector('.alert-area')
-        const url = form.dataset.url
+                const btn = form.querySelector('.btn-save')
+                const spinner = btn.querySelector('.spinner-border')
+                const text = btn.querySelector('.btn-text')
+                const alertArea = form.querySelector('.alert-area') ||
+                    form.closest('.card-body').querySelector('.alert-area')
+                const url = form.dataset.url
 
-        if (!btn || !url) {
-            console.warn('Button or URL not found for form', form)
-            return
-        }
+                btn.addEventListener('click', async () => {
+                    alertArea.innerHTML = ''
+                    btn.disabled = true
+                    spinner.classList.remove('d-none')
+                    text.classList.add('d-none')
 
-        btn.addEventListener('click', async () => {
-            console.log('Submitting to:', url)
+                    try {
+                        const formData = new FormData(form)
+                        const response = await axios.post(url, formData)
 
-            alertArea.innerHTML = ''
-            btn.disabled = true
-            spinner.classList.remove('d-none')
-            text.classList.add('d-none')
-
-            try {
-                const formData = new FormData(form)
-                const response = await axios.post(url, formData)
-
-                alertArea.innerHTML = `
+                        alertArea.innerHTML = `
                     <div class="alert alert-success alert-dismissible fade show">
                         ${response.data.message}
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 `
-            } catch (error) {
-                if (error.response?.status === 422) {
-                    const errors = Object.values(error.response.data.errors)
-                        .flat()
-                        .join('<br>')
+                    } catch (error) {
 
-                    alertArea.innerHTML = `
+                        if (error.response && error.response.status === 422) {
+                            const messages = Object.values(error.response.data.errors)
+                                .flat()
+                                .join('<br>')
+
+                            alertArea.innerHTML = `
                         <div class="alert alert-danger alert-dismissible fade show">
-                            ${errors}
+                            ${messages}
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     `
-                } else {
-                    alertArea.innerHTML = `
+                        } else {
+                            alertArea.innerHTML = `
                         <div class="alert alert-danger alert-dismissible fade show">
                             Terjadi kesalahan sistem
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
                     `
-                }
-            }
+                        }
+                    }
 
-            btn.disabled = false
-            spinner.classList.add('d-none')
-            text.classList.remove('d-none')
+                    btn.disabled = false
+                    spinner.classList.add('d-none')
+                    text.classList.remove('d-none')
+                })
+            })
         })
-    })
-})
-</script>
+    </script>
 @endpush

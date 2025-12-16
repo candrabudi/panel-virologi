@@ -6,6 +6,7 @@ use App\Models\Website;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class WebsiteController extends Controller
 {
@@ -26,8 +27,7 @@ class WebsiteController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'tagline' => 'nullable|string|max:255',
-            'description' => 'nullable|string|max:500',
-            'long_description' => 'nullable|string',
+            'description' => 'nullable|string|max:1000',
         ]);
 
         if ($validator->fails()) {
@@ -49,8 +49,8 @@ class WebsiteController extends Controller
     public function saveContact(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'phone_number' => 'nullable|string|max:30',
             'email' => 'nullable|email|max:255',
+            'phone' => 'nullable|string|max:30',
         ]);
 
         if ($validator->fails()) {
@@ -92,7 +92,11 @@ class WebsiteController extends Controller
                 if ($website->$field) {
                     Storage::disk('public')->delete($website->$field);
                 }
-                $data[$field] = $request->file($field)->store('website', 'public');
+
+                $file = $request->file($field);
+                $filename = $field.'_'.Str::uuid().'.'.$file->getClientOriginalExtension();
+
+                $data[$field] = asset('storage/'.$file->storeAs('website', $filename, 'public'));
             }
         }
 
@@ -101,42 +105,6 @@ class WebsiteController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Branding website berhasil disimpan',
-        ]);
-    }
-
-    public function saveSeo(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'meta_title' => 'nullable|string|max:255',
-            'meta_description' => 'nullable|string|max:500',
-            'meta_keywords' => 'nullable|string|max:500',
-            'og_title' => 'nullable|string|max:255',
-            'og_description' => 'nullable|string|max:500',
-            'og_image' => 'nullable|image|mimes:png,jpg,jpeg,webp|max:3072',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
-        $website = $this->website();
-        $data = $validator->validated();
-
-        if ($request->hasFile('og_image')) {
-            if ($website->og_image) {
-                Storage::disk('public')->delete($website->og_image);
-            }
-            $data['og_image'] = $request->file('og_image')->store('website', 'public');
-        }
-
-        $website->fill($data)->save();
-
-        return response()->json([
-            'success' => true,
-            'message' => 'SEO & Open Graph berhasil disimpan',
         ]);
     }
 }

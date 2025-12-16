@@ -1,0 +1,32 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration {
+    public function up(): void
+    {
+        Schema::create('ai_rules', function (Blueprint $table) {
+            $table->id();
+
+            $table->string('type');
+            $table->string('value', 500);
+
+            $table->foreignId('ai_context_id')->nullable()->constrained('ai_contexts')->nullOnDelete();
+
+            $table->string('category')->default('cybersecurity');
+            $table->boolean('is_active')->default(true);
+            $table->string('note')->nullable();
+
+            $table->timestamps();
+
+            $table->index(['type', 'is_active']);
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('ai_rules');
+    }
+};
