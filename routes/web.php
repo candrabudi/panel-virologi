@@ -74,7 +74,9 @@ Route::middleware(['auth', 'throttle:300,1'])->group(function () {
         Route::delete('/contacts/{id}', [FooterController::class, 'deleteContact']);
     });
     Route::get('/about-us', [AboutUsController::class, 'index']);
-    Route::post('/about-us', [AboutUsController::class, 'store']);
+
+    Route::get('/api/about-us', [AboutUsController::class, 'apiShow']);
+    Route::post('/api/about-us', [AboutUsController::class, 'store']);
 
     Route::get('/product-page', [ProductPageController::class, 'index']);
     Route::post('/product-page', [ProductPageController::class, 'store']);

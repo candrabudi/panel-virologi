@@ -4,60 +4,130 @@ namespace App\Http\Controllers;
 
 use App\Models\AboutUs;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class AboutUsController extends Controller
 {
-    public function index()
+    public function __construct()
     {
-        $about = AboutUs::first();
-
-        return view('about_us.cms', compact('about'));
+        $this->middleware(['auth', 'throttle:60,1'])
+             ->except(['frontend']);
     }
 
+    private function authorizeManage(): void
+    {
+        if (method_exists(auth()->user(), 'can') && auth()->user()->can('manage-website')) {
+            return;
+        }
+
+        if (Auth::user()->role === 'admin') {
+            return;
+        }
+
+        abort(403, 'Forbidden');
+    }
+
+    private function ok($data = null, string $message = 'OK', int $code = 200)
+    {
+        return response()->json([
+            'status' => true,
+            'message' => $message,
+            'data' => $data,
+        ], $code);
+    }
+
+    private function fail(string $message = 'Request failed', $errors = null, int $code = 400)
+    {
+        $payload = [
+            'status' => false,
+            'message' => $message,
+        ];
+
+        if ($errors) {
+            $payload['errors'] = $errors;
+        }
+
+        return response()->json($payload, $code);
+    }
+
+    /**
+     * =========================
+     * CMS PAGE (BLADE)
+     * =========================.
+     */
+    public function index()
+    {
+        $this->authorizeManage();
+
+        return view('about_us.cms');
+    }
+
+    /**
+     * =========================
+     * API: SHOW (JSON)
+     * =========================.
+     */
+    public function apiShow()
+    {
+        $this->authorizeManage();
+
+        $about = AboutUs::first();
+
+        return $this->ok($about);
+    }
+
+    /**
+     * =========================
+     * API: STORE / UPDATE (JSON)
+     * =========================.
+     */
     public function store(Request $request)
     {
+        $this->authorizeManage();
+
         $validator = Validator::make($request->all(), [
-            'breadcrumb_pre' => 'nullable|string|max:100',
-            'breadcrumb_bg' => 'nullable|string|max:100',
-            'page_title' => 'nullable|string|max:150',
-            'headline' => 'nullable|string|max:255',
-            'left_content' => 'nullable|string',
-            'right_content' => 'nullable|string',
-            'topics' => 'nullable|array',
-            'topics.*' => 'string|max:255',
-            'manifesto' => 'nullable|array',
-            'manifesto.*' => 'string|max:255',
-            'seo_title' => 'nullable|string|max:255',
-            'seo_description' => 'nullable|string|max:300',
-            'seo_keywords' => 'nullable|string|max:500',
-            'og_title' => 'nullable|string|max:255',
-            'og_description' => 'nullable|string|max:300',
-            'canonical_url' => 'nullable|string|max:255',
-            'is_active' => 'boolean',
+            'breadcrumb_pre' => ['nullable', 'string', 'max:100'],
+            'breadcrumb_bg' => ['nullable', 'string', 'max:100'],
+            'page_title' => ['nullable', 'string', 'max:150'],
+            'headline' => ['nullable', 'string', 'max:255'],
+            'left_content' => ['nullable', 'string'],
+            'right_content' => ['nullable', 'string'],
+
+            'topics' => ['nullable', 'array'],
+            'topics.*' => ['string', 'max:255'],
+
+            'manifesto' => ['nullable', 'array'],
+            'manifesto.*' => ['string', 'max:255'],
+
+            'seo_title' => ['nullable', 'string', 'max:255'],
+            'seo_description' => ['nullable', 'string', 'max:300'],
+            'seo_keywords' => ['nullable', 'string', 'max:500'],
+
+            'og_title' => ['nullable', 'string', 'max:255'],
+            'og_description' => ['nullable', 'string', 'max:300'],
+            'canonical_url' => ['nullable', 'string', 'max:255'],
+
+            'is_active' => ['required', Rule::in(['0', '1'])],
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors(),
-            ], 422);
+            return $this->fail('Validation error', $validator->errors(), 422);
         }
 
-        $about = AboutUs::first() ?? new AboutUs();
-        $about->fill($validator->validated());
-        $about->save();
+        try {
+            DB::transaction(function () use ($validator) {
+                $about = AboutUs::first() ?? new AboutUs();
+                $about->fill($validator->validated());
+                $about->is_active = (int) request('is_active') === 1;
+                $about->save();
+            });
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Tentang Kami berhasil disimpan',
-        ]);
-    }
-
-    public function show()
-    {
-        $about = AboutUs::where('is_active', true)->firstOrFail();
-
-        return view('about_us.frontend', compact('about'));
+            return $this->ok(null, 'Tentang Kami berhasil disimpan');
+        } catch (\Throwable $e) {
+            return $this->fail('Request failed', null, 500);
+        }
     }
 }
