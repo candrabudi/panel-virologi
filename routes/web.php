@@ -32,7 +32,7 @@ Route::post('/login/send-otp', [AuthController::class, 'sendOtp'])
 
 Route::post('/login/verify-otp', [AuthController::class, 'verifyOtp'])
     ->middleware('throttle:20,1')
-    ->name('login.verifyOtp');
+    ->name('login.verify');
 
 Route::post('/logout', [AuthController::class, 'logout'])
     ->middleware('auth')
