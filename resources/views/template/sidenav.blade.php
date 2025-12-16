@@ -165,6 +165,15 @@
                         <span class="menu-text">AI Context</span>
                     </a>
                 </li>
+               
+                <li class="side-nav-item">
+                    <a href="/ai/bindings" class="side-nav-link {{ request()->is('ai/bindings') ? 'active' : '' }}">
+                        <span class="menu-icon">
+                            <i class="ri ri-brain-line"></i>
+                        </span>
+                        <span class="menu-text">AI Bindings</span>
+                    </a>
+                </li>
 
                 <li class="side-nav-item">
                     <a href="/ai/prompts" class="side-nav-link {{ request()->is('ai/prompts') ? 'active' : '' }}">

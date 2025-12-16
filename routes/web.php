@@ -86,26 +86,33 @@ Route::middleware(['auth', 'throttle:300,1'])->group(function () {
         });
 
     Route::prefix('ai')
+        ->name('ai.')
         ->middleware('throttle:120,1')
         ->group(function () {
             Route::get('/settings', [AiSettingController::class, 'index']);
             Route::post('/settings', [AiSettingController::class, 'store']);
 
             Route::get('/contexts', [AiContextController::class, 'index']);
+            Route::get('/contexts/list', [AiContextController::class, 'list']);
             Route::post('/contexts', [AiContextController::class, 'store']);
             Route::put('/contexts/{id}', [AiContextController::class, 'update']);
 
             Route::get('/prompts', [AiPromptTemplateController::class, 'index']);
+            Route::get('/prompts/list', [AiPromptTemplateController::class, 'list']);
             Route::post('/prompts', [AiPromptTemplateController::class, 'store']);
-            Route::put('/prompts/{id}', [AiPromptTemplateController::class, 'update']);
+            Route::patch('/prompts/{id}', [AiPromptTemplateController::class, 'update']);
+            Route::patch('/prompts/{id}/toggle', [AiPromptTemplateController::class, 'toggle']);
+            Route::delete('/prompts/{id}', [AiPromptTemplateController::class, 'destroy']);
 
             Route::get('/bindings', [AiPromptBindingController::class, 'index']);
+            Route::get('/bindings/list', [AiPromptBindingController::class, 'list']);
             Route::post('/bindings', [AiPromptBindingController::class, 'store']);
-            Route::delete('/bindings/{id}', [AiPromptBindingController::class, 'destroy']);
+            Route::patch('/bindings/{id}', [AiPromptBindingController::class, 'update']);
 
             Route::get('/rules', [AiRuleController::class, 'index']);
+            Route::get('/rules/list', [AiRuleController::class, 'list']);
             Route::post('/rules', [AiRuleController::class, 'store']);
-            Route::put('/rules/{id}', [AiRuleController::class, 'update']);
+            Route::patch('/rules/{id}', [AiRuleController::class, 'update']);
             Route::delete('/rules/{id}', [AiRuleController::class, 'destroy']);
         });
 
