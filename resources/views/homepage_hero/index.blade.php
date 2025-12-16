@@ -3,62 +3,46 @@
 @section('title', 'Homepage Hero')
 
 @section('content')
-    <div class="container-fluid">
+    <div class="container-fluid mt-3">
 
-        <div class="page-title-head d-flex align-items-center mb-4">
-            <div class="flex-grow-1">
-                <h4 class="page-main-title m-0">Homepage Hero</h4>
-            </div>
-            <div class="text-end">
-                <ol class="breadcrumb m-0 py-0">
-                    <li class="breadcrumb-item">Virologi</li>
-                    <li class="breadcrumb-item">CMS</li>
-                    <li class="breadcrumb-item active">Homepage Hero</li>
-                </ol>
-            </div>
-        </div>
+        <div id="alert-box" class="alert d-none"></div>
 
         <div class="row g-4">
 
             <!-- FORM -->
             <div class="col-lg-6">
-                <div class="card">
-                    <div class="card-header fw-semibold">
-                        Pengaturan Hero Homepage
-                    </div>
+                <div class="card shadow-sm">
+                    <div class="card-header fw-semibold">Pengaturan Hero</div>
                     <div class="card-body">
 
-                        <div id="alert-box"></div>
-
-                        <form id="hero-form" onsubmit="return false;">
+                        <form id="hero-form" onsubmit="return false">
+                            @csrf
 
                             <div class="mb-3">
                                 <label class="form-label">Pre Title</label>
-                                <input type="text" name="pre_title" class="form-control"
-                                    value="{{ $hero->pre_title ?? '' }}" placeholder="Contoh: Virologi">
+                                <input class="form-control" name="pre_title" placeholder="Contoh: Virologi">
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label">Judul Utama</label>
-                                <textarea name="title" class="form-control" rows="2" placeholder="Judul besar hero">{{ $hero->title ?? '' }}</textarea>
+                                <textarea class="form-control" rows="2" name="title" required></textarea>
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label">Sub Judul</label>
-                                <textarea name="subtitle" class="form-control" rows="3" placeholder="Deskripsi singkat">{{ $hero->subtitle ?? '' }}</textarea>
+                                <textarea class="form-control" rows="3" name="subtitle"></textarea>
                             </div>
 
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">Warna Overlay</label>
+                                    <label class="form-label">Overlay Color</label>
                                     <input type="color" name="overlay_color" class="form-control form-control-color"
-                                        value="{{ $hero->overlay_color ?? '#000000' }}">
+                                        value="#000000">
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label class="form-label">Opacity Overlay</label>
+                                    <label class="form-label">Overlay Opacity</label>
                                     <input type="number" step="0.05" min="0" max="1"
-                                        name="overlay_opacity" class="form-control"
-                                        value="{{ $hero->overlay_opacity ?? 0.5 }}">
+                                        name="overlay_opacity" class="form-control" value="0.5">
                                 </div>
                             </div>
 
@@ -66,33 +50,26 @@
 
                             <h6 class="fw-semibold">Primary Button</h6>
                             <div class="mb-2">
-                                <input type="text" name="primary_button_text" class="form-control"
-                                    value="{{ $hero->primary_button_text ?? '' }}" placeholder="Teks tombol utama">
+                                <input class="form-control" name="primary_button_text" placeholder="Text tombol utama">
                             </div>
                             <div class="mb-3">
-                                <input type="text" name="primary_button_url" class="form-control"
-                                    value="{{ $hero->primary_button_url ?? '' }}" placeholder="URL tombol utama">
+                                <input class="form-control" name="primary_button_url" placeholder="URL tombol utama">
                             </div>
 
                             <h6 class="fw-semibold">Secondary Button</h6>
                             <div class="mb-2">
-                                <input type="text" name="secondary_button_text" class="form-control"
-                                    value="{{ $hero->secondary_button_text ?? '' }}" placeholder="Teks tombol kedua">
+                                <input class="form-control" name="secondary_button_text" placeholder="Text tombol kedua">
                             </div>
                             <div class="mb-3">
-                                <input type="text" name="secondary_button_url" class="form-control"
-                                    value="{{ $hero->secondary_button_url ?? '' }}" placeholder="URL tombol kedua">
+                                <input class="form-control" name="secondary_button_url" placeholder="URL tombol kedua">
                             </div>
 
-                            <div class="form-check mb-4">
-                                <input class="form-check-input" type="checkbox" name="is_active" value="1"
-                                    {{ $hero->is_active ?? true ? 'checked' : '' }}>
-                                <label class="form-check-label">
-                                    Aktifkan Hero Homepage
-                                </label>
+                            <div class="form-check form-switch mb-4">
+                                <input class="form-check-input" type="checkbox" name="is_active" value="1" checked>
+                                <label class="form-check-label">Aktifkan Hero</label>
                             </div>
 
-                            <button type="button" class="btn btn-primary" id="btn-save">
+                            <button class="btn btn-primary" id="btn-save">
                                 <span class="btn-text">Simpan Perubahan</span>
                                 <span class="spinner-border spinner-border-sm d-none"></span>
                             </button>
@@ -104,37 +81,18 @@
 
             <!-- PREVIEW -->
             <div class="col-lg-6">
-                <div class="card">
-                    <div class="card-header fw-semibold">
-                        Preview Hero (Teks)
-                    </div>
+                <div class="card shadow-sm">
+                    <div class="card-header fw-semibold">Live Preview</div>
                     <div class="card-body">
 
-                        <div class="p-4 rounded"
-                            style="background-color: {{ $hero->overlay_color ?? '#000000' }};
-                                opacity: {{ $hero->overlay_opacity ?? 0.5 }};">
-                            <p class="fw-semibold mb-1 text-white">
-                                {{ $hero->pre_title ?? 'Pre Title' }}
-                            </p>
-                            <h3 class="fw-bold text-white">
-                                {{ $hero->title ?? 'Judul Hero' }}
-                            </h3>
-                            <p class="text-white-50">
-                                {{ $hero->subtitle ?? 'Sub judul hero' }}
-                            </p>
+                        <div id="preview" class="p-4 rounded text-white" style="background:#000; opacity:.5">
+                            <p id="pv-pre" class="fw-semibold mb-1">Pre Title</p>
+                            <h3 id="pv-title" class="fw-bold">Judul Hero</h3>
+                            <p id="pv-sub" class="text-white-50">Sub judul hero</p>
 
                             <div class="mt-3">
-                                @if (!empty($hero->primary_button_text))
-                                    <span class="badge bg-light text-dark me-2">
-                                        {{ $hero->primary_button_text }}
-                                    </span>
-                                @endif
-
-                                @if (!empty($hero->secondary_button_text))
-                                    <span class="badge bg-outline-light text-white border">
-                                        {{ $hero->secondary_button_text }}
-                                    </span>
-                                @endif
+                                <span id="pv-btn-1" class="badge bg-light text-dark d-none"></span>
+                                <span id="pv-btn-2" class="badge border border-light text-white d-none"></span>
                             </div>
                         </div>
 
@@ -149,60 +107,89 @@
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        axios.defaults.headers.common['X-CSRF-TOKEN'] =
+            document.querySelector('meta[name="csrf-token"]').getAttribute('content')
 
-            axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest'
+        const form = document.getElementById('hero-form')
+        const btn = document.getElementById('btn-save')
+        const alertBox = document.getElementById('alert-box')
 
-            const csrf = document.querySelector('meta[name="csrf-token"]')
-            if (csrf) {
-                axios.defaults.headers.common['X-CSRF-TOKEN'] = csrf.getAttribute('content')
+        const pv = {
+            box: document.getElementById('preview'),
+            pre: document.getElementById('pv-pre'),
+            title: document.getElementById('pv-title'),
+            sub: document.getElementById('pv-sub'),
+            btn1: document.getElementById('pv-btn-1'),
+            btn2: document.getElementById('pv-btn-2'),
+        }
+
+        function alertMsg(type, msg) {
+            alertBox.className = `alert alert-${type}`
+            alertBox.textContent = msg
+            alertBox.classList.remove('d-none')
+            setTimeout(() => alertBox.classList.add('d-none'), 4000)
+        }
+
+        function toggleLoading(on) {
+            btn.disabled = on
+            btn.querySelector('.spinner-border').classList.toggle('d-none', !on)
+            btn.querySelector('.btn-text').classList.toggle('d-none', on)
+        }
+
+        function updatePreview() {
+            const d = new FormData(form)
+
+            pv.pre.textContent = d.get('pre_title') || 'Pre Title'
+            pv.title.textContent = d.get('title') || 'Judul Hero'
+            pv.sub.textContent = d.get('subtitle') || 'Sub judul hero'
+
+            pv.box.style.background = d.get('overlay_color') || '#000'
+            pv.box.style.opacity = d.get('overlay_opacity') || 0.5
+
+            if (d.get('primary_button_text')) {
+                pv.btn1.textContent = d.get('primary_button_text')
+                pv.btn1.classList.remove('d-none')
+            } else pv.btn1.classList.add('d-none')
+
+            if (d.get('secondary_button_text')) {
+                pv.btn2.textContent = d.get('secondary_button_text')
+                pv.btn2.classList.remove('d-none')
+            } else pv.btn2.classList.add('d-none')
+        }
+
+        form.querySelectorAll('input,textarea').forEach(el =>
+            el.addEventListener('input', updatePreview)
+        )
+
+        btn.onclick = async () => {
+            toggleLoading(true)
+            const data = new FormData(form)
+            if (!data.has('is_active')) data.append('is_active', 0)
+
+            try {
+                const res = await axios.post('/homepage-hero', data)
+                alertMsg('success', res.data.message || 'Berhasil disimpan')
+            } catch (e) {
+                alertMsg('danger', 'Gagal menyimpan data')
             }
+            toggleLoading(false)
+        }
 
-            const form = document.getElementById('hero-form')
-            const btn = document.getElementById('btn-save')
-            const alertBox = document.getElementById('alert-box')
-            const spinner = btn.querySelector('.spinner-border')
-            const text = btn.querySelector('.btn-text')
+        async function loadHero() {
+            try {
+                const res = await axios.get('/homepage-hero/show')
+                if (!res.data.data) return
 
-            btn.addEventListener('click', async () => {
-                alertBox.innerHTML = ''
-                btn.disabled = true
-                spinner.classList.remove('d-none')
-                text.classList.add('d-none')
+                Object.entries(res.data.data).forEach(([k, v]) => {
+                    const el = form.querySelector(`[name="${k}"]`)
+                    if (!el) return
+                    if (el.type === 'checkbox') el.checked = v
+                    else el.value = v ?? ''
+                })
+                updatePreview()
+            } catch {}
+        }
 
-                try {
-                    const formData = new FormData(form)
-                    const res = await axios.post('{{ route('homepage.hero.store') }}', formData)
-
-                    alertBox.innerHTML = `
-                <div class="alert alert-success alert-dismissible fade show">
-                    ${res.data.message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            `
-                } catch (error) {
-                    if (error.response?.status === 422) {
-                        const errors = Object.values(error.response.data.errors).flat().join('<br>')
-                        alertBox.innerHTML = `
-                    <div class="alert alert-danger alert-dismissible fade show">
-                        ${errors}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                `
-                    } else {
-                        alertBox.innerHTML = `
-                    <div class="alert alert-danger alert-dismissible fade show">
-                        Terjadi kesalahan sistem
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                `
-                    }
-                }
-
-                btn.disabled = false
-                spinner.classList.add('d-none')
-                text.classList.remove('d-none')
-            })
-        })
+        loadHero()
     </script>
 @endpush

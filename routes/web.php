@@ -49,14 +49,19 @@ Route::middleware(['auth', 'throttle:300,1'])->group(function () {
     });
 
     Route::get('/homepage-hero', [HomepageHeroController::class, 'index']);
+
+    Route::get('/homepage-hero/show', [HomepageHeroController::class, 'show']);
     Route::post('/homepage-hero', [HomepageHeroController::class, 'store']);
 
     Route::get('/homepage-blog-section', [HomepageBlogSectionController::class, 'index']);
+
+    Route::get('/homepage-blog-section/show', [HomepageBlogSectionController::class, 'show']);
     Route::post('/homepage-blog-section', [HomepageBlogSectionController::class, 'store']);
 
     Route::get('/homepage-threat-map', [HomepageThreatMapSectionController::class, 'index']);
-    Route::post('/homepage-threat-map', [HomepageThreatMapSectionController::class, 'store']);
 
+    Route::get('/homepage-threat-map/show', [HomepageThreatMapSectionController::class, 'show']);
+    Route::post('/homepage-threat-map', [HomepageThreatMapSectionController::class, 'store']);
     Route::prefix('footer')->group(function () {
         Route::get('/', [FooterController::class, 'index']);
         // SETTINGS

@@ -1,111 +1,107 @@
 @extends('template.app')
 
-@section('title', 'Homepage Cyber Threat Map')
+@section('title', 'Homepage – Cyber Threat Map')
 
 @section('content')
-    <div class="container-fluid">
+    <div class="container-fluid mt-3">
 
-        <div class="page-title-head d-flex align-items-center mb-4">
-            <div class="flex-grow-1">
-                <h4 class="page-main-title m-0">Homepage – Cyber Threat Map</h4>
-            </div>
-            <div class="text-end">
-                <ol class="breadcrumb m-0 py-0">
-                    <li class="breadcrumb-item">Virologi</li>
-                    <li class="breadcrumb-item">CMS</li>
-                    <li class="breadcrumb-item active">Threat Map</li>
-                </ol>
-            </div>
-        </div>
+        <div id="alert-box" class="alert d-none"></div>
 
         <div class="row g-4">
 
-            <!-- FORM -->
-            <div class="col-lg-6">
-                <div class="card">
-                    <div class="card-header fw-semibold">
+            <!-- LEFT : FORM -->
+            <div class="col-xl-5 col-lg-6">
+                <div class="card shadow-sm">
+                    <div class="card-header fw-semibold bg-white">
                         Pengaturan Section
                     </div>
                     <div class="card-body">
 
-                        <div id="alert-box"></div>
-
-                        <form id="threat-map-form" onsubmit="return false;">
+                        <form id="threat-map-form" onsubmit="return false">
+                            @csrf
 
                             <div class="mb-3">
                                 <label class="form-label">Pre Title</label>
-                                <input type="text" name="pre_title" class="form-control"
-                                    value="{{ $section->pre_title ?? '' }}" placeholder="Cyber Threat Map">
+                                <input class="form-control" name="pre_title" placeholder="Contoh: Global Threat Landscape">
                             </div>
 
                             <div class="mb-3">
                                 <label class="form-label">Judul Utama</label>
-                                <textarea name="title" class="form-control" rows="2" placeholder="Tetap Update dengan Serangan Siber">{{ $section->title ?? '' }}</textarea>
+                                <input class="form-control" name="title" placeholder="Cyber Threat Map" required>
                             </div>
 
-                            <div class="mb-3">
+                            <div class="mb-4">
                                 <label class="form-label">Deskripsi</label>
-                                <textarea name="description" class="form-control" rows="4"
-                                    placeholder="Informasi serangan real-time seluruh dunia...">{{ $section->description ?? '' }}</textarea>
+                                <textarea class="form-control" name="description" rows="4"
+                                    placeholder="Visualisasi serangan siber secara global dan realtime"></textarea>
                             </div>
 
-                            <div class="mb-3">
-                                <label class="form-label">Teks Tombol (CTA)</label>
-                                <input type="text" name="cta_text" class="form-control"
-                                    value="{{ $section->cta_text ?? '' }}" placeholder="View Live Threat Map">
+                            <hr>
+
+                            <h6 class="fw-semibold mb-2">Call To Action</h6>
+
+                            <div class="mb-2">
+                                <input class="form-control" name="cta_text" placeholder="Contoh: Lihat Threat Map">
                             </div>
 
-                            <div class="mb-3">
-                                <label class="form-label">URL Tombol</label>
-                                <input type="text" name="cta_url" class="form-control"
-                                    value="{{ $section->cta_url ?? '' }}" placeholder="/threat-map">
+                            <div class="mb-4">
+                                <input class="form-control" name="cta_url" placeholder="https://threatmap.example.com">
                             </div>
 
-                            <div class="form-check mb-4">
-                                <input class="form-check-input" type="checkbox" name="is_active" value="1"
-                                    {{ $section->is_active ?? true ? 'checked' : '' }}>
-                                <label class="form-check-label">
-                                    Tampilkan section di homepage
-                                </label>
+                            <div class="d-flex align-items-center justify-content-between mb-4 p-3 border rounded">
+                                <div>
+                                    <div class="fw-semibold">Status Section</div>
+                                    <small class="text-muted">Tampilkan section ini di homepage</small>
+                                </div>
+                                <div class="form-check form-switch m-0">
+                                    <input class="form-check-input" type="checkbox" name="is_active" value="1" checked>
+                                </div>
                             </div>
 
-                            <button type="button" class="btn btn-primary" id="btn-save">
+                            <button type="button" class="btn btn-primary w-100" id="btn-save">
                                 <span class="btn-text">Simpan Perubahan</span>
                                 <span class="spinner-border spinner-border-sm d-none"></span>
                             </button>
 
                         </form>
+
                     </div>
                 </div>
             </div>
 
-            <!-- PREVIEW -->
-            <div class="col-lg-6">
-                <div class="card">
-                    <div class="card-header fw-semibold">
+            <!-- RIGHT : PREVIEW -->
+            <div class="col-xl-7 col-lg-6">
+                <div class="card shadow-sm">
+                    <div class="card-header fw-semibold bg-white">
                         Preview Section
                     </div>
-                    <div class="card-body" style="background:#000; border-radius:8px;">
+                    <div class="card-body">
 
-                        <span class="badge mb-3" style="background:#ef4444;">
-                            {{ $section->pre_title ?? 'Cyber Threat Map' }}
-                        </span>
+                        <div class="border rounded p-4 bg-dark text-white">
+                            <small id="pv-pre" class="text-uppercase text-secondary">
+                                Global Threat Landscape
+                            </small>
 
-                        <h3 class="fw-bold text-white mt-2" style="line-height:1.3;">
-                            {!! nl2br(e($section->title ?? 'Tetap Update dengan Serangan Siber')) !!}
-                        </h3>
+                            <h3 id="pv-title" class="fw-bold mt-2">
+                                Cyber Threat Map
+                            </h3>
 
-                        <p class="text-muted mt-3" style="max-width:420px;">
-                            {{ $section->description ?? 'Informasi serangan real-time seluruh dunia dapat dipantau langsung.' }}
-                        </p>
+                            <p id="pv-desc" class="text-white-50">
+                                Visualisasi serangan siber secara global dan realtime
+                            </p>
 
-                        @if (!empty($section->cta_text))
-                            <div class="mt-4">
-                                <span class="badge bg-light text-dark px-3 py-2">
-                                    {{ $section->cta_text }}
+                            <div class="mt-3">
+                                <span id="pv-cta" class="badge bg-danger d-none">
+                                    CTA
                                 </span>
                             </div>
-                        @endif
+
+                            <div class="mt-4">
+                                <span id="pv-status" class="badge bg-success">
+                                    AKTIF
+                                </span>
+                            </div>
+                        </div>
 
                     </div>
                 </div>
@@ -118,60 +114,104 @@
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', () => {
+        axios.defaults.headers.common['X-CSRF-TOKEN'] =
+            document.querySelector('meta[name="csrf-token"]').getAttribute('content')
 
-            axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest'
+        const form = document.getElementById('threat-map-form')
+        const btn = document.getElementById('btn-save')
+        const alertBox = document.getElementById('alert-box')
 
-            const csrf = document.querySelector('meta[name="csrf-token"]')
-            if (csrf) {
-                axios.defaults.headers.common['X-CSRF-TOKEN'] = csrf.getAttribute('content')
+        const pv = {
+            pre: document.getElementById('pv-pre'),
+            title: document.getElementById('pv-title'),
+            desc: document.getElementById('pv-desc'),
+            cta: document.getElementById('pv-cta'),
+            status: document.getElementById('pv-status'),
+        }
+
+        function alertMsg(type, msg) {
+            alertBox.className = `alert alert-${type}`
+            alertBox.textContent = msg
+            alertBox.classList.remove('d-none')
+            setTimeout(() => alertBox.classList.add('d-none'), 4000)
+        }
+
+        function toggleLoading(on) {
+            btn.disabled = on
+            btn.querySelector('.spinner-border').classList.toggle('d-none', !on)
+            btn.querySelector('.btn-text').classList.toggle('d-none', on)
+        }
+
+        function updatePreview() {
+            const d = new FormData(form)
+
+            pv.pre.textContent = d.get('pre_title') || 'Global Threat Landscape'
+            pv.title.textContent = d.get('title') || 'Cyber Threat Map'
+            pv.desc.textContent = d.get('description') || 'Visualisasi serangan siber secara global'
+
+            if (d.get('cta_text')) {
+                pv.cta.textContent = d.get('cta_text')
+                pv.cta.classList.remove('d-none')
+            } else {
+                pv.cta.classList.add('d-none')
             }
 
-            const form = document.getElementById('threat-map-form')
-            const btn = document.getElementById('btn-save')
-            const spinner = btn.querySelector('.spinner-border')
-            const text = btn.querySelector('.btn-text')
-            const alertBox = document.getElementById('alert-box')
+            if (form.is_active.checked) {
+                pv.status.textContent = 'AKTIF'
+                pv.status.className = 'badge bg-success'
+            } else {
+                pv.status.textContent = 'NONAKTIF'
+                pv.status.className = 'badge bg-secondary'
+            }
+        }
 
-            btn.addEventListener('click', async () => {
-                alertBox.innerHTML = ''
-                btn.disabled = true
-                spinner.classList.remove('d-none')
-                text.classList.add('d-none')
+        form.querySelectorAll('input,textarea').forEach(el =>
+            el.addEventListener('input', updatePreview)
+        )
+        form.is_active.addEventListener('change', updatePreview)
 
-                try {
-                    const formData = new FormData(form)
-                    const res = await axios.post('{{ route('homepage.threat-map.store') }}', formData)
+        async function loadSection() {
+            try {
+                const res = await axios.get('/homepage-threat-map/show')
+                const d = res.data.data
+                if (!d) return
 
-                    alertBox.innerHTML = `
-                <div class="alert alert-success alert-dismissible fade show">
-                    ${res.data.message}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            `
-                } catch (error) {
-                    if (error.response?.status === 422) {
-                        const errors = Object.values(error.response.data.errors).flat().join('<br>')
-                        alertBox.innerHTML = `
-                    <div class="alert alert-danger alert-dismissible fade show">
-                        ${errors}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                `
-                    } else {
-                        alertBox.innerHTML = `
-                    <div class="alert alert-danger alert-dismissible fade show">
-                        Terjadi kesalahan sistem
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                `
-                    }
+                Object.entries(d).forEach(([k, v]) => {
+                    const el = form.querySelector(`[name="${k}"]`)
+                    if (!el) return
+                    if (el.type === 'checkbox') el.checked = v
+                    else el.value = v ?? ''
+                })
+
+                updatePreview()
+            } catch {
+                alertMsg('danger', 'Gagal memuat data Threat Map')
+            }
+        }
+
+        btn.onclick = async () => {
+            toggleLoading(true)
+
+            const data = new FormData(form)
+            if (!data.has('is_active')) data.append('is_active', 0)
+
+            try {
+                const res = await axios.post('/homepage-threat-map', data)
+                alertMsg('success', res.data.message || 'Berhasil disimpan')
+            } catch (e) {
+                if (e.response?.status === 422) {
+                    const errors = Object.values(e.response.data.errors || {})
+                        .flat()
+                        .join(' | ')
+                    alertMsg('danger', errors)
+                } else {
+                    alertMsg('danger', 'Terjadi kesalahan sistem')
                 }
+            }
 
-                btn.disabled = false
-                spinner.classList.add('d-none')
-                text.classList.remove('d-none')
-            })
-        })
+            toggleLoading(false)
+        }
+
+        loadSection()
     </script>
 @endpush
