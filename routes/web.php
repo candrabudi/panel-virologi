@@ -43,9 +43,9 @@ Route::middleware(['auth', 'throttle:300,1'])->group(function () {
 
     Route::prefix('website')->group(function () {
         Route::get('/', [WebsiteController::class, 'index']);
-        Route::post('/general', [WebsiteController::class, 'saveGeneral']);
-        Route::post('/contact', [WebsiteController::class, 'saveContact']);
-        Route::post('/branding', [WebsiteController::class, 'saveBranding']);
+        Route::post('/general', [WebsiteController::class, 'saveGeneral'])->name('website.general');
+        Route::post('/contact', [WebsiteController::class, 'saveContact'])->name('website.contact');
+        Route::post('/branding', [WebsiteController::class, 'saveBranding'])->name('website.branding');
     });
 
     Route::get('/homepage-hero', [HomepageHeroController::class, 'index']);
@@ -57,13 +57,22 @@ Route::middleware(['auth', 'throttle:300,1'])->group(function () {
     Route::get('/homepage-threat-map', [HomepageThreatMapSectionController::class, 'index']);
     Route::post('/homepage-threat-map', [HomepageThreatMapSectionController::class, 'store']);
 
-    Route::get('/footer', [FooterController::class, 'index']);
-    Route::post('/footer/setting', [FooterController::class, 'saveSetting']);
-    Route::post('/footer/quick-link', [FooterController::class, 'saveQuickLink']);
-    Route::delete('/footer/quick-link/{id}', [FooterController::class, 'deleteQuickLink']);
-    Route::post('/footer/contact', [FooterController::class, 'saveContact']);
-    Route::delete('/footer/contact/{id}', [FooterController::class, 'deleteContact']);
+    Route::prefix('footer')->group(function () {
+        Route::get('/', [FooterController::class, 'index']);
+        // SETTINGS
+        Route::get('/setting', [FooterController::class, 'setting']);
+        Route::post('/setting', [FooterController::class, 'saveSetting']);
 
+        // QUICK LINKS
+        Route::get('/quick-links', [FooterController::class, 'listQuickLinks']);
+        Route::post('/quick-links', [FooterController::class, 'storeQuickLink']);
+        Route::delete('/quick-links/{id}', [FooterController::class, 'deleteQuickLink']);
+
+        // CONTACTS
+        Route::get('/contacts', [FooterController::class, 'listContacts']);
+        Route::post('/contacts', [FooterController::class, 'storeContact']);
+        Route::delete('/contacts/{id}', [FooterController::class, 'deleteContact']);
+    });
     Route::get('/about-us', [AboutUsController::class, 'index']);
     Route::post('/about-us', [AboutUsController::class, 'store']);
 
