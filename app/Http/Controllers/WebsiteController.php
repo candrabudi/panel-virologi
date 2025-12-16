@@ -163,7 +163,7 @@ class WebsiteController extends Controller
                     $file = $request->file($field);
                     $filename = $field.'_'.Str::uuid().'.'.$file->getClientOriginalExtension();
 
-                    $path = asset($file->storeAs('website', $filename, 'public'));
+                    $path = asset('storage/'.$file->storeAs('website', $filename, 'public'));
                     $data[$field] = $path;
                 }
 
@@ -173,7 +173,7 @@ class WebsiteController extends Controller
 
             return $this->ok(null, 'Branding website berhasil disimpan');
         } catch (\Throwable $e) {
-            return $this->fail('Request failed', null, 500);
+            return $this->fail('Request failed '.$e->getMessage(), null, 500);
         }
     }
 }
