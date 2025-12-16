@@ -11,14 +11,14 @@ class Otp extends Model
         'code_hash',
         'code_last4',
         'type',
-        'expired_at',
+        'expires_at',
         'verified_at',
         'ip_address',
         'user_agent',
     ];
 
     protected $casts = [
-        'expired_at' => 'datetime',
+        'expires_at' => 'datetime',
         'verified_at' => 'datetime',
     ];
 
