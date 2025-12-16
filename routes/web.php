@@ -27,10 +27,12 @@ Route::post('/login', [AuthController::class, 'login'])
     ->name('login.process');
 
 Route::post('/login/send-otp', [AuthController::class, 'sendOtp'])
-    ->middleware('throttle:20,1');
+    ->middleware('throttle:20,1')
+    ->name('login.sendOtp');
 
 Route::post('/login/verify-otp', [AuthController::class, 'verifyOtp'])
-    ->middleware('throttle:20,1');
+    ->middleware('throttle:20,1')
+    ->name('login.verifyOtp');
 
 Route::post('/logout', [AuthController::class, 'logout'])
     ->middleware('auth')
