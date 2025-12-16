@@ -12,11 +12,55 @@ use Illuminate\Support\Str;
 
 class ArticleController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware(['auth', 'throttle:60,1']);
+    }
+
+    private function ok($data = null, string $message = 'OK', int $code = 200)
+    {
+        return response()->json([
+            'status' => true,
+            'message' => $message,
+            'data' => $data,
+        ], $code);
+    }
+
+    private function fail(string $message = 'Request failed', $errors = null, int $code = 400)
+    {
+        $payload = [
+            'status' => false,
+            'message' => $message,
+        ];
+
+        if (!is_null($errors)) {
+            $payload['errors'] = $errors;
+        }
+
+        return response()->json($payload, $code);
+    }
+
     public function index()
     {
         return view('articles.index', [
             'articles' => Article::orderByDesc('id')->get(),
         ]);
+    }
+
+    public function list(Request $request)
+    {
+        $query = Article::query()
+            ->with(['categories', 'tags'])
+            ->orderByDesc('id');
+
+        if ($request->filled('q')) {
+            $query->where('title', 'like', '%'.$request->q.'%')
+                  ->orWhere('excerpt', 'like', '%'.$request->q.'%');
+        }
+
+        return $this->ok(
+            $query->get()
+        );
     }
 
     public function create()
@@ -56,7 +100,7 @@ class ArticleController extends Controller
 
         $thumbnail = null;
         if ($request->hasFile('thumbnail')) {
-            $thumbnail = $request->file('thumbnail')->store('articles', 'public');
+            $thumbnail = asset($request->file('thumbnail')->store('articles', 'public'));
         }
 
         $article = Article::create([
@@ -106,7 +150,7 @@ class ArticleController extends Controller
             if ($thumbnail) {
                 Storage::disk('public')->delete($thumbnail);
             }
-            $thumbnail = $request->file('thumbnail')->store('articles', 'public');
+            $thumbnail = asset($request->file('thumbnail')->store('articles', 'public'));
         }
 
         $article->update([
@@ -131,6 +175,20 @@ class ArticleController extends Controller
         return response()->json([
             'status' => true,
             'redirect' => '/articles',
+        ]);
+    }
+
+    public function destroy(Article $article)
+    {
+        if ($article->thumbnail) {
+            Storage::disk('public')->delete($article->thumbnail);
+        }
+
+        $article->delete();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Article deleted successfully',
         ]);
     }
 }

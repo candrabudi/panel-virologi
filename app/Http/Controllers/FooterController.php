@@ -113,8 +113,8 @@ class FooterController extends Controller
                         Storage::disk('public')->delete($setting->logo_path);
                     }
 
-                    $data['logo_path'] = $request->file('logo')
-                        ->store('footer', 'public');
+                    $data['logo_path'] = asset($request->file('logo')
+                        ->store('footer', 'public'));
                 }
 
                 $data['is_active'] = (int) $request->is_active === 1;

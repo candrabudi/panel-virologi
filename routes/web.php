@@ -149,16 +149,15 @@ Route::middleware(['auth', 'throttle:300,1'])->group(function () {
                 Route::delete('/{id}', [ArticleTagController::class, 'destroy']);
             });
 
-    Route::prefix('articles')
-        ->middleware('throttle:120,1')
-        ->group(function () {
-            Route::get('/', [ArticleController::class, 'index']);
-            Route::get('/create', [ArticleController::class, 'create']);
-            Route::get('/{article}/edit', [ArticleController::class, 'edit']);
+    Route::prefix('articles')->group(function () {
+        Route::get('/', [ArticleController::class, 'index'])->name('articles.index');
+        Route::get('/create', [ArticleController::class, 'create'])->name('articles.create');
+        Route::get('/{article}/edit', [ArticleController::class, 'edit'])->name('articles.edit');
 
-            Route::post('/', [ArticleController::class, 'store']);
-            Route::post('/{article}', [ArticleController::class, 'update']);
-            Route::post('/{article}/toggle-publish', [ArticleController::class, 'togglePublish']);
-            Route::delete('/{article}', [ArticleController::class, 'destroy']);
-        });
+        Route::get('/list', [ArticleController::class, 'list'])->name('articles.list');
+
+        Route::post('/', [ArticleController::class, 'store'])->name('articles.store');
+        Route::put('/{article}', [ArticleController::class, 'update'])->name('articles.update');
+        Route::delete('/{article}', [ArticleController::class, 'destroy'])->name('articles.destroy');
+    });
 });

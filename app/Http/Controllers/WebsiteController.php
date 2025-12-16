@@ -163,7 +163,7 @@ class WebsiteController extends Controller
                     $file = $request->file($field);
                     $filename = $field.'_'.Str::uuid().'.'.$file->getClientOriginalExtension();
 
-                    $path = $file->storeAs('website', $filename, 'public');
+                    $path = asset($file->storeAs('website', $filename, 'public'));
                     $data[$field] = $path;
                 }
 

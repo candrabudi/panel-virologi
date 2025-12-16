@@ -3,103 +3,284 @@
 @section('title', 'Articles')
 
 @section('content')
-    <div class="container-fluid">
+    <div class="container-fluid mt-3">
 
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h4>Articles</h4>
-            <a href="/articles/create" class="btn btn-primary">
-                Tambah Article
+            <h4 class="fw-bold text-primary">Article Management</h4>
+            <a href="{{ route('articles.create') }}" class="btn btn-primary shadow-lg border-0">
+                <i class="bi bi-plus-lg me-1"></i> Tambah Article
             </a>
         </div>
 
-        <div class="card">
-            <div class="card-body p-0">
+        <div id="alert-box" class="alert d-none rounded-3 shadow-sm"></div>
 
-                <table class="table mb-0 align-middle">
-                    <thead>
+        <div class="card shadow-lg border-0">
+            <div
+                class="card-header bg-white p-4 d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+                <h6 class="mb-2 mb-md-0 fw-bold text-muted">Daftar Artikel</h6>
+
+                {{-- Revisi Input Search: Lebih besar, kurang rounded (menggunakan rounded-3), dan menyatu --}}
+                <div class="input-group" style="max-width: 400px; width: 100%;">
+                    <span class="input-group-text rounded-start-3 bg-light text-muted">
+                        <i class="bi bi-search"></i>
+                    </span>
+                    <input id="search-input" type="text" class="form-control rounded-end-3"
+                        placeholder="Cari berdasarkan judul...">
+                    <span class="input-group-text d-none bg-white" id="search-spinner">
+                        <span class="spinner-border spinner-border-sm"></span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="card-body p-0">
+                {{-- SKELETON LOADER --}}
+                <div id="skeleton">
+                    @for ($i = 0; $i < 5; $i++)
+                        <div class="p-3 border-bottom placeholder-glow d-flex align-items-center">
+                            <span class="placeholder rounded me-3" style="width: 60px; height: 60px;"></span>
+                            <div class="flex-grow-1">
+                                <span class="placeholder col-6 mb-1"></span>
+                                <span class="placeholder col-4"></span>
+                            </div>
+                        </div>
+                    @endfor
+                </div>
+
+                {{-- ARTICLE TABLE --}}
+                <table class="table table-striped table-hover mb-0 d-none" id="article-table">
+                    <thead class="table-light">
                         <tr>
                             <th width="80">Thumb</th>
-                            <th>Title</th>
-                            <th>Category</th>
+                            <th>Title / Slug</th>
+                            <th>Categories</th>
                             <th>Tags</th>
                             <th>Status</th>
-                            <th>Publish Date</th>
-                            <th width="200">Aksi</th>
+                            <th>Published At</th>
+                            <th width="150" class="text-end">Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        @foreach ($articles as $article)
-                            <tr data-id="{{ $article->id }}">
-                                <td>
-                                    @if ($article->thumbnail)
-                                        <img src="{{ asset('storage/' . $article->thumbnail) }}" class="rounded"
-                                            width="60">
-                                    @endif
-                                </td>
-                                <td>
-                                    <strong>{{ $article->title }}</strong>
-                                    <div class="text-muted small">
-                                        {{ $article->slug }}
-                                    </div>
-                                </td>
-                                <td>
-                                    @foreach ($article->categories as $cat)
-                                        <span class="badge bg-secondary">{{ $cat->name }}</span>
-                                    @endforeach
-                                </td>
-                                <td>
-                                    @foreach ($article->tags as $tag)
-                                        <span class="badge bg-light text-dark">{{ $tag->name }}</span>
-                                    @endforeach
-                                </td>
-                                <td>
-                                    <span class="badge {{ $article->is_published ? 'bg-success' : 'bg-warning' }}">
-                                        {{ $article->is_published ? 'Published' : 'Draft' }}
-                                    </span>
-                                </td>
-                                <td>
-                                    {{ $article->published_at?->format('d M Y H:i') ?? '-' }}
-                                </td>
-                                <td>
-                                    <button class="btn btn-sm btn-outline-primary btn-toggle">
-                                        {{ $article->is_published ? 'Unpublish' : 'Publish' }}
-                                    </button>
-                                    <a href="/articles/{{ $article->id }}/edit" class="btn btn-sm btn-outline-secondary">
-                                        Edit
-                                    </a>
-                                    <button class="btn btn-sm btn-outline-danger btn-delete">
-                                        Hapus
-                                    </button>
-                                </td>
-                            </tr>
-                        @endforeach
+                    <tbody id="table-body">
+                        {{-- Rows generated by JavaScript --}}
                     </tbody>
                 </table>
 
+                <div id="empty-state" class="text-center py-5 text-muted d-none">
+                    <p class="mb-1"><i class="bi bi-x-octagon fs-3"></i></p>
+                    <p class="mb-0">Data artikel tidak ditemukan.</p>
+                </div>
             </div>
         </div>
 
+    </div>
+
+    {{-- MODAL DELETE --}}
+    <div class="modal fade" id="deleteModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 shadow-lg border-0">
+                <div class="modal-header bg-danger text-white rounded-top-4 p-3">
+                    <h5 class="modal-title fs-5">Konfirmasi Hapus Artikel</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p>Apakah Anda yakin ingin menghapus artikel "<span id="article-title-to-delete"
+                            class="fw-bold text-danger"></span>"?</p>
+                    <p class="text-muted small mb-0">Aksi ini tidak dapat dibatalkan.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary rounded-pill"
+                        data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-danger rounded-pill shadow-sm" id="btn-confirm-delete">
+                        <i class="bi bi-trash me-1"></i> Hapus Permanen
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 @endsection
 
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-        document.querySelectorAll('.btn-toggle').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const tr = this.closest('tr')
-                axios.post('/articles/' + tr.dataset.id + '/toggle-publish')
-                    .then(() => location.reload())
+        // --- INITIAL SETUP ---
+        axios.defaults.headers.common['X-CSRF-TOKEN'] =
+            document.querySelector('meta[name="csrf-token"]') ? document.querySelector('meta[name="csrf-token"]')
+            .getAttribute('content') : ''
+
+        const tableBody = document.getElementById('table-body')
+        const articleTable = document.getElementById('article-table')
+        const skeleton = document.getElementById('skeleton')
+        const emptyState = document.getElementById('empty-state')
+        const alertBox = document.getElementById('alert-box')
+        const searchInput = document.getElementById('search-input')
+        const searchSpinner = document.getElementById('search-spinner')
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'))
+        const btnConfirmDelete = document.getElementById('btn-confirm-delete')
+        const articleTitleToDelete = document.getElementById('article-title-to-delete')
+
+        let deleteArticleId = null
+        let debounceTimer = null
+
+        // --- HELPER FUNCTIONS ---
+        function alertMsg(type, msg) {
+            alertBox.className = `alert alert-${type} rounded-3 shadow-sm`
+            alertBox.innerHTML = msg
+            alertBox.classList.remove('d-none')
+            setTimeout(() => alertBox.classList.add('d-none'), 4000)
+        }
+
+        function formatDateTime(dateString) {
+            if (!dateString) return '-';
+            const options = {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            // Pastikan menggunakan Intl API untuk format tanggal lokal
+            return new Date(dateString).toLocaleDateString('id-ID', options).replace(/\./g, '');
+        }
+
+        function getThumbnailUrl(path) {
+            // Gunakan gambar placeholder yang lebih netral
+            return path ? `/storage/${path}` : `https://placehold.co/60x60/343a40/ffffff?text=IMG`;
+        }
+
+        // --- RENDER LOGIC ---
+        function renderArticles(articles) {
+            tableBody.innerHTML = ''
+
+            skeleton.classList.add('d-none')
+            articleTable.classList.add('d-none')
+            emptyState.classList.add('d-none')
+
+            if (!articles || articles.length === 0) {
+                emptyState.classList.remove('d-none')
+                return
+            }
+
+            articleTable.classList.remove('d-none')
+
+            articles.forEach(article => {
+                const isPublished = article.is_published === 1
+                const statusClass = isPublished ? 'bg-success' : 'bg-secondary'
+                const statusText = isPublished ? 'Published' : 'Draft'
+
+                const categoriesHtml = article.categories.map(cat =>
+                    `<span class="badge rounded-pill bg-light text-primary fw-normal border me-1">${cat.name}</span>`
+                ).join('')
+
+                const tagsHtml = article.tags.map(tag =>
+                    `<span class="badge rounded-pill bg-info-subtle text-info fw-normal me-1">${tag.name}</span>`
+                ).join('')
+
+                const row = document.createElement('tr')
+                row.dataset.id = article.id
+                row.innerHTML = `
+                    <td class="py-3 align-middle">
+                        <img src="${getThumbnailUrl(article.thumbnail)}" class="rounded shadow-sm" width="60" height="60" style="object-fit: cover;">
+                    </td>
+                    <td class="align-middle">
+                        <strong class="text-dark">${article.title}</strong>
+                        <div class="text-muted small">${article.slug}</div>
+                    </td>
+                    <td class="align-middle">${categoriesHtml || '<span class="text-muted small">-</span>'}</td>
+                    <td class="align-middle">${tagsHtml || '<span class="text-muted small">-</span>'}</td>
+                    <td class="align-middle">
+                        <span class="badge ${statusClass} rounded-pill">${statusText}</span>
+                    </td>
+                    <td class="align-middle text-muted small">${formatDateTime(article.published_at)}</td>
+                    <td class="text-end align-middle">
+                        <a href="/articles/${article.id}/edit" class="btn btn-sm btn-outline-primary me-1 rounded-pill">
+                            <i class="bi bi-pencil-square"></i> Edit
+                        </a>
+                        <button type="button" class="btn btn-sm btn-outline-danger btn-delete rounded-pill">
+                            <i class="bi bi-trash"></i> Hapus
+                        </button>
+                    </td>
+                `
+                tableBody.appendChild(row)
             })
+        }
+
+        // --- DATA FETCHING ---
+        function loadArticles(query = '') {
+            skeleton.classList.remove('d-none')
+            articleTable.classList.add('d-none')
+            emptyState.classList.add('d-none')
+            searchSpinner.classList.remove('d-none')
+
+            axios.get('{{ route('articles.list') }}', {
+                    params: {
+                        q: query
+                    }
+                })
+                .then(response => {
+                    renderArticles(response.data.data)
+                })
+                .catch(error => {
+                    console.error("Error loading articles:", error)
+                    alertMsg('danger', 'Gagal memuat data artikel.')
+                    emptyState.classList.remove('d-none')
+                })
+                .finally(() => {
+                    skeleton.classList.add('d-none')
+                    searchSpinner.classList.add('d-none')
+                })
+        }
+
+        // --- EVENT LISTENERS ---
+
+        // 1. Live Search (Debounced)
+        searchInput.addEventListener('input', e => {
+            clearTimeout(debounceTimer)
+            debounceTimer = setTimeout(() => {
+                loadArticles(e.target.value)
+            }, 500)
         })
 
-        document.querySelectorAll('.btn-delete').forEach(btn => {
-            btn.addEventListener('click', function() {
-                if (!confirm('Hapus article ini?')) return
-                const tr = this.closest('tr')
-                axios.delete('/articles/' + tr.dataset.id)
-                    .then(() => location.reload())
-            })
+        // 2. Dynamic Delete Click Handler (using event delegation)
+        tableBody.addEventListener('click', (e) => {
+            if (e.target.closest('.btn-delete')) {
+                const row = e.target.closest('tr')
+                deleteArticleId = row.dataset.id
+
+                // Get title for modal
+                const titleElement = row.querySelector('strong')
+                articleTitleToDelete.textContent = titleElement ? titleElement.textContent : 'Artikel ini'
+
+                deleteModal.show()
+            }
         })
+
+        // 3. Confirm Delete Handler
+        btnConfirmDelete.addEventListener('click', () => {
+            if (!deleteArticleId) return
+
+            btnConfirmDelete.disabled = true
+            const originalText = btnConfirmDelete.textContent
+            btnConfirmDelete.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Menghapus...'
+
+            axios.delete(`/articles/${deleteArticleId}`)
+                .then(response => {
+                    alertMsg('success', response.data.message || 'Artikel berhasil dihapus.')
+                    loadArticles(searchInput.value) // Reload current filtered view
+                })
+                .catch(error => {
+                    alertMsg('danger', 'Gagal menghapus artikel.')
+                })
+                .finally(() => {
+                    deleteModal.hide()
+                    btnConfirmDelete.disabled = false
+                    btnConfirmDelete.textContent = originalText // Reset text (need to re-add icon)
+                    btnConfirmDelete.innerHTML = '<i class="bi bi-trash me-1"></i> Hapus Permanen'
+                    deleteArticleId = null
+                })
+        })
+
+        // 4. Initial Load
+        window.onload = () => {
+            loadArticles()
+        }
     </script>
 @endpush
