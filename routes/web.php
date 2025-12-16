@@ -10,6 +10,7 @@ use App\Http\Controllers\ArticleCategoryController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\ArticleTagController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\FooterController;
 use App\Http\Controllers\HomepageBlogSectionController;
 use App\Http\Controllers\HomepageHeroController;
@@ -41,6 +42,11 @@ Route::post('/logout', [AuthController::class, 'logout'])
 
 Route::middleware(['auth', 'throttle:300,1'])->group(function () {
     Route::get('/dashboard', fn () => view('welcome'))->name('dashboard');
+    Route::get('/dashboard/summary', [DashboardController::class, 'summary'])
+        ->middleware('auth');
+
+    Route::get('/dashboard/ai-traffic-daily', [DashboardController::class, 'aiTrafficDaily'])
+    ->middleware('auth');
 
     Route::prefix('website')->group(function () {
         Route::get('/', [WebsiteController::class, 'index']);

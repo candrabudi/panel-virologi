@@ -47,8 +47,8 @@
                  <div class="dropdown">
                      <a class="topbar-link dropdown-toggle drop-arrow-none px-2" data-bs-toggle="dropdown"
                          href="#!" aria-haspopup="false" aria-expanded="false">
-                         <img src="assets/images/users/user-1.jpg" width="32"
-                             class="rounded-circle me-lg-2 d-flex" alt="user-image" />
+                         <img src="assets/images/users/user-1.jpg" width="32" class="rounded-circle me-lg-2 d-flex"
+                             alt="user-image" />
                          <div class="d-lg-flex align-items-center gap-1 d-none">
                              <h5 class="my-0">David Dev</h5>
                              <i class="ri ri-arrow-down-s-line align-middle"></i>
@@ -62,10 +62,15 @@
                              <i class="ri ri-user-line me-1 fs-lg align-middle"></i>
                              <span class="align-middle">Profile</span>
                          </a>
-                         <a href="javascript:void(0);" class="dropdown-item text-danger fw-semibold">
+                         <a href="javascript:void(0);" class="dropdown-item text-danger fw-semibold" onclick="logout()">
                              <i class="ri ri-logout-box-line me-1 fs-lg align-middle"></i>
                              <span class="align-middle">Log Out</span>
                          </a>
+
+                         <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                             @csrf
+                         </form>
+
                      </div>
                  </div>
              </div>
