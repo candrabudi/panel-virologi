@@ -100,7 +100,7 @@ class ArticleController extends Controller
 
         $thumbnail = null;
         if ($request->hasFile('thumbnail')) {
-            $thumbnail = asset($request->file('thumbnail')->store('articles', 'public'));
+            $thumbnail = asset('storage/'.$request->file('thumbnail')->store('articles', 'public'));
         }
 
         $article = Article::create([
@@ -150,7 +150,7 @@ class ArticleController extends Controller
             if ($thumbnail) {
                 Storage::disk('public')->delete($thumbnail);
             }
-            $thumbnail = asset($request->file('thumbnail')->store('articles', 'public'));
+            $thumbnail = asset('storage/'.$request->file('thumbnail')->store('articles', 'public'));
         }
 
         $article->update([

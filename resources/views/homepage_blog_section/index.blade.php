@@ -7,8 +7,6 @@
         <div id="alert-box" class="alert d-none"></div>
 
         <div class="row g-4">
-
-            <!-- LEFT : FORM -->
             <div class="col-xl-5 col-lg-6">
                 <div class="card shadow-sm">
                     <div class="card-header fw-semibold bg-white">
@@ -52,7 +50,6 @@
                 </div>
             </div>
 
-            <!-- RIGHT : PREVIEW -->
             <div class="col-xl-7 col-lg-6">
                 <div class="card shadow-sm">
                     <div class="card-header fw-semibold bg-white">

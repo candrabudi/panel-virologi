@@ -96,11 +96,11 @@ class AboutUsController extends Controller
             'left_content' => ['nullable', 'string'],
             'right_content' => ['nullable', 'string'],
 
-            'topics' => ['nullable', 'array'],
-            'topics.*' => ['string', 'max:255'],
+            // 'topics' => ['nullable', 'array'],
+            // 'topics.*' => ['string', 'max:255'],
 
-            'manifesto' => ['nullable', 'array'],
-            'manifesto.*' => ['string', 'max:255'],
+            // 'manifesto' => ['nullable', 'array'],
+            // 'manifesto.*' => ['string', 'max:255'],
 
             'seo_title' => ['nullable', 'string', 'max:255'],
             'seo_description' => ['nullable', 'string', 'max:300'],
