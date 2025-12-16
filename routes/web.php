@@ -16,6 +16,7 @@ use App\Http\Controllers\HomepageHeroController;
 use App\Http\Controllers\HomepageThreatMapSectionController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductPageController;
+use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\WebsiteController;
 use Illuminate\Support\Facades\Route;
 
@@ -159,5 +160,22 @@ Route::middleware(['auth', 'throttle:300,1'])->group(function () {
         Route::post('/', [ArticleController::class, 'store'])->name('articles.store');
         Route::put('/{article}', [ArticleController::class, 'update'])->name('articles.update');
         Route::delete('/{article}', [ArticleController::class, 'destroy'])->name('articles.destroy');
+    });
+
+    Route::prefix('users')->name('users.')->group(function () {
+        Route::get('/', [UserManagementController::class, 'index'])
+            ->name('index');
+
+        Route::get('/list', [UserManagementController::class, 'list'])
+            ->name('list');
+
+        Route::post('/', [UserManagementController::class, 'store'])
+            ->name('store');
+
+        Route::put('/{id}', [UserManagementController::class, 'update'])
+            ->name('update');
+
+        Route::delete('/{id}', [UserManagementController::class, 'destroy'])
+            ->name('destroy');
     });
 });

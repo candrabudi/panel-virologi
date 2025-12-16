@@ -87,7 +87,8 @@
                 </li>
 
                 <li class="side-nav-item">
-                    <a href="/articles/tags" class="side-nav-link {{ request()->is('articles/tags*') ? 'active' : '' }}">
+                    <a href="/articles/tags"
+                        class="side-nav-link {{ request()->is('articles/tags*') ? 'active' : '' }}">
                         <span class="menu-icon">
                             <i class="ri ri-price-tag-3-line"></i>
                         </span>
@@ -129,6 +130,15 @@
                 <li class="side-nav-title">Pengaturan</li>
 
                 <li class="side-nav-item">
+                    <a href="/users" class="side-nav-link {{ request()->is('users*') ? 'active' : '' }}">
+                        <span class="menu-icon">
+                            <i class="ri ri-user-settings-line"></i>
+                        </span>
+                        <span class="menu-text">Manajemen User</span>
+                    </a>
+                </li>
+
+                <li class="side-nav-item">
                     <a href="/website" class="side-nav-link {{ request()->is('website*') ? 'active' : '' }}">
                         <span class="menu-icon">
                             <i class="ri ri-global-line"></i>
@@ -165,7 +175,7 @@
                         <span class="menu-text">AI Context</span>
                     </a>
                 </li>
-               
+
                 <li class="side-nav-item">
                     <a href="/ai/bindings" class="side-nav-link {{ request()->is('ai/bindings') ? 'active' : '' }}">
                         <span class="menu-icon">
