@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AboutUsController;
+use App\Http\Controllers\AiChatController;
 use App\Http\Controllers\AiContextController;
 use App\Http\Controllers\AiPromptBindingController;
 use App\Http\Controllers\AiPromptTemplateController;
@@ -10,7 +11,9 @@ use App\Http\Controllers\ArticleCategoryController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\ArticleTagController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CyberSecurityServiceController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\EbookController;
 use App\Http\Controllers\FooterController;
 use App\Http\Controllers\HomepageBlogSectionController;
 use App\Http\Controllers\HomepageHeroController;
@@ -93,20 +96,32 @@ Route::middleware(['auth', 'throttle:300,1'])->group(function () {
     Route::get('/product-page', [ProductPageController::class, 'index']);
     Route::post('/product-page', [ProductPageController::class, 'store']);
 
+    Route::prefix('api/products')
+        ->middleware('throttle:120,1')
+        ->group(function () {
+            Route::get('/', [ProductController::class, 'list']);
+            Route::post('/', [ProductController::class, 'store']);
+            Route::put('/{product}', [ProductController::class, 'update']);
+            Route::delete('/{product}', [ProductController::class, 'destroy']);
+        });
+
     Route::prefix('products')->group(function () {
         Route::get('/', [ProductController::class, 'index']);
         Route::get('/create', [ProductController::class, 'create']);
         Route::get('/{product}/edit', [ProductController::class, 'edit']);
     });
 
-    Route::prefix('api/products')
-        ->middleware('throttle:120,1')
-        ->group(function () {
-            Route::get('/', [ProductController::class, 'list']);
-            Route::post('/', [ProductController::class, 'store']);
-            Route::post('/{product}', [ProductController::class, 'update']);
-            Route::delete('/{product}', [ProductController::class, 'destroy']);
-        });
+    Route::prefix('/api/cyber-security-services')->group(function () {
+        Route::get('/', [CyberSecurityServiceController::class, 'list']);
+        Route::post('/', [CyberSecurityServiceController::class, 'store']);
+        Route::post('/{cyberSecurityService}', [CyberSecurityServiceController::class, 'update']);
+        Route::delete('/{cyberSecurityService}', [CyberSecurityServiceController::class, 'destroy']);
+    });
+    Route::prefix('cyber-security-services')->group(function () {
+        Route::get('/', [CyberSecurityServiceController::class, 'index']);
+        Route::get('/create', [CyberSecurityServiceController::class, 'create']);
+        Route::get('/{cyberSecurityService}/edit', [CyberSecurityServiceController::class, 'edit']);
+    });
 
     Route::prefix('ai')
         ->name('ai.')
@@ -183,5 +198,26 @@ Route::middleware(['auth', 'throttle:300,1'])->group(function () {
 
         Route::delete('/{id}', [UserManagementController::class, 'destroy'])
             ->name('destroy');
+    });
+
+    Route::get('/ebooks', [EbookController::class, 'index'])->name('ebooks.index');
+    Route::get('/ebooks/list', [EbookController::class, 'list'])->name('ebooks.list');
+
+    Route::get('/ebooks/create', [EbookController::class, 'create'])->name('ebooks.create');
+    Route::post('/ebooks', [EbookController::class, 'store'])->name('ebooks.store');
+
+    Route::get('/ebooks/{ebook}/edit', [EbookController::class, 'edit'])->name('ebooks.edit');
+    Route::put('/ebooks/{ebook}', [EbookController::class, 'update'])->name('ebooks.update');
+
+    Route::delete('/ebooks/{ebook}', [EbookController::class, 'destroy'])->name('ebooks.destroy');
+
+    Route::prefix('ai/chat')->group(function () {
+        Route::get('/', [AiChatController::class, 'index']);
+        Route::get('/sessions/{session}', [AiChatController::class, 'show']);
+
+        Route::get('/list', [AiChatController::class, 'list']);
+        Route::get('/detail/{session}', [AiChatController::class, 'detail']);
+        Route::post('/send', [AiChatController::class, 'store']);
+        Route::delete('/sessions/{session}', [AiChatController::class, 'destroy']);
     });
 });

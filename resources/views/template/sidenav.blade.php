@@ -96,7 +96,16 @@
                     </a>
                 </li>
 
-                <li class="side-nav-title">Produk</li>
+                <li class="side-nav-item">
+                    <a href="/ebooks" class="side-nav-link {{ request()->is('ebooks*') ? 'active' : '' }}">
+                        <span class="menu-icon">
+                            <i class="ri ri-book-2-line"></i>
+                        </span>
+                        <span class="menu-text">Ebook Cyber Security</span>
+                    </a>
+                </li>
+
+                <li class="side-nav-title">Produk & Service</li>
 
                 <li class="side-nav-item">
                     <a href="/product-page" class="side-nav-link {{ request()->is('product-page') ? 'active' : '' }}">
@@ -113,6 +122,17 @@
                             <i class="ri ri-shopping-bag-3-line"></i>
                         </span>
                         <span class="menu-text">List Produk</span>
+                    </a>
+                </li>
+
+                <!-- 🔐 CYBER SECURITY SERVICES -->
+                <li class="side-nav-item">
+                    <a href="/cyber-security-services"
+                        class="side-nav-link {{ request()->is('cyber-security-services*') ? 'active' : '' }}">
+                        <span class="menu-icon">
+                            <i class="ri ri-shield-keyhole-line"></i>
+                        </span>
+                        <span class="menu-text">Cyber Security Services</span>
                     </a>
                 </li>
 
@@ -158,6 +178,16 @@
 
                 <li class="side-nav-title">AI</li>
 
+                <!-- 🤖 AI SESSION -->
+                <li class="side-nav-item">
+                    <a href="/ai/chat" class="side-nav-link {{ request()->is('ai/chat*') ? 'active' : '' }}">
+                        <span class="menu-icon">
+                            <i class="ri ri-chat-voice-line"></i>
+                        </span>
+                        <span class="menu-text">AI Chat</span>
+                    </a>
+                </li>
+
                 <li class="side-nav-item">
                     <a href="/ai/settings" class="side-nav-link {{ request()->is('ai/settings') ? 'active' : '' }}">
                         <span class="menu-icon">
@@ -179,7 +209,7 @@
                 <li class="side-nav-item">
                     <a href="/ai/bindings" class="side-nav-link {{ request()->is('ai/bindings') ? 'active' : '' }}">
                         <span class="menu-icon">
-                            <i class="ri ri-brain-line"></i>
+                            <i class="ri ri-links-line"></i>
                         </span>
                         <span class="menu-text">AI Bindings</span>
                     </a>
@@ -204,6 +234,8 @@
                 </li>
 
             </ul>
+
+
 
         </div>
     </div>

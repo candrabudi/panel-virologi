@@ -24,11 +24,11 @@
                         <thead class="table-light">
                             <tr>
                                 <th width="80">Thumbnail</th>
-                                <th>Nama</th>
-                                <th>Slug</th>
-                                <th>Deskripsi</th>
-                                <th>SEO Title</th>
-                                <th width="150">Tanggal</th>
+                                <th>Produk</th>
+                                <th>AI</th>
+                                <th>CTA</th>
+                                <th>SEO</th>
+                                <th width="130">Tanggal</th>
                                 <th width="140" class="text-end">Aksi</th>
                             </tr>
                         </thead>
@@ -43,68 +43,98 @@
 @endsection
 
 @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
-    <script>
-        axios.defaults.headers.common['X-CSRF-TOKEN'] =
-            document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+<script>
+axios.defaults.headers.common['X-CSRF-TOKEN'] =
+    document.querySelector('meta[name="csrf-token"]').getAttribute('content')
 
-        const tbody = document.getElementById('tbody')
-        const table = document.getElementById('table')
-        const loading = document.getElementById('loading')
+const tbody = document.getElementById('tbody')
+const table = document.getElementById('table')
+const loading = document.getElementById('loading')
 
-        const loadData = async () => {
-            loading.classList.remove('d-none')
-            table.classList.add('d-none')
+const badge = (text, cls) => {
+    if (!text) return `<span class="text-muted">-</span>`
+    return `<span class="badge bg-${cls}">${text}</span>`
+}
 
-            const res = await axios.get('/api/products')
+const loadData = async () => {
+    loading.classList.remove('d-none')
+    table.classList.add('d-none')
 
-            tbody.innerHTML = ''
+    const res = await axios.get('/api/products')
+    tbody.innerHTML = ''
 
-            res.data.forEach(p => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td>
-                            ${
-                                p.thumbnail
-                                    ? `<img src="/storage/${p.thumbnail}" class="rounded" style="width:50px;height:50px;object-fit:cover">`
-                                    : `<div class="bg-light rounded d-flex align-items-center justify-content-center" style="width:50px;height:50px">
-                                                <i class="ri-image-line text-muted"></i>
-                                           </div>`
-                            }
-                        </td>
+    res.data.forEach(p => {
+        tbody.innerHTML += `
+            <tr>
+                <td>
+                    ${
+                        p.thumbnail
+                            ? `<img src="/storage/${p.thumbnail}" class="rounded" style="width:50px;height:50px;object-fit:cover">`
+                            : `<div class="bg-light rounded d-flex align-items-center justify-content-center" style="width:50px;height:50px">
+                                    <i class="ri-image-line text-muted"></i>
+                               </div>`
+                    }
+                </td>
 
-                        <td class="fw-semibold">${p.name}</td>
-                        <td class="text-muted">${p.slug}</td>
-                        <td class="text-muted" style="max-width:240px">
-                            ${p.description ? p.description.substring(0, 80) + '...' : '-'}
-                        </td>
-                        <td class="text-muted">${p.seo_title ?? '-'}</td>
-                        <td class="text-muted">
-                            ${new Date(p.created_at).toLocaleDateString('id-ID')}
-                        </td>
-                        <td class="text-end">
-                            <a href="/products/${p.id}/edit" class="btn btn-sm btn-warning">
-                                Edit
-                            </a>
-                            <button class="btn btn-sm btn-danger" onclick="removeProduct(${p.id})">
-                                Hapus
-                            </button>
-                        </td>
-                    </tr>
-                `
-            })
+                <td>
+                    <div class="fw-semibold">${p.name}</div>
+                    <div class="text-muted small">${p.slug}</div>
+                    <div class="small mt-1 text-muted">
+                        ${p.summary ? p.summary.substring(0, 80) + '…' : '-'}
+                    </div>
+                </td>
 
-            loading.classList.add('d-none')
-            table.classList.remove('d-none')
-        }
+                <td>
+                    <div class="mb-1">${badge(p.product_type, 'secondary')}</div>
+                    <div class="mb-1">${badge(p.ai_domain, 'info')}</div>
+                    <div>${badge(p.ai_level, 'dark')}</div>
+                </td>
 
-        const removeProduct = async (id) => {
-            if (!confirm('Hapus produk ini?')) return
-            await axios.delete('/api/products/' + id)
-            loadData()
-        }
+                <td>
+                    ${
+                        p.cta_label && p.cta_url
+                            ? `<a href="${p.cta_url}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    ${p.cta_label}
+                               </a>`
+                            : `<span class="text-muted">-</span>`
+                    }
+                </td>
 
-        loadData()
-    </script>
+                <td>
+                    <div class="fw-semibold">${p.seo_title ?? '-'}</div>
+                    <div class="small text-muted">
+                        ${p.is_ai_visible ? 'AI Visible' : 'Hidden'}
+                    </div>
+                </td>
+
+                <td class="text-muted">
+                    ${new Date(p.created_at).toLocaleDateString('id-ID')}
+                </td>
+
+                <td class="text-end">
+                    <a href="/products/${p.id}/edit" class="btn btn-sm btn-warning">
+                        Edit
+                    </a>
+                    <button class="btn btn-sm btn-danger" onclick="removeProduct(${p.id})">
+                        Hapus
+                    </button>
+                </td>
+            </tr>
+        `
+    })
+
+    loading.classList.add('d-none')
+    table.classList.remove('d-none')
+}
+
+const removeProduct = async (id) => {
+    if (!confirm('Hapus produk ini?')) return
+    await axios.delete('/api/products/' + id)
+    loadData()
+}
+
+loadData()
+</script>
 @endpush
