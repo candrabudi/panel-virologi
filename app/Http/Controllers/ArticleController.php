@@ -191,4 +191,17 @@ class ArticleController extends Controller
             'message' => 'Article deleted successfully',
         ]);
     }
+
+    public function uploadImage(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|image|mimes:jpg,jpeg,png,webp|max:2048',
+        ]);
+
+        $path = $request->file('file')->store('articles/content', 'public');
+
+        return response()->json([
+            'location' => asset('storage/'.$path),
+        ]);
+    }
 }

@@ -125,7 +125,6 @@
                     </a>
                 </li>
 
-                <!-- 🔐 CYBER SECURITY SERVICES -->
                 <li class="side-nav-item">
                     <a href="/cyber-security-services"
                         class="side-nav-link {{ request()->is('cyber-security-services*') ? 'active' : '' }}">

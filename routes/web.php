@@ -181,6 +181,8 @@ Route::middleware(['auth', 'throttle:300,1'])->group(function () {
         Route::post('/', [ArticleController::class, 'store'])->name('articles.store');
         Route::put('/{article}', [ArticleController::class, 'update'])->name('articles.update');
         Route::delete('/{article}', [ArticleController::class, 'destroy'])->name('articles.destroy');
+
+        Route::post('/upload-image', [ArticleController::class, 'uploadImage']);
     });
 
     Route::prefix('users')->name('users.')->group(function () {
