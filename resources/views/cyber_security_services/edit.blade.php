@@ -2,63 +2,161 @@
 
 @section('title', 'Edit Cyber Security Service')
 
-@section('content')
-    <div class="container-fluid">
+@push('styles')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+@endpush
 
-        <h4 class="mb-4">Edit Cyber Security Service</h4>
+@section('content')
+    <div class="container-fluid mt-3">
+
+        <h3 class="mb-4 fw-bold text-primary d-flex align-items-center gap-2">
+            <i class="bi bi-shield-check fs-2"></i>
+            Edit Cyber Security Service
+        </h3>
 
         <form id="form">
             @csrf
             @method('PUT')
 
-            <input name="name" class="form-control mb-3" value="{{ $cyberSecurityService->name }}" required>
-            <input name="short_name" class="form-control mb-3" value="{{ $cyberSecurityService->short_name }}">
+            <div class="row g-4">
 
-            <select name="category" class="form-select mb-3">
-                @foreach (['soc', 'pentest', 'audit', 'incident_response', 'cloud_security', 'governance', 'training', 'consulting'] as $c)
-                    <option value="{{ $c }}" @selected($cyberSecurityService->category === $c)>
-                        {{ strtoupper(str_replace('_', ' ', $c)) }}
-                    </option>
-                @endforeach
-            </select>
+                {{-- LEFT COLUMN --}}
+                <div class="col-lg-8">
 
-            <textarea name="summary" class="form-control mb-3">{{ $cyberSecurityService->summary }}</textarea>
-            <textarea name="description" class="form-control mb-3" rows="4">{{ $cyberSecurityService->description }}</textarea>
+                    {{-- BASIC INFO --}}
+                    <div class="card shadow-sm border-0 mb-4">
+                        <div class="card-body">
 
-            <hr>
+                            <label class="form-label fw-bold fs-5">Nama Service</label>
+                            <input name="name" class="form-control fs-5 mb-3" value="{{ $cyberSecurityService->name }}">
 
-            <textarea name="service_scope" class="form-control mb-2">
-{{ implode(',', $cyberSecurityService->service_scope ?? []) }}
-</textarea>
+                            <label class="form-label fw-bold fs-5">Short Name</label>
+                            <input name="short_name" class="form-control fs-5 mb-3"
+                                value="{{ $cyberSecurityService->short_name }}">
 
-            <textarea name="deliverables" class="form-control mb-2">
-{{ implode(',', $cyberSecurityService->deliverables ?? []) }}
-</textarea>
+                            <label class="form-label fw-bold fs-5">Ringkasan</label>
+                            <textarea name="summary" class="form-control fs-5 mb-3 rounded-3" rows="3">{{ $cyberSecurityService->summary }}</textarea>
 
-            <textarea name="target_audience" class="form-control mb-2">
-{{ implode(',', $cyberSecurityService->target_audience ?? []) }}
-</textarea>
+                            <label class="form-label fw-bold fs-5">Deskripsi Lengkap</label>
+                            <textarea name="description" id="content-editor" class="form-control fs-5" rows="10">{{ $cyberSecurityService->description }}</textarea>
 
-            <hr>
+                        </div>
+                    </div>
 
-            <textarea name="ai_keywords" class="form-control mb-2">
-{{ implode(',', $cyberSecurityService->ai_keywords ?? []) }}
-</textarea>
+                    {{-- SERVICE DETAILS --}}
+                    <div class="card shadow-sm border-0 mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="fw-bold text-muted mb-0 fs-5">
+                                <i class="bi bi-diagram-3 me-1"></i> Service Details
+                            </h6>
+                        </div>
+                        <div class="card-body">
 
-            <input name="cta_label" class="form-control mb-2" value="{{ $cyberSecurityService->cta_label }}">
-            <input name="cta_url" class="form-control mb-3" value="{{ $cyberSecurityService->cta_url }}">
+                            <label class="form-label fs-5">Service Scope</label>
+                            <textarea name="service_scope" class="form-control fs-5 mb-3" placeholder="comma separated">{{ implode(',', $cyberSecurityService->service_scope ?? []) }}</textarea>
 
-            <button type="button" class="btn btn-primary" onclick="update()">Update</button>
+                            <label class="form-label fs-5">Deliverables</label>
+                            <textarea name="deliverables" class="form-control fs-5 mb-3" placeholder="comma separated">{{ implode(',', $cyberSecurityService->deliverables ?? []) }}</textarea>
 
+                            <label class="form-label fs-5">Target Audience</label>
+                            <textarea name="target_audience" class="form-control fs-5" placeholder="comma separated">{{ implode(',', $cyberSecurityService->target_audience ?? []) }}</textarea>
+
+                        </div>
+                    </div>
+
+                    {{-- AI --}}
+                    <div class="card shadow-sm border-0">
+                        <div class="card-header bg-light">
+                            <h6 class="fw-bold text-muted mb-0 fs-5">
+                                <i class="bi bi-cpu me-1"></i> AI Configuration
+                            </h6>
+                        </div>
+                        <div class="card-body">
+
+                            <label class="form-label fs-5">AI Keywords</label>
+                            <textarea name="ai_keywords" class="form-control fs-5" placeholder="comma separated">{{ implode(',', $cyberSecurityService->ai_keywords ?? []) }}</textarea>
+                            <small class="text-muted fs-6">
+                                Digunakan untuk AI Agent & rekomendasi service.
+                            </small>
+
+                        </div>
+                    </div>
+
+                </div>
+
+                {{-- RIGHT COLUMN --}}
+                <div class="col-lg-4">
+
+                    {{-- METADATA --}}
+                    <div class="card shadow-sm border-0 mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="fw-bold text-muted mb-0 fs-5">
+                                <i class="bi bi-sliders me-1"></i> Metadata
+                            </h6>
+                        </div>
+                        <div class="card-body">
+
+                            <label class="form-label fw-bold fs-5">Kategori</label>
+                            <select name="category" class="form-select fs-5 mb-3">
+                                @foreach (['soc', 'pentest', 'audit', 'incident_response', 'cloud_security', 'governance', 'training', 'consulting'] as $c)
+                                    <option value="{{ $c }}" @selected($cyberSecurityService->category === $c)>
+                                        {{ strtoupper(str_replace('_', ' ', $c)) }}
+                                    </option>
+                                @endforeach
+                            </select>
+
+                        </div>
+                    </div>
+
+                    {{-- CTA --}}
+                    <div class="card shadow-sm border-0 mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="fw-bold text-muted mb-0 fs-5">
+                                <i class="bi bi-megaphone me-1"></i> Call To Action
+                            </h6>
+                        </div>
+                        <div class="card-body">
+
+                            <label class="form-label fs-5">CTA Label</label>
+                            <input name="cta_label" class="form-control fs-5 mb-3"
+                                value="{{ $cyberSecurityService->cta_label }}">
+
+                            <label class="form-label fs-5">CTA URL</label>
+                            <input name="cta_url" class="form-control fs-5" value="{{ $cyberSecurityService->cta_url }}">
+
+                        </div>
+                    </div>
+
+                    {{-- SUBMIT --}}
+                    <div class="card shadow-sm border-0">
+                        <div class="card-body">
+                            <button type="button" class="btn btn-primary w-100 fs-5 fw-semibold shadow-sm"
+                                onclick="update()">
+                                <i class="bi bi-save me-1"></i> Update Service
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
         </form>
     </div>
 @endsection
 
 @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/tinymce@6/tinymce.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
+        tinymce.init({
+            selector: '#content-editor',
+            height: 420,
+            plugins: 'lists link table code fullscreen',
+            toolbar: 'undo redo | bold italic | bullist numlist | link table | code fullscreen'
+        })
+
         const Toast = Swal.mixin({
             toast: true,
             position: 'top-end',
@@ -67,6 +165,8 @@
         })
 
         const update = async () => {
+            tinymce.triggerSave()
+
             const f = document.getElementById('form')
             const d = new FormData(f)
 
@@ -84,10 +184,12 @@
                 Swal.showLoading()
                 await axios.post('/api/cyber-security-services/{{ $cyberSecurityService->id }}', d)
                 Swal.close()
+
                 Toast.fire({
                     icon: 'success',
-                    title: 'Service diperbarui'
+                    title: 'Service berhasil diperbarui'
                 })
+
                 setTimeout(() => location.href = '/cyber-security-services', 1200)
             } catch (e) {
                 Swal.close()
