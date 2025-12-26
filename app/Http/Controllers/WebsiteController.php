@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\ImageManager;
 
 class WebsiteController extends Controller
 {
@@ -17,6 +19,9 @@ class WebsiteController extends Controller
         $this->middleware(['auth', 'throttle:30,1']);
     }
 
+    /* =========================
+     | AUTH & RESPONSE HELPERS
+     ========================= */
     private function authorizeManage(): void
     {
         if (method_exists(auth()->user(), 'can') && auth()->user()->can('manage-website')) {
@@ -46,7 +51,7 @@ class WebsiteController extends Controller
             'message' => $message,
         ];
 
-        if (!is_null($errors)) {
+        if ($errors !== null) {
             $payload['errors'] = $errors;
         }
 
@@ -58,9 +63,30 @@ class WebsiteController extends Controller
         return Website::first() ?? new Website();
     }
 
-    /**
-     * PAGE.
-     */
+    /* =========================
+     | FILE SIZE COMPRESSION
+     ========================= */
+    private function compressToTargetSize(
+        $image,
+        string $path,
+        int $targetKb = 100,
+        int $startQuality = 85,
+        int $minQuality = 40
+    ): void {
+        $quality = $startQuality;
+
+        do {
+            $image->toJpeg($quality)->save($path);
+            clearstatcache(true, $path);
+
+            $sizeKb = filesize($path) / 1024;
+            $quality -= 5;
+        } while ($sizeKb > $targetKb && $quality >= $minQuality);
+    }
+
+    /* =========================
+     | PAGES
+     ========================= */
     public function index()
     {
         $this->authorizeManage();
@@ -70,9 +96,9 @@ class WebsiteController extends Controller
         ]);
     }
 
-    /**
-     * GENERAL.
-     */
+    /* =========================
+     | GENERAL
+     ========================= */
     public function saveGeneral(Request $request)
     {
         $this->authorizeManage();
@@ -96,13 +122,15 @@ class WebsiteController extends Controller
 
             return $this->ok(null, 'Informasi website berhasil disimpan');
         } catch (\Throwable $e) {
-            return $this->fail('Request failed', null, 500);
+            report($e);
+
+            return $this->fail('Request failed', $e->getMessage(), 500);
         }
     }
 
-    /**
-     * CONTACT.
-     */
+    /* =========================
+     | CONTACT
+     ========================= */
     public function saveContact(Request $request)
     {
         $this->authorizeManage();
@@ -125,20 +153,22 @@ class WebsiteController extends Controller
 
             return $this->ok(null, 'Kontak website berhasil disimpan');
         } catch (\Throwable $e) {
-            return $this->fail('Request failed', null, 500);
+            report($e);
+
+            return $this->fail('Request failed', $e->getMessage(), 500);
         }
     }
 
-    /**
-     * BRANDING.
-     */
+    /* =========================
+     | BRANDING (TARGET FILE SIZE)
+     ========================= */
     public function saveBranding(Request $request)
     {
         $this->authorizeManage();
 
         $validator = Validator::make($request->all(), [
-            'logo_rectangle' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:2048'],
-            'logo_square' => ['nullable', 'image', 'mimes:png,jpg,jpeg,webp', 'max:2048'],
+            'logo_rectangle' => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:4096'],
+            'logo_square' => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:4096'],
             'favicon' => ['nullable', 'image', 'mimes:png,ico', 'max:1024'],
         ]);
 
@@ -151,20 +181,43 @@ class WebsiteController extends Controller
                 $website = $this->website();
                 $data = [];
 
+                $disk = Storage::disk('public');
+                $disk->makeDirectory('website');
+
+                $manager = new ImageManager(new Driver());
+
                 foreach (['logo_rectangle', 'logo_square', 'favicon'] as $field) {
                     if (!$request->hasFile($field)) {
                         continue;
                     }
 
-                    if ($website->$field) {
-                        Storage::disk('public')->delete($website->$field);
+                    if ($website->$field && $disk->exists($website->$field)) {
+                        $disk->delete($website->$field);
                     }
 
                     $file = $request->file($field);
-                    $filename = $field.'_'.Str::uuid().'.'.$file->getClientOriginalExtension();
+                    $image = $manager->read($file->getPathname());
 
-                    $path = asset('storage/'.$file->storeAs('website', $filename, 'public'));
-                    $data[$field] = $path;
+                    $filename = $field.'_'.Str::uuid().'.jpg';
+                    $absolutePath = storage_path('app/public/website/'.$filename);
+
+                    // TARGET FILE SIZE PER FIELD
+                    $targetKb = match ($field) {
+                        'favicon' => 20,
+                        'logo_square' => 80,
+                        'logo_rectangle' => 120,
+                        default => 100,
+                    };
+
+                    $this->compressToTargetSize(
+                        $image,
+                        $absolutePath,
+                        targetKb: $targetKb,
+                        startQuality: 85,
+                        minQuality: 40
+                    );
+
+                    $data[$field] = asset('storage/website/'.$filename);
                 }
 
                 $website->fill($data);
@@ -173,7 +226,13 @@ class WebsiteController extends Controller
 
             return $this->ok(null, 'Branding website berhasil disimpan');
         } catch (\Throwable $e) {
-            return $this->fail('Request failed '.$e->getMessage(), null, 500);
+            report($e);
+
+            return $this->fail('Request failed', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+            ], 500);
         }
     }
 }
