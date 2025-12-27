@@ -78,7 +78,7 @@ class ProductController extends Controller
         $data['slug'] = \Str::slug($data['name']);
 
         if ($request->hasFile('thumbnail')) {
-            $data['thumbnail'] = $request->file('thumbnail')->store('products', 'public');
+            $data['thumbnail'] = asset('storage/'.$request->file('thumbnail')->store('products', 'public'));
         }
 
         $product = Product::create($data);
@@ -87,7 +87,7 @@ class ProductController extends Controller
             foreach ($request->file('images') as $i => $img) {
                 ProductImage::create([
                     'product_id' => $product->id,
-                    'image_path' => $img->store('products/gallery', 'public'),
+                    'image_path' => asset('storage/'.$img->store('products/gallery', 'public')),
                     'is_primary' => $i === 0,
                 ]);
             }
@@ -142,7 +142,7 @@ class ProductController extends Controller
             if ($product->thumbnail) {
                 \Storage::disk('public')->delete($product->thumbnail);
             }
-            $data['thumbnail'] = $request->file('thumbnail')->store('products', 'public');
+            $data['thumbnail'] = asset('storage/'.$request->file('thumbnail')->store('products', 'public'));
         }
 
         $product->update($data);
