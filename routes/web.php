@@ -94,7 +94,7 @@ Route::middleware(['auth', 'throttle:300,1'])->group(function () {
     Route::post('/api/about-us', [AboutUsController::class, 'store']);
 
     Route::get('/product-page', [ProductPageController::class, 'index']);
-    Route::post('/product-page', [ProductPageController::class, 'store']);
+    Route::post('/product-page', [ProductPageController::class, 'store'])->name('product.page.store');
 
     Route::prefix('api/products')
         ->middleware('throttle:120,1')
