@@ -81,6 +81,9 @@
                         </thead>
                         <tbody id="table-body" class="fs-6"></tbody>
                     </table>
+
+                    <!-- PAGINATION -->
+                    <nav id="pagination" class="mt-3 px-3"></nav>
                 </div>
 
                 <!-- EMPTY STATE -->
@@ -145,6 +148,8 @@
 
         let deleteId = null
         let debounceTimer = null
+        let currentPage = 1
+        let lastPage = 1
 
         function alertMsg(type, msg) {
             alertBox.className = `alert alert-${type} rounded-3 shadow-sm fs-6`
@@ -154,7 +159,8 @@
         }
 
         function coverUrl(path) {
-            return path ? path : 'https://placehold.co/80x80/1f2937/ffffff?text=PDF'
+            if (!path) return 'https://placehold.co/80x80/1f2937/ffffff?text=PDF'
+            return path.startsWith('http') ? path : `{{ url('') }}/${path}`
         }
 
         function renderEbooks(ebooks) {
@@ -178,47 +184,90 @@
                 const row = document.createElement('tr')
                 row.dataset.id = e.id
                 row.innerHTML = `
-            <td>
-                <img src="${coverUrl(e.cover_image)}"
-                     class="rounded-3 shadow-sm"
-                     width="80" height="80"
-                     style="object-fit:cover">
-            </td>
-            <td>
-                <div class="fw-semibold fs-5">${e.title}</div>
-                <div class="text-muted fs-6">${e.slug}</div>
-            </td>
-            <td>
-                <span class="badge bg-light text-dark rounded-pill px-3 fs-6">${e.level}</span>
-            </td>
-            <td class="text-muted fs-6">${e.topic}</td>
-            <td>
-                <div class="d-flex flex-wrap gap-1" style="max-width:300px">
-                    ${keywords || '<span class="text-muted fs-6">-</span>'}
-                </div>
-            </td>
-            <td>
-                ${e.is_active
-                    ? '<span class="badge bg-success rounded-pill fs-6">Active</span>'
-                    : '<span class="badge bg-secondary rounded-pill fs-6">Inactive</span>'}
-            </td>
-            <td class="text-end">
-                <a href="/ebooks/${e.id}/edit"
-                   class="btn btn-sm btn-outline-primary rounded-pill fs-6 me-1"
-                   title="Edit">
-                    <i class="bi bi-pencil-square"></i>
-                </a>
-                <button class="btn btn-sm btn-outline-danger rounded-pill fs-6 btn-delete"
-                        title="Hapus">
-                    <i class="bi bi-trash3"></i>
-                </button>
-            </td>
+        <td>
+            <img src="${coverUrl(e.cover_image)}"
+                 class="rounded-3 shadow-sm"
+                 width="80" height="80"
+                 style="object-fit:cover">
+        </td>
+        <td>
+            <div class="fw-semibold fs-5">${e.title}</div>
+            <div class="text-muted fs-6">${e.slug}</div>
+        </td>
+        <td>
+            <span class="badge bg-light text-dark rounded-pill px-3 fs-6">${e.level}</span>
+        </td>
+        <td class="text-muted fs-6">${e.topic}</td>
+        <td>
+            <div class="d-flex flex-wrap gap-1" style="max-width:300px">
+                ${keywords || '<span class="text-muted fs-6">-</span>'}
+            </div>
+        </td>
+        <td>
+            ${e.is_active
+                ? '<span class="badge bg-success rounded-pill fs-6">Active</span>'
+                : '<span class="badge bg-secondary rounded-pill fs-6">Inactive</span>'}
+        </td>
+        <td class="text-end">
+            <a href="/ebooks/${e.id}/edit"
+               class="btn btn-sm btn-outline-primary rounded-pill fs-6 me-1"
+               title="Edit">
+                <i class="bi bi-pencil-square"></i>
+            </a>
+            <button class="btn btn-sm btn-outline-danger rounded-pill fs-6 btn-delete"
+                    title="Hapus">
+                <i class="bi bi-trash3"></i>
+            </button>
+        </td>
         `
                 tableBody.appendChild(row)
             })
         }
 
-        function loadEbooks(query = '') {
+        function renderPagination(meta) {
+            const pagination = document.getElementById('pagination')
+            pagination.innerHTML = ''
+            currentPage = meta.current_page
+            lastPage = meta.last_page
+
+            if (lastPage <= 1) return
+
+            const ul = document.createElement('ul')
+            ul.className = 'pagination justify-content-center'
+
+            // Previous
+            const prevLi = document.createElement('li')
+            prevLi.className = `page-item ${!meta.prev_page_url ? 'disabled' : ''}`
+            prevLi.innerHTML = `<a class="page-link" href="#" data-page="${currentPage - 1}">&laquo; Previous</a>`
+            ul.appendChild(prevLi)
+
+            // Pages
+            for (let i = 1; i <= lastPage; i++) {
+                const li = document.createElement('li')
+                li.className = `page-item ${i === currentPage ? 'active' : ''}`
+                li.innerHTML = `<a class="page-link" href="#" data-page="${i}">${i}</a>`
+                ul.appendChild(li)
+            }
+
+            // Next
+            const nextLi = document.createElement('li')
+            nextLi.className = `page-item ${!meta.next_page_url ? 'disabled' : ''}`
+            nextLi.innerHTML = `<a class="page-link" href="#" data-page="${currentPage + 1}">Next &raquo;</a>`
+            ul.appendChild(nextLi)
+
+            pagination.appendChild(ul)
+            pagination.querySelectorAll('a.page-link').forEach(a => {
+                a.addEventListener('click', e => {
+                    e.preventDefault()
+                    const page = parseInt(a.dataset.page)
+                    if (page >= 1 && page <= lastPage) {
+                        loadEbooks(searchInput.value, page)
+                    }
+                })
+            })
+        }
+
+        function loadEbooks(query = '', page = 1) {
             skeleton.classList.remove('d-none')
             ebookTable.classList.add('d-none')
             emptyState.classList.add('d-none')
@@ -226,10 +275,14 @@
 
             axios.get('{{ route('ebooks.list') }}', {
                     params: {
-                        q: query
+                        q: query,
+                        page
                     }
                 })
-                .then(res => renderEbooks(res.data.data))
+                .then(res => {
+                    renderEbooks(res.data.data.data)
+                    renderPagination(res.data.data)
+                })
                 .catch(() => {
                     alertMsg('danger', 'Gagal memuat data ebook.')
                     emptyState.classList.remove('d-none')
@@ -263,7 +316,7 @@
             axios.delete(`/ebooks/${deleteId}`)
                 .then(res => {
                     alertMsg('success', res.data.message || 'Ebook berhasil dihapus.')
-                    loadEbooks(searchInput.value)
+                    loadEbooks(searchInput.value, currentPage)
                 })
                 .catch(() => alertMsg('danger', 'Gagal menghapus ebook.'))
                 .finally(() => {
