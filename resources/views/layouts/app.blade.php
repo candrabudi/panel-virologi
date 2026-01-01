@@ -10,11 +10,6 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description"
-        content="Tailwise admin is super flexible, powerful, clean & modern responsive tailwind admin template with unlimited possibilities.">
-    <meta name="keywords"
-        content="admin template, Tailwise Admin Template, dashboard template, flat admin template, responsive admin template, web app">
-    <meta name="author" content="LEFT4CODE">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>@yield('title') | {{ $setting ? $setting->name : 'default' }}</title>
@@ -100,37 +95,41 @@
 
     <script src="{{ asset('dist/js/themes/havoc.js') }}"></script>
     <script src="{{ asset('dist/js/components/quick-search.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
     <script>
         function logout() {
-            Swal.fire({
-                title: 'Keluar dari akun?',
-                text: 'Anda akan logout dari sistem',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: 'Logout',
-                cancelButtonText: 'Batal'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    axios.post('/logout')
-                        .then(res => {
-                            if (res.data.success) {
-                                Swal.fire({
-                                    icon: 'success',
-                                    title: 'Logout berhasil',
-                                    timer: 1200,
-                                    showConfirmButton: false
-                                }).then(() => {
-                                    window.location.href = '/login'
-                                })
-                            }
-                        })
-                        .catch(() => {
-                            Swal.fire('Error', 'Gagal logout', 'error')
-                        })
-                }
-            })
+            axios.post("{{ route('logout') }}")
+                .then(res => {
+                    if (res.data?.success) {
+                        showToast(
+                            'success',
+                            'Logout',
+                            res.data.message ?? 'Berhasil logout'
+                        )
+
+                        setTimeout(() => {
+                            window.location.href = '/login'
+                        }, 1200)
+                    } else {
+                        showToast(
+                            'error',
+                            'Logout gagal',
+                            res.data?.message ?? 'Terjadi kesalahan'
+                        )
+                    }
+                })
+                .catch(() => {
+                    showToast(
+                        'error',
+                        'Logout gagal',
+                        'Gagal logout'
+                    )
+                })
         }
     </script>
+
     <script>
         function showToast(type, title, message) {
             const toast = document.createElement('div')
@@ -151,22 +150,22 @@
             ${
                 type === 'success'
                     ? `
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                    class="lucide lucide-check-circle stroke-[1] w-5 h-5 text-success">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <path d="M20 6 9 17l-5-5"></path>
-                                </svg>`
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="lucide lucide-check-circle stroke-[1] w-5 h-5 text-success">
+                                                    <circle cx="12" cy="12" r="10"></circle>
+                                                    <path d="M20 6 9 17l-5-5"></path>
+                                                </svg>`
                     : `
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                    class="lucide lucide-x-circle stroke-[1] w-5 h-5 text-danger">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <path d="m15 9-6 6"></path>
-                                    <path d="m9 9 6 6"></path>
-                                </svg>`
+                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                    class="lucide lucide-x-circle stroke-[1] w-5 h-5 text-danger">
+                                                    <circle cx="12" cy="12" r="10"></circle>
+                                                    <path d="m15 9-6 6"></path>
+                                                    <path d="m9 9 6 6"></path>
+                                                </svg>`
             }
 
             <div class="ml-4 mr-4">

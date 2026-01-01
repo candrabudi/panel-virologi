@@ -57,14 +57,13 @@
                         class="dropdown-menu absolute z-[9999] hidden">
                         <div data-tw-merge=""
                             class="dropdown-content rounded-md border-transparent bg-white p-2 shadow-[0px_3px_10px_#00000017] dark:border-transparent dark:bg-darkmode-600 mt-1 w-56">
-                            <a href="javascript:void(0);"
-                                class="cursor-pointer flex items-center p-2 transition duration-300 ease-in-out rounded-md hover:bg-slate-200/60 dark:bg-darkmode-600 dark:hover:bg-darkmode-400 dropdown-item"><i
-                                    data-tw-merge="" data-lucide="power" class="stroke-[1] mr-2 h-4 w-4" onclick="logout()"></i>
-                                Logout</a>
+                            <a href="javascript:void(0);" onclick="logout()"
+                                class="cursor-pointer flex items-center p-2 transition duration-300 ease-in-out rounded-md hover:bg-slate-200/60 dark:bg-darkmode-600 dark:hover:bg-darkmode-400 dropdown-item">
+                                <i data-lucide="power" class="stroke-[1] mr-2 h-4 w-4"></i>
+                                Logout
+                            </a>
 
-                            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
-                                @csrf
-                            </form>
+
                         </div>
                     </div>
                 </div>
