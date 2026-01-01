@@ -35,8 +35,8 @@
     <div
         class="absolute inset-x-0 ml-5 h-full transition-[padding] duration-100 xl:pl-[275px] group-[.side-menu--collapsed]:xl:pl-[91px]">
         <div class="flex h-full w-full items-center px-5">
-          
-          
+
+
             <div class="flex flex-1 items-center">
                 <div class="ml-auto flex items-center gap-1">
                     <a class="request-full-screen rounded-full p-2 hover:bg-white/5" href="javascript:;">
@@ -48,8 +48,7 @@
                         class="cursor-pointer image-fit h-[36px] w-[36px] overflow-hidden rounded-full border-[3px] border-white/[0.15]"><img
                             src="dist/images/users/user7-50x50.jpg" alt="Tailwise - Admin Dashboard Template">
                     </button>
-                    <div data-transition="" data-selector=".show"
-                        data-enter="transition-all ease-linear duration-150"
+                    <div data-transition="" data-selector=".show" data-enter="transition-all ease-linear duration-150"
                         data-enter-from="absolute !mt-5 invisible opacity-0 translate-y-1"
                         data-enter-to="!mt-1 visible opacity-100 translate-y-0"
                         data-leave="transition-all ease-linear duration-150"
@@ -58,10 +57,14 @@
                         class="dropdown-menu absolute z-[9999] hidden">
                         <div data-tw-merge=""
                             class="dropdown-content rounded-md border-transparent bg-white p-2 shadow-[0px_3px_10px_#00000017] dark:border-transparent dark:bg-darkmode-600 mt-1 w-56">
-                            <a href="havoc-login.html"
+                            <a href="javascript:void(0);"
                                 class="cursor-pointer flex items-center p-2 transition duration-300 ease-in-out rounded-md hover:bg-slate-200/60 dark:bg-darkmode-600 dark:hover:bg-darkmode-400 dropdown-item"><i
-                                    data-tw-merge="" data-lucide="power" class="stroke-[1] mr-2 h-4 w-4"></i>
+                                    data-tw-merge="" data-lucide="power" class="stroke-[1] mr-2 h-4 w-4" onclick="logout()"></i>
                                 Logout</a>
+
+                            <form id="logout-form" action="{{ route('logout') }}" method="POST" class="d-none">
+                                @csrf
+                            </form>
                         </div>
                     </div>
                 </div>
