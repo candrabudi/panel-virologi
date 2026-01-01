@@ -6,144 +6,225 @@ use App\Models\HomepageHero;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 class HomepageHeroController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(['auth', 'throttle:60,1']);
-    }
-
-    private function authorizeManage(): void
-    {
-        if (method_exists(auth()->user(), 'can') && auth()->user()->can('manage-cms')) {
-            return;
-        }
-
-        if (Auth::user()->role === 'admin') {
-            return;
-        }
-
-        abort(403, 'Forbidden');
-    }
-
-    private function ok($data = null, string $message = 'OK', int $code = 200)
-    {
-        return response()->json([
-            'status' => true,
-            'message' => $message,
-            'data' => $data,
-        ], $code);
-    }
-
-    private function fail(string $message = 'Request failed', $errors = null, int $code = 400)
-    {
-        $payload = [
-            'status' => false,
-            'message' => $message,
-        ];
-
-        if (!is_null($errors)) {
-            $payload['errors'] = $errors;
-        }
-
-        return response()->json($payload, $code);
-    }
+    /**
+     * Field yang BOLEH diterima (whitelist).
+     */
+    private const ALLOWED_FIELDS = [
+        '_token',
+        'pre_title',
+        'title',
+        'subtitle',
+        'primary_button_text',
+        'primary_button_url',
+        'secondary_button_text',
+        'secondary_button_url',
+        'is_active',
+    ];
 
     /**
-     * Blade CMS only.
+     * Field yang WAJIB ada.
+     */
+    private const REQUIRED_FIELDS = [
+        '_token',
+        'pre_title',
+        'title',
+        'subtitle',
+        'primary_button_text',
+        'primary_button_url',
+        'secondary_button_text',
+        'secondary_button_url',
+        'is_active',
+    ];
+
+    /**
+     * ==================================================
+     * INDEX (Blade CMS)
+     * ==================================================.
      */
     public function index()
     {
-        $this->authorizeManage();
+        if (!Auth::check()) {
+            abort(401);
+        }
 
         return view('homepage_hero.index');
     }
 
     /**
-     * JSON – get hero data.
+     * ==================================================
+     * SHOW (JSON – fetch current hero)
+     * ==================================================.
      */
     public function show()
     {
-        $this->authorizeManage();
-
-        $hero = HomepageHero::first();
-
-        if (!$hero) {
-            return $this->ok(null, 'No hero configured');
+        if (!Auth::check()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthenticated',
+            ], 401);
         }
 
-        return $this->ok([
-            'id' => $hero->id,
-            'pre_title' => $hero->pre_title,
-            'title' => $hero->title,
-            'subtitle' => $hero->subtitle,
-            'overlay_color' => $hero->overlay_color,
-            'overlay_opacity' => $hero->overlay_opacity,
-            'primary_button_text' => $hero->primary_button_text,
-            'primary_button_url' => $hero->primary_button_url,
-            'secondary_button_text' => $hero->secondary_button_text,
-            'secondary_button_url' => $hero->secondary_button_url,
-            'is_active' => (bool) $hero->is_active,
+        $hero = HomepageHero::latest()->first();
+
+        if (!$hero) {
+            return response()->json([
+                'status' => true,
+                'message' => 'No hero configured',
+                'data' => null,
+            ]);
+        }
+
+        return response()->json([
+            'status' => true,
+            'message' => 'OK',
+            'data' => [
+                'id' => $hero->id,
+                'pre_title' => $hero->pre_title,
+                'title' => $hero->title,
+                'subtitle' => $hero->subtitle,
+                'primary_button_text' => $hero->primary_button_text,
+                'primary_button_url' => $hero->primary_button_url,
+                'secondary_button_text' => $hero->secondary_button_text,
+                'secondary_button_url' => $hero->secondary_button_url,
+                'is_active' => (bool) $hero->is_active,
+                'updated_at' => $hero->updated_at,
+            ],
         ]);
     }
 
     /**
-     * JSON – create / update hero.
+     * ==================================================
+     * STORE / UPDATE (JSON – ultra secure)
+     * ==================================================.
      */
     public function store(Request $request)
     {
-        $this->authorizeManage();
-
-        $validator = Validator::make($request->all(), [
-            'pre_title' => ['nullable', 'string', 'max:255'],
-            'title' => ['required', 'string', 'max:255'],
-            'subtitle' => ['nullable', 'string'],
-            'overlay_color' => ['nullable', 'string', 'max:20'],
-            'overlay_opacity' => ['nullable', 'numeric', 'min:0', 'max:1'],
-            'primary_button_text' => ['nullable', 'string', 'max:255'],
-            'primary_button_url' => ['nullable', 'string', 'max:255'],
-            'secondary_button_text' => ['nullable', 'string', 'max:255'],
-            'secondary_button_url' => ['nullable', 'string', 'max:255'],
-            'is_active' => ['required', Rule::in(['0', '1'])],
-        ], [
-            'title.required' => 'Judul utama wajib diisi',
-        ]);
-
-        if ($validator->fails()) {
-            return $this->fail('Validation error', $validator->errors(), 422);
+        // =========================
+        // 1. AUTH CHECK
+        // =========================
+        if (!Auth::check()) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Unauthenticated',
+            ], 401);
         }
 
+        // =========================
+        // 2. ILLEGAL PAYLOAD CHECK
+        // =========================
+        $incomingKeys = array_keys($request->all());
+
+        $illegalFields = array_diff($incomingKeys, self::ALLOWED_FIELDS);
+        if (!empty($illegalFields)) {
+            Log::warning('HomepageHero blocked: illegal payload', [
+                'user_id' => Auth::id(),
+                'ip' => $request->ip(),
+                'illegal_fields' => array_values($illegalFields),
+            ]);
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Illegal payload detected',
+                'errors' => [
+                    'illegal_fields' => array_values($illegalFields),
+                ],
+            ], 422);
+        }
+
+        $missingFields = array_diff(self::REQUIRED_FIELDS, $incomingKeys);
+        if (!empty($missingFields)) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Missing required fields',
+                'errors' => [
+                    'missing_fields' => array_values($missingFields),
+                ],
+            ], 422);
+        }
+
+        // =========================
+        // 3. VALIDATION
+        // =========================
         try {
-            $hero = DB::transaction(function () use ($request) {
-                $model = HomepageHero::first() ?? new HomepageHero();
+            $validated = $request->validate([
+                'pre_title' => 'required|string|max:100',
+                'title' => 'required|string|max:255',
+                'subtitle' => 'required|string|max:500',
+                'primary_button_text' => 'required|string|max:100',
+                'primary_button_url' => 'required|string|max:255',
+                'secondary_button_text' => 'required|string|max:100',
+                'secondary_button_url' => 'required|string|max:255',
+                'is_active' => 'required|boolean',
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Validation failed',
+                'errors' => $e->errors(),
+            ], 422);
+        }
 
-                $model->fill([
-                    'pre_title' => trim($request->pre_title),
-                    'title' => trim($request->title),
-                    'subtitle' => trim($request->subtitle),
-                    'overlay_color' => $request->overlay_color,
-                    'overlay_opacity' => $request->overlay_opacity,
-                    'primary_button_text' => trim($request->primary_button_text),
-                    'primary_button_url' => trim($request->primary_button_url),
-                    'secondary_button_text' => trim($request->secondary_button_text),
-                    'secondary_button_url' => trim($request->secondary_button_url),
-                    'is_active' => (int) $request->is_active === 1,
+        // =========================
+        // 4. SANITIZE
+        // =========================
+        $data = [
+            'pre_title' => strip_tags(trim($validated['pre_title'])),
+            'title' => strip_tags(trim($validated['title'])),
+            'subtitle' => strip_tags(trim($validated['subtitle'])),
+            'primary_button_text' => strip_tags(trim($validated['primary_button_text'])),
+            'primary_button_url' => trim($validated['primary_button_url']),
+            'secondary_button_text' => strip_tags(trim($validated['secondary_button_text'])),
+            'secondary_button_url' => trim($validated['secondary_button_url']),
+            'is_active' => (bool) $validated['is_active'],
+        ];
+
+        // =========================
+        // 5. DB TRANSACTION
+        // =========================
+        DB::beginTransaction();
+
+        try {
+            if ($data['is_active']) {
+                HomepageHero::where('is_active', 1)->update([
+                    'is_active' => 0,
                 ]);
+            }
 
-                $model->save();
+            $hero = HomepageHero::create($data);
 
-                return $model;
-            });
+            DB::commit();
 
-            return $this->ok([
-                'id' => $hero->id,
-                'is_active' => (bool) $hero->is_active,
-            ], 'Homepage hero saved');
+            Log::info('HomepageHero saved', [
+                'user_id' => Auth::id(),
+                'hero_id' => $hero->id,
+                'ip' => $request->ip(),
+            ]);
+
+            return response()->json([
+                'status' => true,
+                'message' => 'Homepage hero saved successfully',
+                'data' => [
+                    'id' => $hero->id,
+                ],
+            ], 201);
         } catch (\Throwable $e) {
-            return $this->fail('Request failed', null, 500);
+            DB::rollBack();
+
+            Log::error('HomepageHero error', [
+                'user_id' => Auth::id(),
+                'ip' => $request->ip(),
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'status' => false,
+                'message' => 'Internal server error',
+            ], 500);
         }
     }
 }

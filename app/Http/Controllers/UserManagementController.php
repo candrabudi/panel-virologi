@@ -24,7 +24,7 @@ class UserManagementController extends Controller
             return;
         }
 
-        if (Auth::user()->role === 'admin') {
+        if (auth()->user()->role === 'admin') {
             return;
         }
 
@@ -54,9 +54,6 @@ class UserManagementController extends Controller
         return response()->json($payload, $code);
     }
 
-    /**
-     * Blade only.
-     */
     public function index()
     {
         $this->authorizeManage();
@@ -64,9 +61,6 @@ class UserManagementController extends Controller
         return view('users.index');
     }
 
-    /**
-     * JSON list.
-     */
     public function list(Request $request)
     {
         $this->authorizeManage();
@@ -90,25 +84,30 @@ class UserManagementController extends Controller
         }
 
         return $this->ok(
-            $query->get()->map(function ($user) {
-                return [
-                    'id' => $user->id,
-                    'username' => $user->username,
-                    'email' => $user->email,
-                    'role' => $user->role,
-                    'status' => $user->status,
-                    'last_login_at' => $user->last_login_at,
-                    'full_name' => optional($user->detail)->full_name,
-                    'phone_number' => optional($user->detail)->phone_number,
-                    'avatar' => optional($user->detail)->avatar,
-                ];
-            })
+            $query->paginate(10)
         );
     }
 
-    /**
-     * Store.
-     */
+    public function create()
+    {
+        $this->authorizeManage();
+
+        return view('users.create', [
+            'user' => null,
+        ]);
+    }
+
+    public function edit(User $user)
+    {
+        $this->authorizeManage();
+
+        $user->load('detail');
+
+        return view('users.edit', [
+            'user' => $user,
+        ]);
+    }
+
     public function store(Request $request)
     {
         $this->authorizeManage();
@@ -127,64 +126,48 @@ class UserManagementController extends Controller
             return $this->fail('Validation error', $validator->errors(), 422);
         }
 
-        try {
-            $user = DB::transaction(function () use ($request) {
-                $user = User::create([
-                    'username' => trim($request->username),
-                    'email' => trim($request->email),
-                    'password' => Hash::make($request->password),
-                    'role' => $request->role,
-                    'status' => $request->status,
-                ]);
+        DB::transaction(function () use ($request) {
+            $user = User::create([
+                'username' => trim($request->username),
+                'email' => trim($request->email),
+                'password' => Hash::make($request->password),
+                'role' => $request->role,
+                'status' => $request->status,
+            ]);
 
-                UserDetail::create([
-                    'user_id' => $user->id,
-                    'full_name' => trim($request->full_name),
-                    'phone_number' => $request->phone_number,
-                ]);
+            UserDetail::create([
+                'user_id' => $user->id,
+                'full_name' => trim($request->full_name),
+                'phone_number' => $request->phone_number,
+            ]);
+        });
 
-                return $user;
-            });
-
-            return $this->ok([
-                'id' => $user->id,
-                'username' => $user->username,
-                'email' => $user->email,
-            ], 'User created', 201);
-        } catch (\Throwable $e) {
-            return $this->fail('Failed to create user', null, 500);
-        }
+        return $this->ok([
+            'redirect' => '/users',
+        ], 'Pengguna berhasil dibuat');
     }
 
-    /**
-     * Update.
-     */
-    public function update(Request $request, $id)
+    public function update(Request $request, User $user)
     {
         $this->authorizeManage();
 
-        if (!ctype_digit((string) $id)) {
-            return $this->fail('Invalid id', null, 400);
-        }
-
-        $user = User::with('detail')->find($id);
-
-        if (!$user) {
-            return $this->fail('User not found', null, 404);
-        }
+        $userKey = $user->getKey();
+        $userKeyName = $user->getKeyName();
 
         $validator = Validator::make($request->all(), [
             'username' => [
                 'required',
                 'string',
                 'max:100',
-                Rule::unique('users', 'username')->ignore($user->id),
+                Rule::unique('users', 'username')
+                    ->ignore($userKey, $userKeyName),
             ],
             'email' => [
                 'required',
                 'email',
                 'max:150',
-                Rule::unique('users', 'email')->ignore($user->id),
+                Rule::unique('users', 'email')
+                    ->ignore($userKey, $userKeyName),
             ],
             'password' => 'nullable|string|min:6',
             'role' => ['required', Rule::in(['admin', 'editor', 'user'])],
@@ -213,7 +196,7 @@ class UserManagementController extends Controller
                 $user->update($data);
 
                 $user->detail()->updateOrCreate(
-                    ['user_id' => $user->id],
+                    ['user_id' => $user->getKey()],
                     [
                         'full_name' => trim($request->full_name),
                         'phone_number' => $request->phone_number,
@@ -221,39 +204,24 @@ class UserManagementController extends Controller
                 );
             });
 
-            return $this->ok(null, 'User updated');
+            return $this->ok([
+                'redirect' => '/users',
+            ], 'Pengguna berhasil dirubah');
         } catch (\Throwable $e) {
             return $this->fail('Failed to update user', null, 500);
         }
     }
 
-    /**
-     * Delete.
-     */
-    public function destroy($id)
+    public function destroy(User $user)
     {
         $this->authorizeManage();
-
-        if (!ctype_digit((string) $id)) {
-            return $this->fail('Invalid id', null, 400);
-        }
-
-        $user = User::find($id);
-
-        if (!$user) {
-            return $this->fail('User not found', null, 404);
-        }
 
         if ($user->id === Auth::id()) {
             return $this->fail('Cannot delete your own account', null, 403);
         }
 
-        try {
-            DB::transaction(fn () => $user->delete());
+        DB::transaction(fn () => $user->delete());
 
-            return $this->ok(null, 'User deleted');
-        } catch (\Throwable $e) {
-            return $this->fail('Failed to delete user', null, 500);
-        }
+        return $this->ok(null, 'User deleted');
     }
 }

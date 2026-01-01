@@ -1,116 +1,142 @@
-@extends('template.app')
-
-@section('title', 'Homepage – Cyber Threat Map')
+@extends('layouts.app')
 
 @section('content')
-    <div class="container-fluid mt-3">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <div id="alert-box" class="alert d-none"></div>
+    <div class="col-span-12">
 
-        <div class="row g-4">
+        {{-- Header --}}
+        <div class="flex flex-col gap-1 mb-8">
+            <h2 class="text-xl font-semibold group-[.mode--light]:text-white">
+                Homepage Threat Map
+            </h2>
+            <p class="text-sm text-slate-500 group-[.mode--light]:text-white/80">
+                Kelola konten Threat Map dan status tampil di homepage
+            </p>
+        </div>
 
-            <!-- LEFT : FORM -->
-            <div class="col-xl-5 col-lg-6">
-                <div class="card shadow-sm">
-                    <div class="card-header fw-semibold bg-white">
-                        Pengaturan Section
-                    </div>
-                    <div class="card-body">
+        <div class="mt-3.5 grid grid-cols-12 gap-x-6 gap-y-10">
+            <div class="relative col-span-12 flex flex-col gap-y-7">
+                <div class="box box--stacked flex flex-col p-5">
 
-                        <form id="threat-map-form" onsubmit="return false">
-                            @csrf
+                    <form id="threat-map-form">
+                        @csrf
 
-                            <div class="mb-3">
-                                <label class="form-label">Pre Title</label>
-                                <input class="form-control" name="pre_title" placeholder="Contoh: Global Threat Landscape">
-                            </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
 
-                            <div class="mb-3">
-                                <label class="form-label">Judul Utama</label>
-                                <input class="form-control" name="title" placeholder="Cyber Threat Map" required>
-                            </div>
-
-                            <div class="mb-4">
-                                <label class="form-label">Deskripsi</label>
-                                <textarea class="form-control" name="description" rows="4"
-                                    placeholder="Visualisasi serangan siber secara global dan realtime"></textarea>
-                            </div>
-
-                            <hr>
-
-                            <h6 class="fw-semibold mb-2">Call To Action</h6>
-
-                            <div class="mb-2">
-                                <input class="form-control" name="cta_text" placeholder="Contoh: Lihat Threat Map">
-                            </div>
-
-                            <div class="mb-4">
-                                <input class="form-control" name="cta_url" placeholder="https://threatmap.example.com">
-                            </div>
-
-                            <div class="d-flex align-items-center justify-content-between mb-4 p-3 border rounded">
-                                <div>
-                                    <div class="fw-semibold">Status Section</div>
-                                    <small class="text-muted">Tampilkan section ini di homepage</small>
+                            {{-- LEFT --}}
+                            <div class="space-y-8 p-5">
+                                <div class="pb-3 border-b border-slate-200/70">
+                                    <h3 class="text-sm font-semibold text-slate-700">
+                                        Threat Map Content
+                                    </h3>
                                 </div>
-                                <div class="form-check form-switch m-0">
-                                    <input class="form-check-input" type="checkbox" name="is_active" value="1" checked>
+
+                                <div class="space-y-6">
+
+                                    <div>
+                                        <label class="block mt-5 mb-2 text-sm font-medium">
+                                            Pre Title
+                                        </label>
+                                        <input type="text" name="pre_title"
+                                            class="disabled:bg-slate-100 disabled:cursor-not-allowed dark:disabled:bg-darkmode-800/50 dark:disabled:border-transparent [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 [&[readonly]]:dark:border-transparent transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md placeholder:text-slate-400/90 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 dark:bg-darkmode-800 dark:border-transparent dark:focus:ring-slate-700 dark:focus:ring-opacity-50 dark:placeholder:text-slate-500/80 [&[type='file']]:border file:mr-4 file:py-2 file:px-4 file:rounded-l-md file:border-0 file:border-r-[1px] file:border-slate-100/10 file:text-sm file:font-semibold file:bg-slate-100 file:text-slate-500/70 hover:file:bg-200 group-[.form-inline]:flex-1 group-[.input-group]:rounded-none group-[.input-group]:[&:not(:first-child)]:border-l-transparent group-[.input-group]:first:rounded-l group-[.input-group]:last:rounded-r group-[.input-group]:z-10 form-control">
+                                    </div>
+
+                                    <div>
+                                        <label class="block mt-5 mb-2 text-sm font-medium">
+                                            Title
+                                        </label>
+                                        <input type="text" name="title" required
+                                            class="disabled:bg-slate-100 disabled:cursor-not-allowed dark:disabled:bg-darkmode-800/50 dark:disabled:border-transparent [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 [&[readonly]]:dark:border-transparent transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md placeholder:text-slate-400/90 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 dark:bg-darkmode-800 dark:border-transparent dark:focus:ring-slate-700 dark:focus:ring-opacity-50 dark:placeholder:text-slate-500/80 [&[type='file']]:border file:mr-4 file:py-2 file:px-4 file:rounded-l-md file:border-0 file:border-r-[1px] file:border-slate-100/10 file:text-sm file:font-semibold file:bg-slate-100 file:text-slate-500/70 hover:file:bg-200 group-[.form-inline]:flex-1 group-[.input-group]:rounded-none group-[.input-group]:[&:not(:first-child)]:border-l-transparent group-[.input-group]:first:rounded-l group-[.input-group]:last:rounded-r group-[.input-group]:z-10 form-control">
+                                    </div>
+
+                                    <div>
+                                        <label class="block mt-5 mb-2 text-sm font-medium">
+                                            Description
+                                        </label>
+                                        <textarea name="description" rows="4"
+                                            class="disabled:bg-slate-100 disabled:cursor-not-allowed dark:disabled:bg-darkmode-800/50 dark:disabled:border-transparent [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 [&[readonly]]:dark:border-transparent transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md placeholder:text-slate-400/90 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 dark:bg-darkmode-800 dark:border-transparent dark:focus:ring-slate-700 dark:focus:ring-opacity-50 dark:placeholder:text-slate-500/80 [&[type='file']]:border file:mr-4 file:py-2 file:px-4 file:rounded-l-md file:border-0 file:border-r-[1px] file:border-slate-100/10 file:text-sm file:font-semibold file:bg-slate-100 file:text-slate-500/70 hover:file:bg-200 group-[.form-inline]:flex-1 group-[.input-group]:rounded-none group-[.input-group]:[&:not(:first-child)]:border-l-transparent group-[.input-group]:first:rounded-l group-[.input-group]:last:rounded-r group-[.input-group]:z-10 form-control"></textarea>
+                                    </div>
+
+                                    <div>
+                                        <label class="block mt-5 mb-2 text-sm font-medium">
+                                            CTA Text (Optional)
+                                        </label>
+                                        <input type="text" name="cta_text"
+                                            class="disabled:bg-slate-100 disabled:cursor-not-allowed dark:disabled:bg-darkmode-800/50 dark:disabled:border-transparent [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 [&[readonly]]:dark:border-transparent transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md placeholder:text-slate-400/90 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 dark:bg-darkmode-800 dark:border-transparent dark:focus:ring-slate-700 dark:focus:ring-opacity-50 dark:placeholder:text-slate-500/80 [&[type='file']]:border file:mr-4 file:py-2 file:px-4 file:rounded-l-md file:border-0 file:border-r-[1px] file:border-slate-100/10 file:text-sm file:font-semibold file:bg-slate-100 file:text-slate-500/70 hover:file:bg-200 group-[.form-inline]:flex-1 group-[.input-group]:rounded-none group-[.input-group]:[&:not(:first-child)]:border-l-transparent group-[.input-group]:first:rounded-l group-[.input-group]:last:rounded-r group-[.input-group]:z-10 form-control">
+                                    </div>
+
                                 </div>
                             </div>
 
-                            <button type="button" class="btn btn-primary w-100" id="btn-save">
-                                <span class="btn-text">Simpan Perubahan</span>
-                                <span class="spinner-border spinner-border-sm d-none"></span>
-                            </button>
+                            {{-- RIGHT --}}
+                            <div class="space-y-8 p-5">
+                                <div class="pb-3 border-b border-slate-200/70">
+                                    <h3 class="text-sm font-semibold text-slate-700">
+                                        Preview & Status
+                                    </h3>
+                                </div>
 
-                        </form>
+                                <div class="space-y-6">
 
-                    </div>
-                </div>
-            </div>
+                                    {{-- Preview Box --}}
+                                    <div class="rounded-md border p-5 bg-slate-50 dark:bg-darkmode-700">
+                                        <span id="pv-pre" class="text-xs uppercase tracking-wide text-slate-500">
+                                            Global Threat Landscape
+                                        </span>
 
-            <!-- RIGHT : PREVIEW -->
-            <div class="col-xl-7 col-lg-6">
-                <div class="card shadow-sm">
-                    <div class="card-header fw-semibold bg-white">
-                        Preview Section
-                    </div>
-                    <div class="card-body">
+                                        <h3 id="pv-title" class="mt-2 text-lg font-semibold">
+                                            Cyber Threat Map
+                                        </h3>
 
-                        <div class="border rounded p-4 bg-dark text-white">
-                            <small id="pv-pre" class="text-uppercase text-secondary">
-                                Global Threat Landscape
-                            </small>
+                                        <p id="pv-desc" class="mt-2 text-sm text-slate-500">
+                                            Visualisasi serangan siber secara global
+                                        </p>
 
-                            <h3 id="pv-title" class="fw-bold mt-2">
-                                Cyber Threat Map
-                            </h3>
+                                        <span id="pv-cta"
+                                            class="inline-block mt-4 text-sm font-semibold text-primary d-none">
+                                            View Threat Map →
+                                        </span>
 
-                            <p id="pv-desc" class="text-white-50">
-                                Visualisasi serangan siber secara global dan realtime
-                            </p>
+                                        <div class="mt-4">
+                                            <span id="pv-status" class="badge bg-secondary">
+                                                NONAKTIF
+                                            </span>
+                                        </div>
+                                    </div>
 
-                            <div class="mt-3">
-                                <span id="pv-cta" class="badge bg-danger d-none">
-                                    CTA
-                                </span>
+                                    {{-- Active Toggle --}}
+                                    <div>
+                                        <h4 class="text-sm font-semibold text-slate-600 mt-3">
+                                            Aktifkan Threat Map Section
+                                        </h4>
+                                        <div class="mt-3">
+                                            <input type="checkbox" name="is_active" value="1"
+                                                class="transition-all duration-100 ease-in-out shadow-sm border-slate-200 cursor-pointer focus:ring-4 focus:ring-offset-0 focus:ring-primary focus:ring-opacity-20 dark:bg-darkmode-800 dark:border-transparent dark:focus:ring-slate-700 dark:focus:ring-opacity-50 [&[type='radio']]:checked:bg-primary [&[type='radio']]:checked:border-primary [&[type='radio']]:checked:border-opacity-10 [&[type='checkbox']]:checked:bg-primary [&[type='checkbox']]:checked:border-primary [&[type='checkbox']]:checked:border-opacity-10 [&:disabled:not(:checked)]:bg-slate-100 [&:disabled:not(:checked)]:cursor-not-allowed [&:disabled:not(:checked)]:dark:bg-darkmode-800/50 [&:disabled:checked]:opacity-70 [&:disabled:checked]:cursor-not-allowed [&:disabled:checked]:dark:bg-darkmode-800/50 w-[38px] h-[24px] p-px rounded-full relative before:w-[20px] before:h-[20px] before:shadow-[1px_1px_3px_rgba(0,0,0,0.25)] before:transition-[margin-left] before:duration-200 before:ease-in-out before:absolute before:inset-y-0 before:my-auto before:rounded-full before:dark:bg-darkmode-600 checked:bg-primary checked:border-primary checked:bg-none before:checked:ml-[14px] before:checked:bg-white mr-0">
+                                        </div>
+                                    </div>
+
+                                </div>
                             </div>
 
-                            <div class="mt-4">
-                                <span id="pv-status" class="badge bg-success">
-                                    AKTIF
-                                </span>
-                            </div>
                         </div>
 
-                    </div>
+                        {{-- Action --}}
+                        <div class="flex justify-end pt-8 mt-10 border-t border-slate-200/70">
+                            <button type="button" id="btn-save"
+                                class="px-8 py-2.5 text-sm font-semibold text-white rounded-md
+                                   bg-primary hover:bg-primary/90 flex items-center gap-2">
+                                <span class="spinner-border spinner-border-sm d-none"></span>
+                                <span class="btn-text">Simpan Threat Map</span>
+                            </button>
+                        </div>
+
+                    </form>
                 </div>
             </div>
-
         </div>
     </div>
 @endsection
-
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
@@ -119,7 +145,6 @@
 
         const form = document.getElementById('threat-map-form')
         const btn = document.getElementById('btn-save')
-        const alertBox = document.getElementById('alert-box')
 
         const pv = {
             pre: document.getElementById('pv-pre'),
@@ -129,17 +154,10 @@
             status: document.getElementById('pv-status'),
         }
 
-        function alertMsg(type, msg) {
-            alertBox.className = `alert alert-${type}`
-            alertBox.textContent = msg
-            alertBox.classList.remove('d-none')
-            setTimeout(() => alertBox.classList.add('d-none'), 4000)
-        }
-
         function toggleLoading(on) {
             btn.disabled = on
-            btn.querySelector('.spinner-border').classList.toggle('d-none', !on)
-            btn.querySelector('.btn-text').classList.toggle('d-none', on)
+            btn.querySelector('.spinner-border')?.classList.toggle('d-none', !on)
+            btn.querySelector('.btn-text')?.classList.toggle('d-none', on)
         }
 
         function updatePreview() {
@@ -179,13 +197,21 @@
                 Object.entries(d).forEach(([k, v]) => {
                     const el = form.querySelector(`[name="${k}"]`)
                     if (!el) return
-                    if (el.type === 'checkbox') el.checked = v
-                    else el.value = v ?? ''
+
+                    if (el.type === 'checkbox') {
+                        el.checked = !!v
+                    } else {
+                        el.value = v ?? ''
+                    }
                 })
 
                 updatePreview()
             } catch {
-                alertMsg('danger', 'Gagal memuat data Threat Map')
+                showToast(
+                    'danger',
+                    'Gagal',
+                    'Tidak dapat memuat data Threat Map'
+                )
             }
         }
 
@@ -197,15 +223,28 @@
 
             try {
                 const res = await axios.post('/homepage-threat-map', data)
-                alertMsg('success', res.data.message || 'Berhasil disimpan')
+                showToast(
+                    'success',
+                    'Berhasil',
+                    res.data.message || 'Threat Map berhasil disimpan'
+                )
             } catch (e) {
                 if (e.response?.status === 422) {
                     const errors = Object.values(e.response.data.errors || {})
                         .flat()
                         .join(' | ')
-                    alertMsg('danger', errors)
+
+                    showToast(
+                        'danger',
+                        'Validasi Gagal',
+                        errors
+                    )
                 } else {
-                    alertMsg('danger', 'Terjadi kesalahan sistem')
+                    showToast(
+                        'danger',
+                        'Error',
+                        'Terjadi kesalahan sistem'
+                    )
                 }
             }
 

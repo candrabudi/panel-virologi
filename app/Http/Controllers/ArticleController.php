@@ -54,12 +54,20 @@ class ArticleController extends Controller
             ->orderByDesc('id');
 
         if ($request->filled('q')) {
-            $query->where('title', 'like', '%'.$request->q.'%')
+            $query->where(function ($q) use ($request) {
+                $q->where('title', 'like', '%'.$request->q.'%')
                   ->orWhere('excerpt', 'like', '%'.$request->q.'%');
+            });
         }
 
+        if (!$request->is_published) {
+            $query->where('is_published', $request->is_published);
+        }
+
+        $perPage = (int) $request->get('per_page', 10);
+
         return $this->ok(
-            $query->get()
+            $query->paginate($perPage)
         );
     }
 

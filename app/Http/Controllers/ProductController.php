@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\ProductImage;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -26,11 +25,30 @@ class ProductController extends Controller
         return view('products.edit', compact('product'));
     }
 
-    public function list()
+    private function ok($data = null, string $message = 'OK', int $code = 200)
     {
-        return response()->json(
-            Product::orderByDesc('id')->get()
-        );
+        return response()->json([
+            'status' => true,
+            'message' => $message,
+            'data' => $data,
+        ], $code);
+    }
+
+    public function list(Request $request)
+    {
+        $query = Product::query()->orderByDesc('id');
+
+        // Search by name (bisa diganti field lain sesuai kebutuhan)
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        // Pagination
+        $perPage = $request->get('per_page', 10);
+        $products = $query->paginate($perPage);
+
+        return $this->ok($products);
     }
 
     public function store(Request $request)
@@ -44,7 +62,7 @@ class ProductController extends Controller
         }
 
         $data = validator($payload, [
-            'name' => 'required|string|max:255',
+            'product_name' => 'required|string|max:255',
             'subtitle' => 'nullable|string|max:255',
             'summary' => 'nullable|string',
             'content' => 'nullable|string',
@@ -74,8 +92,8 @@ class ProductController extends Controller
             'canonical_url' => 'nullable|string|max:255',
         ])->validate();
 
-        // $data['uuid'] = \Str::uuid();
-        $data['slug'] = \Str::slug($data['name']);
+        $data['slug'] = \Str::slug($data['product_name']);
+        $data['name'] = $data['product_name'];
 
         if ($request->hasFile('thumbnail')) {
             $data['thumbnail'] = asset('storage/'.$request->file('thumbnail')->store('products', 'public'));
@@ -93,7 +111,11 @@ class ProductController extends Controller
             }
         }
 
-        return response()->json(['success' => true]);
+        // Response disesuaikan untuk showToast()
+        return response()->json([
+            'status' => true,
+            'message' => 'Produk berhasil disimpan',
+        ]);
     }
 
     public function update(Request $request, Product $product)
@@ -107,12 +129,12 @@ class ProductController extends Controller
         }
 
         $data = validator($payload, [
-            'name' => 'required|string|max:255',
+            'product_name' => 'required|string|max:255',
             'subtitle' => 'nullable|string|max:255',
             'summary' => 'nullable|string',
             'content' => 'nullable|string',
 
-            'product_type' => 'required|string',
+            'product_type' => 'required|in:digital,hardware,service,bundle',
             'ai_domain' => 'nullable|string',
             'ai_level' => 'nullable|string',
 
@@ -129,6 +151,7 @@ class ProductController extends Controller
             'cta_type' => 'nullable|string',
 
             'thumbnail' => 'nullable|image|max:2048',
+            'images.*' => 'nullable|image|max:4096',
 
             'seo_title' => 'nullable|string|max:255',
             'seo_description' => 'nullable|string|max:300',
@@ -136,32 +159,41 @@ class ProductController extends Controller
             'canonical_url' => 'nullable|string|max:255',
         ])->validate();
 
-        $data['slug'] = \Str::slug($data['name']);
+        $data['slug'] = \Str::slug($data['product_name']);
+        $data['name'] = $data['product_name'];
 
         if ($request->hasFile('thumbnail')) {
             if ($product->thumbnail) {
-                \Storage::disk('public')->delete($product->thumbnail);
+                \Storage::disk('public')->delete(str_replace(asset('storage/'), '', $product->thumbnail));
             }
             $data['thumbnail'] = asset('storage/'.$request->file('thumbnail')->store('products', 'public'));
         }
 
         $product->update($data);
 
-        return response()->json(['success' => true]);
+        return response()->json([
+            'status' => true,
+            'message' => 'Produk berhasil diperbarui',
+        ]);
     }
 
     public function destroy(Product $product)
     {
         if ($product->thumbnail) {
-            Storage::disk('public')->delete($product->thumbnail);
+            \Storage::disk('public')->delete(str_replace(asset('storage/'), '', $product->thumbnail));
         }
 
         foreach ($product->images as $img) {
-            Storage::disk('public')->delete($img->image_path);
+            \Storage::disk('public')->delete(str_replace(asset('storage/'), '', $img->image_path));
+            $img->delete();
         }
 
         $product->delete();
 
-        return response()->json(['success' => true]);
+        return response()->json([
+            'status' => true,
+            'message' => 'Produk berhasil dihapus',
+            'redirect' => route('products.index'),
+        ]);
     }
 }

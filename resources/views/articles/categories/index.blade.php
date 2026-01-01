@@ -1,83 +1,104 @@
-@extends('template.app')
-
-@section('title', 'Article Categories')
-
+@extends('layouts.app')
+@push('styles')
+    <style>
+        .d-none {
+            display: none;
+        }
+    </style>
+@endpush
 @section('content')
-    <div class="container-fluid">
-
-        <div class="d-flex justify-content-between mb-4">
-            <h4>Article Categories</h4>
+    <div class="col-span-12">
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold">Data Category</h2>
         </div>
 
-        <div id="alert-box" class="alert d-none"></div>
+        <div class="grid grid-cols-12 gap-6">
+            <div class="col-span-12 lg:col-span-4 space-y-6">
 
-        <div class="row g-4">
-
-            {{-- FORM --}}
-            <div class="col-lg-4">
-                <div class="card shadow-sm">
-                    <div class="card-header fw-semibold" id="form-title">Tambah Kategori</div>
-                    <div class="card-body">
-                        <form id="form-category">
-
-                            @csrf
+                <div class="bg-white rounded-lg border border-slate-200 p-6 space-y-6 p-5">
+                    <h3 class="text-sm font-semibold text-slate-700 border-b pb-3" id="form-title">
+                        Add Category
+                    </h3>
+                    <form id="form-category">
+                        @csrf
+                        <div class="mt-3">
                             <input type="hidden" id="category_id">
+                            <label class="block mb-2 text-sm font-medium">Category Name</label>
+                            <input type="text" name="title"
+                                class="disabled:bg-slate-100 disabled:cursor-not-allowed dark:disabled:bg-darkmode-800/50 dark:disabled:border-transparent [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 [&[readonly]]:dark:border-transparent transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md placeholder:text-slate-400/90 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 dark:bg-darkmode-800 dark:border-transparent dark:focus:ring-slate-700 dark:focus:ring-opacity-50 dark:placeholder:text-slate-500/80 [&[type='file']]:border file:mr-4 file:py-2 file:px-4 file:rounded-l-md file:border-0 file:border-r-[1px] file:border-slate-100/10 file:text-sm file:font-semibold file:bg-slate-100 file:text-slate-500/70 hover:file:bg-200 group-[.form-inline]:flex-1 group-[.input-group]:rounded-none group-[.input-group]:[&:not(:first-child)]:border-l-transparent group-[.input-group]:first:rounded-l group-[.input-group]:last:rounded-r group-[.input-group]:z-10 form-control"
+                                placeholder="Judul artikel" id="name">
+                        </div>
+                        <div class="mt-6 flex items-center justify-end gap-4 px-4">
+                            <button type="button"
+                                class="px-5 py-2 rounded-md border text-sm
+        text-slate-600 hover:bg-slate-100 transition d-none"
+                                id="btn-cancel">
+                                Batal
+                            </button>
 
-                            <div class="mb-3">
-                                <label class="form-label">Nama Kategori</label>
-                                <input id="name" class="form-control" placeholder="Contoh: Cyber Security">
-                            </div>
+                            <button type="submit"
+                                class="px-5 py-2 rounded-md border border-primary
+        text-primary hover:bg-primary/10 transition">
+                                Simpan
+                            </button>
+                        </div>
 
-                            <div class="d-grid gap-2">
-                                <button type="submit" class="btn btn-primary" id="btn-submit">
-                                    <span class="btn-text">Simpan</span>
-                                    <span class="spinner-border spinner-border-sm d-none"></span>
-                                </button>
-
-                                <button type="button" class="btn btn-light d-none" id="btn-cancel">
-                                    Batal
-                                </button>
-                            </div>
-
-                        </form>
-                    </div>
+                    </form>
                 </div>
             </div>
-
-            {{-- TABLE --}}
-            <div class="col-lg-8">
-                <div class="card shadow-sm">
-                    <div class="card-header fw-semibold d-flex justify-content-between align-items-center">
-                        <span>Daftar Kategori</span>
-                        <input id="search" class="form-control form-control-sm w-50" placeholder="Cari kategori...">
-                    </div>
-
-                    <div class="card-body p-0">
-
-                        {{-- SKELETON --}}
-                        <div id="skeleton">
-                            @for ($i = 0; $i < 5; $i++)
-                                <div class="px-4 py-3 border-bottom placeholder-glow">
-                                    <span class="placeholder col-4"></span>
-                                    <span class="placeholder col-3 ms-2"></span>
-                                </div>
-                            @endfor
+            <div class="col-span-12 lg:col-span-8 space-y-6">
+                <div class="box box--stacked flex flex-col">
+                    <div class="flex flex-col gap-y-2 p-5 sm:flex-row sm:items-center">
+                        <div>
+                            <div class="relative">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" data-lucide="search"
+                                    class="lucide lucide-search absolute inset-y-0 left-0 z-10 my-auto ml-3 h-4 w-4 stroke-[1.3] text-slate-500">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <path d="m21 21-4.3-4.3"></path>
+                                </svg>
+                                <input type="text" placeholder="Search users..." id="search-input"
+                                    class="disabled:bg-slate-100 disabled:cursor-not-allowed dark:disabled:bg-darkmode-800/50 dark:disabled:border-transparent [&amp;[readonly]]:bg-slate-100 [&amp;[readonly]]:cursor-not-allowed [&amp;[readonly]]:dark:bg-darkmode-800/50 [&amp;[readonly]]:dark:border-transparent transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm placeholder:text-slate-400/90 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 dark:bg-darkmode-800 dark:border-transparent dark:focus:ring-slate-700 dark:focus:ring-opacity-50 dark:placeholder:text-slate-500/80 [&amp;[type='file']]:border file:mr-4 file:py-2 file:px-4 file:rounded-l-md file:border-0 file:border-r-[1px] file:border-slate-100/10 file:text-sm file:font-semibold file:bg-slate-100 file:text-slate-500/70 hover:file:bg-200 group-[.form-inline]:flex-1 group-[.input-group]:rounded-none group-[.input-group]:[&amp;:not(:first-child)]:border-l-transparent group-[.input-group]:first:rounded-l group-[.input-group]:last:rounded-r group-[.input-group]:z-10 rounded-[0.5rem] pl-9 sm:w-64">
+                            </div>
                         </div>
-
-                        <table class="table table-hover mb-0 d-none" id="table">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Nama</th>
-                                    <th>Slug</th>
-                                    <th width="140" class="text-end">Aksi</th>
+                    </div>
+                    <div class="overflow-auto xl:overflow-visible">
+                        <table class="w-full text-left border-b border-slate-200/60">
+                            <thead class="">
+                                <tr class="">
+                                    <td
+                                        class="px-5 border-b dark:border-darkmode-300 border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500">
+                                        Name
+                                    </td>
+                                    <td
+                                        class="px-5 border-b dark:border-darkmode-300 border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500">
+                                        Slug
+                                    </td>
+                                    <td
+                                        class="px-5 border-b dark:border-darkmode-300 w-20 border-t border-slate-200/60 bg-slate-50 py-4 text-center font-medium text-slate-500">
+                                        Action </td>
                                 </tr>
                             </thead>
-                            <tbody id="tbody"></tbody>
+                            <tbody id="table-body">
+                            </tbody>
                         </table>
-
-                        <div id="empty" class="text-center py-5 text-muted d-none">
-                            Belum ada kategori
-                        </div>
+                    </div>
+                    <div class="flex-reverse flex flex-col-reverse flex-wrap items-center gap-y-2 p-5 sm:flex-row">
+                        <nav class="mr-auto w-full flex-1 sm:w-auto">
+                            <ul id="pagination-container" class="flex w-full mr-0 sm:mr-auto sm:w-auto"></ul>
+                        </nav>
+                        <select id="per-page"
+                            class="disabled:bg-slate-100 disabled:cursor-not-allowed disabled:dark:bg-darkmode-800/50
+    transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm
+    py-2 px-3 pr-8 focus:ring-4 focus:ring-primary focus:ring-opacity-20
+    dark:bg-darkmode-800 dark:border-transparent rounded-[0.5rem] sm:w-20">
+                            <option value="5">5</option>
+                            <option value="10">10</option>
+                            <option value="25">25</option>
+                            <option value="35">35</option>
+                            <option value="50">50</option>
+                        </select>
 
                     </div>
                 </div>
@@ -86,108 +107,214 @@
         </div>
     </div>
 
-    {{-- MODAL DELETE --}}
-    <div class="modal fade" id="deleteModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Hapus Kategori</h5>
+    <div id="delete-modal" tabindex="-1" aria-hidden="true"
+        class="modal group bg-gradient-to-b from-theme-1/50 via-theme-2/50 to-black/50 transition-[visibility,opacity] w-screen h-screen fixed left-0 top-0 overflow-y-hidden z-[60] [&:not(.show)]:duration-[0s,0.2s] [&:not(.show)]:delay-[0.2s,0s] [&:not(.show)]:invisible [&:not(.show)]:opacity-0 [&.show]:visible [&.show]:opacity-100 [&.show]:duration-[0s,0.1s] overflow-y-auto">
+
+        <div
+            class="relative mx-auto my w-[95%] scale-95 transition-transform group-[.show]:scale-100 sm:mt-40 sm:w-[600px] lg:w-[700px]">
+
+            <div
+                class="global-search global-search--show-result group relative z-10 max-h-[468px] overflow-y-auto rounded-lg bg-white pb-1 shadow-lg sm:max-h-[615px]">
+                <div class="flex items-center justify-between px-5 py-4 border-b">
+                    <h3 class="text-base font-semibold text-slate-800">
+                        Hapus Tag
+                    </h3>
                 </div>
-                <div class="modal-body">
-                    Yakin ingin menghapus kategori ini?
+                <div class="px-5 py-4 text-slate-600 text-sm leading-relaxed">
+                    Tag ini akan
+                    <span class="font-semibold text-danger">dihapus permanen</span>.
+                    Tindakan ini tidak bisa dibatalkan.
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Batal</button>
-                    <button type="button" class="btn btn-danger" id="btn-confirm-delete">Hapus</button>
+                <div class="flex justify-end gap-2 px-5 py-4 border-t">
+                    <button data-tw-dismiss="modal"
+                        class="px-4 py-2 rounded-lg border text-slate-600 hover:bg-slate-100 transition">
+                        Batal
+                    </button>
+
+                    <form id="delete-form" method="POST">
+                        @csrf
+                        @method('DELETE')
+
+                        <button id="confirm-delete" class="px-4 py-2 rounded-lg bg-danger text-white hover:bg-danger/90">
+                            Hapus
+                        </button>
+
+                    </form>
                 </div>
+
             </div>
         </div>
     </div>
 @endsection
-
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
         axios.defaults.headers.common['X-CSRF-TOKEN'] =
-            document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-
-        const tbody = document.getElementById('tbody')
-        const table = document.getElementById('table')
-        const skeleton = document.getElementById('skeleton')
-        const empty = document.getElementById('empty')
-        const alertBox = document.getElementById('alert-box')
+            document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
 
         const idEl = document.getElementById('category_id')
         const nameEl = document.getElementById('name')
         const formTitle = document.getElementById('form-title')
         const btnSubmit = document.getElementById('btn-submit')
-        const btnCancel = document.getElementById('btn-cancel')
-        const spinner = btnSubmit.querySelector('.spinner-border')
-        const btnText = btnSubmit.querySelector('.btn-text')
 
-        const modal = new bootstrap.Modal(document.getElementById('deleteModal'))
-        let deleteId = null
+        const tableBody = document.getElementById('table-body')
+        const skeleton = document.getElementById('skeleton')
+        const emptyState = document.getElementById('empty-state')
+        const searchInput = document.getElementById('search-input')
+        const searchSpinner = document.getElementById('search-spinner')
+        const btnCancel = document.getElementById('btn-cancel')
+
+        let deletecategoryId = null
         let debounceTimer = null
 
-        function alertMsg(type, msg) {
-            alertBox.className = `alert alert-${type}`
-            alertBox.innerHTML = msg
-            alertBox.classList.remove('d-none')
-            setTimeout(() => alertBox.classList.add('d-none'), 4000)
+        function formatDate(date) {
+            if (!date) return '-'
+            return new Date(date).toLocaleDateString('id-ID', {
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric'
+            })
         }
 
         function resetForm() {
             idEl.value = ''
             nameEl.value = ''
             formTitle.textContent = 'Tambah Kategori'
-            btnText.textContent = 'Simpan'
             btnCancel.classList.add('d-none')
         }
 
-        function loadCategories(q = '') {
-            skeleton.classList.remove('d-none')
-            table.classList.add('d-none')
-            empty.classList.add('d-none')
+        function renderCategories(categorys) {
+            tableBody.innerHTML = ''
+
+            skeleton?.classList.add('hidden')
+            emptyState?.classList.add('hidden')
+
+            if (!categorys || categorys.length === 0) {
+                emptyState?.classList.remove('hidden')
+                return
+            }
+
+            categorys.forEach(category => {
+                const statusText = category.is_published ? 'Published' : 'Draft'
+                const statusClass = category.is_published ? 'text-success' : 'text-slate-400'
+
+                const categories = category.categories?.map(cat => `
+                    <span class="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 mr-1">
+                        ${cat.name}
+                    </span>
+                `).join('') || '-'
+
+                const tr = document.createElement('tr')
+                tr.dataset.id = category.id
+                tr.className = '[&_td]:last:border-b-0'
+                tr.dataset.item = JSON.stringify(category)
+                tr.innerHTML = `
+                    <td class="px-5 border-b border-dashed py-4 dark:bg-darkmode-600">
+                        ${category.name}
+                    </td>
+                    <td class="px-5 border-b border-dashed py-4 dark:bg-darkmode-600">
+                        ${category.slug}
+                    </td>
+
+                    <td class="px-5 border-b dark:border-darkmode-300 relative border-dashed py-3 dark:bg-darkmode-600">
+                        <div class="flex items-center justify-center gap-2">
+                            <button
+                                data-tw-merge
+                                class="transition duration-200 border shadow-sm inline-flex items-center justify-center
+                                py-1 px-2 w-20 text-sm rounded-md font-medium cursor-pointer
+                                focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus-visible:outline-none
+                                dark:focus:ring-slate-700 dark:focus:ring-opacity-50
+                                [&:hover:not(:disabled)]:bg-opacity-90
+                                [&:hover:not(:disabled)]:border-opacity-90
+                                disabled:opacity-70 disabled:cursor-not-allowed
+                                border-warning text-warning dark:border-warning
+                                [&:hover:not(:disabled)]:bg-warning/10 btn-edit">
+                                Edit
+                            </button>
+
+                           <div
+                                class="cursor-pointer inline-flex items-center justify-center
+                                py-1 px-3 text-sm rounded-md font-medium
+                                border border-danger text-danger
+                                hover:bg-danger/10 transition"
+                                data-tw-toggle="modal"
+                                data-tw-target="#delete-modal"
+                                data-id="${category.id}">
+                                Hapus
+                            </div>
+                        </div>
+                    </td>
+
+                    `
+                tableBody.appendChild(tr)
+            })
+        }
+
+        let currentPage = 1
+        let currentQuery = ''
+        let currentPerPage = 5
+
+        function loadCategories(query = '', page = 1) {
+            if (query instanceof Event) query = ''
+
+            currentQuery = query
+            currentPage = page
+
+            const status = document.getElementById('filter-status')?.value || ''
 
             axios.get('/articles/categories/list', {
-                    params: {
-                        q
-                    }
-                })
-                .then(res => {
-                    const rows = res.data.data
-                    tbody.innerHTML = ''
-                    skeleton.classList.add('d-none')
-
-                    if (!rows.length) {
-                        empty.classList.remove('d-none')
-                        return
-                    }
-
-                    table.classList.remove('d-none')
-
-                    rows.forEach(r => {
-                        const tr = document.createElement('tr')
-                        tr.dataset.item = JSON.stringify(r)
-                        tr.innerHTML = `
-                    <td>${r.name}</td>
-                    <td class="text-muted">${r.slug}</td>
-                    <td class="text-end">
-                        <button type="button" class="btn btn-sm btn-outline-primary btn-edit">Edit</button>
-                        <button type="button" class="btn btn-sm btn-outline-danger btn-delete ms-1">Hapus</button>
-                    </td>
-                `
-                        tbody.appendChild(tr)
-                    })
-                })
+                params: {
+                    q: currentQuery,
+                    page: currentPage,
+                    per_page: currentPerPage
+                }
+            }).then(res => {
+                const paginator = res.data.data
+                renderCategories(paginator.data)
+                renderPagination(paginator)
+            })
         }
+
+        searchInput?.addEventListener('input', e => {
+            clearTimeout(debounceTimer)
+            debounceTimer = setTimeout(() => loadCategories(e.target.value), 500)
+        })
+
+        tableBody.addEventListener('click', e => {
+            const tr = e.target.closest('tr')
+            if (!tr) return
+            const data = JSON.parse(tr.dataset.item)
+
+            if (e.target.classList.contains('btn-edit')) {
+                idEl.value = data.id
+                nameEl.value = data.name
+                formTitle.textContent = 'Edit Kategori'
+                btnCancel.classList.remove('d-none')
+            }
+
+            if (e.target.classList.contains('btn-delete')) {
+                deleteId = data.id
+                modal.show()
+            }
+        })
+
+        const perPageSelect = document.getElementById('per-page')
+
+        perPageSelect.addEventListener('change', e => {
+            currentPerPage = e.target.value
+            loadCategories(currentQuery, 1)
+        })
+
+        btnCancel.onclick = resetForm
+
+        window.addEventListener('load', loadCategories())
 
         document.getElementById('form-category').addEventListener('submit', (e) => {
             e.preventDefault();
 
-            btnSubmit.disabled = true
-            spinner.classList.remove('d-none')
-            btnText.classList.add('d-none')
+            // btnSubmit.disabled = true
+            // spinner.classList.remove('d-none')
+            // btnText.classList.add('d-none')
 
             const payload = {
                 name: nameEl.value
@@ -198,7 +325,11 @@
                 axios.post('/articles/categories', payload)
 
             req.then(() => {
-                alertMsg('success', 'Kategori berhasil disimpan')
+                showToast(
+                    'success',
+                    'Berhasil',
+                    'Tag berhasil di simpan. load data terbaru...'
+                )
                 resetForm()
                 loadCategories()
             }).catch(err => {
@@ -212,44 +343,143 @@
                 btnText.classList.remove('d-none')
             })
         })
+    </script>
+    <script>
+        function renderPagination(paginator) {
+            const container = document.getElementById('pagination-container')
+            container.innerHTML = ''
 
-        tbody.addEventListener('click', e => {
-            const tr = e.target.closest('tr')
-            if (!tr) return
-            const data = JSON.parse(tr.dataset.item)
+            const current = paginator.current_page
+            const last = paginator.last_page
 
-            if (e.target.classList.contains('btn-edit')) {
-                idEl.value = data.id
-                nameEl.value = data.name
-                formTitle.textContent = 'Edit Kategori'
-                btnText.textContent = 'Update'
-                btnCancel.classList.remove('d-none')
+            const li = (content, page = null, active = false) => `
+                <li class="flex-1 sm:flex-initial">
+                    <a
+                        ${page ? `onclick="loadCategories(currentQuery, ${page})"` : ''}
+                        class="transition duration-200 border items-center justify-center py-2 rounded-md cursor-pointer
+                        focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus-visible:outline-none
+                        dark:focus:ring-slate-700 dark:focus:ring-opacity-50
+                        [&:hover:not(:disabled)]:bg-opacity-90
+                        [&:hover:not(:disabled)]:border-opacity-90
+                        [&:not(button)]:text-center
+                        min-w-0 sm:min-w-[40px] shadow-none font-normal flex
+                        border-transparent text-slate-800 sm:mr-2 dark:text-slate-300 px-1 sm:px-3
+                        ${active ? '!box dark:bg-darkmode-400' : ''}">
+                        ${content}
+                    </a>
+                </li>`
+
+            if (current > 1) {
+                container.innerHTML += li(`
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="h-4 w-4">
+                    <path d="m11 17-5-5 5-5"></path>
+                    <path d="m18 17-5-5 5-5"></path>
+                    </svg>`,
+                    1)
+
+                container.innerHTML += li(`
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="h-4 w-4">
+                    <path d="m15 18-6-6 6-6"></path>
+                    </svg>`,
+                    current - 1)
             }
 
-            if (e.target.classList.contains('btn-delete')) {
-                deleteId = data.id
-                modal.show()
-            }
-        })
+            paginator.links.forEach(link => {
+                if (
+                    link.label.includes('Previous') ||
+                    link.label.includes('Next')
+                ) return
 
-        document.getElementById('btn-confirm-delete').onclick = () => {
-            axios.delete(`/articles/categories/${deleteId}`)
-                .then(() => {
-                    alertMsg('success', 'Kategori dihapus')
-                    loadCategories()
-                })
-            modal.hide()
+                if (link.label === '...') {
+                    container.innerHTML += li('...')
+                    return
+                }
+
+                const page = link.url ?
+                    new URL(link.url).searchParams.get('page') :
+                    null
+
+                if (page) {
+                    container.innerHTML += li(link.label, page, link.active)
+                }
+            })
+
+            if (current < last) {
+                container.innerHTML += li(`
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="h-4 w-4">
+                    <path d="m9 18 6-6-6-6"></path>
+                    </svg>`,
+                    current + 1)
+
+                container.innerHTML += li(`
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                    class="h-4 w-4">
+                    <path d="m6 17 5-5-5-5"></path>
+                    <path d="m13 17 5-5-5-5"></path>
+                    </svg>`,
+                    last)
+            }
         }
 
-        btnCancel.onclick = resetForm
 
-        document.getElementById('search').addEventListener('input', e => {
-            clearTimeout(debounceTimer)
-            debounceTimer = setTimeout(() => {
-                loadCategories(e.target.value)
-            }, 400)
+        function getPageFromUrl(url) {
+            if (!url) return null
+            const params = new URL(url).searchParams
+            return params.get('page')
+        }
+    </script>
+    <script>
+        let deleteId = null
+
+        document.addEventListener('click', function(e) {
+            const openBtn = e.target.closest('[data-tw-target="#delete-modal"]')
+            if (openBtn) {
+                deleteId = openBtn.getAttribute('data-id')
+            }
+
+            const confirmBtn = e.target.closest('#confirm-delete')
+            if (!confirmBtn || !deleteId) return
+
+            confirmBtn.disabled = true
+            confirmBtn.textContent = 'Menghapus...'
+
+            axios.delete(`/articles/categories/${deleteId}/delete`, {
+                headers: {
+                    'X-CSRF-TOKEN': document
+                        .querySelector('meta[name="csrf-token"]')
+                        .getAttribute('content')
+                }
+            }).then(res => {
+                if (res.data.status) {
+                    document.querySelector(`[data-row-id="${deleteId}"]`)?.remove()
+
+                    showToast(
+                        'success',
+                        'Berhasil',
+                        'Tag berhasil dihapus. load data terbaru...'
+                    )
+                    document
+                        .getElementById('delete-modal')
+                        .classList.remove('show')
+
+                    deleteId = null
+                    loadCategories(currentQuery, 1)
+                }
+            }).finally(() => {
+                confirmBtn.disabled = false
+                confirmBtn.textContent = 'Hapus'
+            })
         })
-
-        loadCategories()
     </script>
 @endpush

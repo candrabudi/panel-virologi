@@ -1,167 +1,172 @@
-@extends('template.app')
+@extends('layouts.app')
 @section('title', 'Pengaturan Website')
 @section('content')
-<div class="container-fluid">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <div class="page-title-head d-flex align-items-center mb-4">
-        <div class="flex-grow-1">
-            <h4 class="page-main-title mb-1">Pengaturan Website</h4>
-            <small class="text-muted">Kelola identitas, kontak, dan branding website</small>
+    <div class="col-span-12">
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold">Website</h2>
+            <p class="text-sm text-slate-500">
+                Kelola Website
+            </p>
         </div>
-        <ol class="breadcrumb m-0">
-            <li class="breadcrumb-item">Virologi</li>
-            <li class="breadcrumb-item">CMS</li>
-            <li class="breadcrumb-item active">Website</li>
-        </ol>
+
+        <form id="ajax-form" data-url="{{ route('website.general') }}" onsubmit="return false;" class="grid grid-cols-12 gap-6">
+
+            <div class="col-span-12 lg:col-span-12 space-y-6">
+
+                <div class="bg-white rounded-lg border border-slate-200 p-6 space-y-6 p-5">
+                    <h3 class="text-sm font-semibold text-slate-700 pb-3">
+                        General Website Information
+                    </h3>
+
+                    <div class="mt-3">
+                        <label class="block mb-2 text-sm font-medium">Nama Website</label>
+                        <input type="text" name="name" value="{{ old('name', $website->name ?? '') }}"
+                            class="transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md form-control"
+                            placeholder="Nama website">
+                    </div>
+
+                    <div class="mt-3">
+                        <label class="block mb-2 text-sm font-medium">Tagline</label>
+                        <input type="text" name="tagline" value="{{ old('tagline', $website->tagline ?? '') }}"
+                            class="transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md form-control"
+                            placeholder="Tagline singkat">
+                    </div>
+
+                    <div class="mt-3">
+                        <label class="block mb-2 text-sm font-medium">Deskripsi</label>
+                        <textarea name="description" rows="4"
+                            class="transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md form-control"
+                            placeholder="Deskripsi singkat website">{{ old('description', $website->description ?? '') }}</textarea>
+                    </div>
+                    <button type="submit" id="btn-save"
+                        class="px-6 py-2.5 text-sm font-semibold text-white rounded-md bg-primary hover:bg-primary/90 flex items-center gap-2 mt-3">
+                        <span class="btn-text">Simpan Perubahan</span>
+
+                        <svg id="btn-spinner" class="hidden w-4 h-4 animate-spin" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"
+                                fill="none" opacity="0.25" />
+                            <path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" stroke-width="4" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+        </form>
+
+        <form id="contact-form" data-url="{{ route('website.contact') }}" onsubmit="return false;"
+            class="grid grid-cols-12 gap-6 mt-3">
+
+            <div class="col-span-12 lg:col-span-12 space-y-6">
+
+                <div class="bg-white rounded-lg border border-slate-200 p-6 space-y-6 p-5">
+                    <h3 class="text-sm font-semibold text-slate-700 pb-3">
+                        Informasi Kontak Website
+                    </h3>
+
+                    <div class="mt-3">
+                        <label class="block mb-2 text-sm font-medium">Nomor Telepon</label>
+                        <input type="text" name="phone" value="{{ old('phone', $website->phone ?? '') }}"
+                            class="transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md form-control"
+                            placeholder="+62xxxx">
+                    </div>
+
+                    <div class="mt-3">
+                        <label class="block mb-2 text-sm font-medium">Email</label>
+                        <input type="email" name="email" value="{{ old('email', $website->email ?? '') }}"
+                            class="transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md form-control"
+                            placeholder="admin@domain.com">
+                    </div>
+
+                    <button type="submit" id="btn-contact-save"
+                        class="px-6 py-2.5 text-sm font-semibold text-white rounded-md bg-primary hover:bg-primary/90 flex items-center gap-2 mt-3">
+                        <span class="btn-text">Simpan Kontak</span>
+
+                        <svg id="btn-contact-spinner" class="hidden w-4 h-4 animate-spin" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"
+                                fill="none" opacity="0.25" />
+                            <path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" stroke-width="4" />
+                        </svg>
+                    </button>
+                </div>
+
+            </div>
+        </form>
+
+
+        <form id="branding-form" data-url="{{ route('website.branding') }}" enctype="multipart/form-data"
+            onsubmit="return false;" class="grid grid-cols-12 gap-6 mt-3">
+
+            <div class="col-span-12 lg:col-span-12 space-y-6">
+
+                <div class="bg-white rounded-lg border border-slate-200 p-6 space-y-6 p-5">
+                    <h3 class="text-sm font-semibold text-slate-700 pb-3">
+                        Branding Website
+                    </h3>
+
+                    <div class="mt-3">
+                        <label class="block mb-2 text-sm font-medium">Logo Rectangle</label>
+                        <input type="file" name="logo_rectangle"
+                            class="transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md form-control">
+
+                        @if ($website?->logo_rectangle)
+                            <div class="mt-2 flex items-center gap-2">
+                                <span class="text-xs px-2 py-1 rounded bg-slate-100 text-slate-600">
+                                    Current
+                                </span>
+                                <img src="{{ $website->logo_rectangle }}" class="h-10 rounded border">
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="mt-3">
+                        <label class="block mb-2 text-sm font-medium">Logo Square</label>
+                        <input type="file" name="logo_square"
+                            class="transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md form-control">
+
+                        @if ($website?->logo_square)
+                            <div class="mt-2 flex items-center gap-2">
+                                <span class="text-xs px-2 py-1 rounded bg-slate-100 text-slate-600">
+                                    Current
+                                </span>
+                                <img src="{{ $website->logo_square }}" class="h-10 rounded border">
+                            </div>
+                        @endif
+                    </div>
+
+                    <div class="mt-3">
+                        <label class="block mb-2 text-sm font-medium">Favicon</label>
+                        <input type="file" name="favicon"
+                            class="transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md form-control">
+
+                        @if ($website?->favicon)
+                            <div class="mt-2 flex items-center gap-2">
+                                <span class="text-xs px-2 py-1 rounded bg-slate-100 text-slate-600">
+                                    Current
+                                </span>
+                                <img src="{{ $website->favicon }}" class="h-6 rounded border">
+                            </div>
+                        @endif
+                    </div>
+
+                    <button type="submit" id="btn-branding-save"
+                        class="px-6 py-2.5 text-sm font-semibold text-white rounded-md bg-primary hover:bg-primary/90 flex items-center gap-2 mt-3">
+                        <span class="btn-text">Simpan Branding</span>
+
+                        <svg id="btn-branding-spinner" class="hidden w-4 h-4 animate-spin" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"
+                                fill="none" opacity="0.25" />
+                            <path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" stroke-width="4" />
+                        </svg>
+                    </button>
+
+                </div>
+            </div>
+        </form>
+
     </div>
-
-    <div class="row g-4">
-
-        {{-- LEFT --}}
-        <div class="col-lg-6 d-flex flex-column gap-4">
-
-            {{-- GENERAL --}}
-            <div class="card shadow-sm rounded-3">
-                <div class="card-header bg-white fw-semibold">
-                    <i class="ri ri-global-line me-1"></i> Informasi Website
-                </div>
-                <div class="card-body">
-                    <div class="alert-area mb-3"></div>
-
-                    <form class="ajax-form" data-url="{{ route('website.general') }}" onsubmit="return false;">
-                        <div class="mb-3">
-                            <label class="form-label">Nama Website</label>
-                            <input name="name" class="form-control"
-                                   value="{{ $website->name ?? '' }}"
-                                   placeholder="Nama website">
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label">Tagline</label>
-                            <input name="tagline" class="form-control"
-                                   value="{{ $website->tagline ?? '' }}"
-                                   placeholder="Tagline singkat">
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="form-label">Deskripsi</label>
-                            <textarea name="description"
-                                      class="form-control"
-                                      rows="4"
-                                      placeholder="Deskripsi singkat website">{{ $website->description ?? '' }}</textarea>
-                        </div>
-
-                        <button type="button" class="btn btn-primary w-100 btn-save">
-                            <span class="btn-text">Simpan Perubahan</span>
-                            <span class="spinner-border spinner-border-sm d-none"></span>
-                        </button>
-                    </form>
-                </div>
-            </div>
-
-            {{-- CONTACT --}}
-            <div class="card shadow-sm rounded-3">
-                <div class="card-header bg-white fw-semibold">
-                    <i class="ri ri-phone-line me-1"></i> Kontak
-                </div>
-                <div class="card-body">
-                    <div class="alert-area mb-3"></div>
-
-                    <form class="ajax-form" data-url="{{ route('website.contact') }}" onsubmit="return false;">
-                        <div class="mb-3">
-                            <label class="form-label">Nomor Telepon</label>
-                            <input name="phone" class="form-control"
-                                   value="{{ $website->phone ?? '' }}"
-                                   placeholder="+62xxxx">
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="form-label">Email</label>
-                            <input name="email" class="form-control"
-                                   value="{{ $website->email ?? '' }}"
-                                   placeholder="admin@domain.com">
-                        </div>
-
-                        <button type="button" class="btn btn-primary w-100 btn-save">
-                            <span class="btn-text">Simpan Kontak</span>
-                            <span class="spinner-border spinner-border-sm d-none"></span>
-                        </button>
-                    </form>
-                </div>
-            </div>
-
-        </div>
-
-        {{-- RIGHT --}}
-        <div class="col-lg-6">
-
-            {{-- BRANDING --}}
-            <div class="card shadow-sm rounded-3 h-100">
-                <div class="card-header bg-white fw-semibold">
-                    <i class="ri ri-palette-line me-1"></i> Branding
-                </div>
-                <div class="card-body">
-                    <div class="alert-area mb-3"></div>
-
-                    <form class="ajax-form"
-                          data-url="{{ route('website.branding') }}"
-                          enctype="multipart/form-data"
-                          onsubmit="return false;">
-
-                        <div class="mb-4">
-                            <label class="form-label">Logo Rectangle</label>
-                            <input type="file" name="logo_rectangle" class="form-control">
-                            @if ($website?->logo_rectangle)
-                                <div class="mt-2 d-flex align-items-center gap-2">
-                                    <span class="badge bg-light text-dark">Current</span>
-                                    <img src="{{ asset('storage/'.$website->logo_rectangle) }}"
-                                         class="rounded border"
-                                         height="40">
-                                </div>
-                            @endif
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="form-label">Logo Square</label>
-                            <input type="file" name="logo_square" class="form-control">
-                            @if ($website?->logo_square)
-                                <div class="mt-2 d-flex align-items-center gap-2">
-                                    <span class="badge bg-light text-dark">Current</span>
-                                    <img src="{{ asset('storage/'.$website->logo_square) }}"
-                                         class="rounded border"
-                                         height="40">
-                                </div>
-                            @endif
-                        </div>
-
-                        <div class="mb-4">
-                            <label class="form-label">Favicon</label>
-                            <input type="file" name="favicon" class="form-control">
-                            @if ($website?->favicon)
-                                <div class="mt-2 d-flex align-items-center gap-2">
-                                    <span class="badge bg-light text-dark">Current</span>
-                                    <img src="{{ asset('storage/'.$website->favicon) }}"
-                                         class="rounded border"
-                                         height="24">
-                                </div>
-                            @endif
-                        </div>
-
-                        <button type="button" class="btn btn-primary w-100 btn-save">
-                            <span class="btn-text">Simpan Branding</span>
-                            <span class="spinner-border spinner-border-sm d-none"></span>
-                        </button>
-
-                    </form>
-                </div>
-            </div>
-
-        </div>
-
-    </div>
-</div>
 @endsection
-
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
@@ -172,58 +177,152 @@
             axios.defaults.headers.common['X-CSRF-TOKEN'] =
                 document.querySelector('meta[name="csrf-token"]').getAttribute('content')
 
-            document.querySelectorAll('.ajax-form').forEach(form => {
+            const form = document.getElementById('ajax-form')
+            if (!form) return
 
-                const btn = form.querySelector('.btn-save')
-                const spinner = btn.querySelector('.spinner-border')
-                const text = btn.querySelector('.btn-text')
-                const alertArea = form.querySelector('.alert-area') ||
-                    form.closest('.card-body').querySelector('.alert-area')
-                const url = form.dataset.url
+            const btn = document.getElementById('btn-save')
+            const spinner = document.getElementById('btn-spinner')
+            const text = btn.querySelector('.btn-text')
+            const url = form.dataset.url
 
-                btn.addEventListener('click', async () => {
-                    alertArea.innerHTML = ''
-                    btn.disabled = true
-                    spinner.classList.remove('d-none')
-                    text.classList.add('d-none')
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault()
 
-                    try {
-                        const formData = new FormData(form)
-                        const response = await axios.post(url, formData)
+                btn.disabled = true
+                spinner.classList.remove('hidden')
+                text.classList.add('hidden')
 
-                        alertArea.innerHTML = `
-                    <div class="alert alert-success alert-dismissible fade show">
-                        ${response.data.message}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                `
-                    } catch (error) {
+                try {
+                    const formData = new FormData(form)
+                    const response = await axios.post(url, formData)
 
-                        if (error.response && error.response.status === 422) {
-                            const messages = Object.values(error.response.data.errors)
-                                .flat()
-                                .join('<br>')
+                    showToast(
+                        'success',
+                        'Berhasil',
+                        response.data.message ?? 'Berhasil disimpan',
+                    )
 
-                            alertArea.innerHTML = `
-                        <div class="alert alert-danger alert-dismissible fade show">
-                            ${messages}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    `
-                        } else {
-                            alertArea.innerHTML = `
-                        <div class="alert alert-danger alert-dismissible fade show">
-                            Terjadi kesalahan sistem
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    `
-                        }
+                } catch (error) {
+
+                    if (error.response?.status === 422) {
+                        const messages = Object.values(error.response.data.errors)
+                            .flat()
+                            .join('<br>')
+
+                        showToast('failed', 'Gagal', messages)
+                    } else {
+                        showToast('failed', 'Gagal', 'Terjadi kesalahan sistem')
                     }
+                }
 
-                    btn.disabled = false
-                    spinner.classList.add('d-none')
-                    text.classList.remove('d-none')
-                })
+                btn.disabled = false
+                spinner.classList.add('hidden')
+                text.classList.remove('hidden')
+            })
+        })
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest'
+            axios.defaults.headers.common['X-CSRF-TOKEN'] =
+                document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+
+            const form = document.getElementById('contact-form')
+            if (!form) return
+
+            const btn = document.getElementById('btn-contact-save')
+            const spinner = document.getElementById('btn-contact-spinner')
+            const text = btn.querySelector('.btn-text')
+            const url = form.dataset.url
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault()
+
+                btn.disabled = true
+                spinner.classList.remove('hidden')
+                text.classList.add('hidden')
+
+                try {
+                    const formData = new FormData(form)
+                    const response = await axios.post(url, formData)
+
+                    showToast(
+                        'success',
+                        'Berhasil',
+                        response.data.message ?? 'Kontak berhasil disimpan',
+                    )
+
+                } catch (error) {
+
+                    if (error.response?.status === 422) {
+                        const messages = Object.values(error.response.data.errors)
+                            .flat()
+                            .join('<br>')
+
+                        showToast('failed', 'Gagal', messages)
+                    } else {
+                        showToast('failed', 'Gagal', 'Terjadi kesalahan sistem')
+                    }
+                }
+
+                btn.disabled = false
+                spinner.classList.add('hidden')
+                text.classList.remove('hidden')
+            })
+        })
+    </script>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest'
+            axios.defaults.headers.common['X-CSRF-TOKEN'] =
+                document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+
+            const form = document.getElementById('branding-form')
+            if (!form) return
+
+            const btn = document.getElementById('btn-branding-save')
+            const spinner = document.getElementById('btn-branding-spinner')
+            const text = btn.querySelector('.btn-text')
+            const url = form.dataset.url
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault()
+
+                btn.disabled = true
+                spinner.classList.remove('hidden')
+                text.classList.add('hidden')
+
+                try {
+                    const formData = new FormData(form)
+                    const response = await axios.post(url, formData)
+
+                    showToast(
+                        'success', 
+                        'Berhasil',
+                        response.data.message ?? 'Branding berhasil disimpan',
+                    )
+
+                } catch (error) {
+
+                    if (error.response?.status === 422) {
+                        const messages = Object.values(error.response.data.errors)
+                            .flat()
+                            .join('<br>')
+
+                        showToast('failed', 'Gagal', messages)
+                    } else {
+                        showToast('failed', 'Gagal', 'Terjadi kesalahan sistem')
+                    }
+                }
+
+                btn.disabled = false
+                spinner.classList.add('hidden')
+                text.classList.remove('hidden')
             })
         })
     </script>

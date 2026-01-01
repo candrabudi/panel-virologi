@@ -83,8 +83,10 @@ class EbookController extends Controller
             'content' => 'nullable|string',
             'level' => 'required|in:beginner,intermediate,advanced',
             'topic' => 'required|in:general,network_security,application_security,cloud_security,soc,pentest,malware,incident_response,governance',
-            // 'ai_keywords' => 'nullable|array',
+
+            'ai_keywords' => 'nullable|array',
             'ai_keywords.*' => 'string|max:100',
+
             'cover_image' => 'nullable|image|max:2048',
             'file' => 'required|file|mimes:pdf|max:20480',
             'author' => 'nullable|string|max:255',
@@ -96,6 +98,16 @@ class EbookController extends Controller
             return $this->fail('Validation error', $validator->errors(), 422);
         }
 
+        $aiKeywords = null;
+        if ($request->filled('ai_keywords')) {
+            $aiKeywords = collect($request->ai_keywords)
+                ->map(fn ($k) => trim($k))
+                ->filter()
+                ->unique()
+                ->values()
+                ->toArray();
+        }
+
         $coverImage = null;
         if ($request->hasFile('cover_image')) {
             $coverImage = $request->file('cover_image')->store('ebooks/covers', 'public');
@@ -103,7 +115,7 @@ class EbookController extends Controller
 
         $filePath = $request->file('file')->store('ebooks/files', 'public');
 
-        $ebook = Ebook::create([
+        Ebook::create([
             'uuid' => Str::uuid(),
             'title' => $request->title,
             'slug' => Str::slug($request->title).'-'.Str::random(6),
@@ -111,7 +123,7 @@ class EbookController extends Controller
             'content' => $request->content,
             'level' => $request->level,
             'topic' => $request->topic,
-            'ai_keywords' => $request->ai_keywords ?? null,
+            'ai_keywords' => $aiKeywords,
 
             'cover_image' => $coverImage ? asset('storage/'.$coverImage) : null,
             'file_path' => asset('storage/'.$filePath),

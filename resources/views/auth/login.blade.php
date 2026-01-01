@@ -1,147 +1,241 @@
-<!doctype html>
-<html lang="id">
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" class="opacity-0" lang="en">
+<meta http-equiv="content-type" content="text/html;charset=utf-8" />
 
 <head>
-    <meta charset="utf-8" />
-    <title>Masuk | Panel Virologi</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description"
+        content="Tailwise admin is super flexible, powerful, clean & modern responsive tailwind admin template with unlimited possibilities.">
+    <meta name="keywords"
+        content="admin template, Tailwise Admin Template, dashboard template, flat admin template, responsive admin template, web app">
+    <meta name="author" content="LEFT4CODE">
+    <title>Tailwise - Admin Dashboard Template</title>
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link rel="shortcut icon" href="{{ asset('assets/images/favicon.ico') }}" />
-    <script src="{{ asset('assets/js/config.js') }}"></script>
-    <link href="{{ asset('assets/css/vendors.min.css') }}" rel="stylesheet" />
-    <link href="{{ asset('assets/css/app.min.css') }}" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ asset('dist/css/vendors/tippy.css') }}">
+    <link rel="stylesheet" href="{{ asset('dist/css/app.css') }}">
 </head>
 
 <body>
-    <div class="auth-box overflow-hidden align-items-center d-flex">
-        <div class="container">
-            <div class="row justify-content-center">
-                <div class="col-xxl-4 col-md-6 col-sm-8">
-                    <div class="auth-brand text-center mb-4">
-                        <h4 class="fw-bold mt-3">Panel Virologi</h4>
-                        <p class="text-muted">Autentikasi dua langkah</p>
+    <div
+        class="container grid grid-cols-12 px-5 py-10 sm:px-10 sm:py-14 md:px-36 lg:h-screen lg:max-w-[1550px] lg:py-0 lg:pl-14 lg:pr-12 xl:px-24 2xl:max-w-[1750px]">
+        <div
+            class="relative z-50 h-full col-span-12 p-7 sm:p-14 bg-white rounded-2xl lg:bg-transparent lg:pr-10 lg:col-span-5 xl:pr-24 2xl:col-span-4 lg:p-0 before:content-[''] before:absolute before:inset-0 before:-mb-3.5 before:bg-white/40 before:rounded-2xl before:mx-5">
+            <div class="relative z-10 flex flex-col justify-center w-full h-full py-2 lg:py-32">
+                <div
+                    class="flex h-[55px] w-[55px] items-center justify-center rounded-[0.8rem] border border-primary/30">
+                    <div
+                        class="relative flex h-[50px] w-[50px] items-center justify-center rounded-[0.6rem] bg-white bg-gradient-to-b from-theme-1/90 to-theme-2/90">
+                        <div class="relative h-[26px] w-[26px] -rotate-45 [&_div]:bg-white">
+                            <div class="absolute inset-y-0 left-0 my-auto h-[75%] w-[20%] rounded-full opacity-50">
+                            </div>
+                            <div class="absolute inset-0 m-auto h-[120%] w-[20%] rounded-full"></div>
+                            <div class="absolute inset-y-0 right-0 my-auto h-[75%] w-[20%] rounded-full opacity-50">
+                            </div>
+                        </div>
                     </div>
+                </div>
+                <div class="mt-10">
+                    <div class="text-2xl font-medium mb-5">Sign In</div>
 
-                    <div class="card p-4">
-                        <div id="alert-box"></div>
+                    <!-- Alert Box -->
+                    <div id="alert-box"></div>
 
-                        <form id="form-login">
-                            <div id="step-login">
-                                <div class="mb-3">
-                                    <label class="form-label">Username atau Email</label>
-                                    <input type="text" class="form-control" id="identity" required autofocus>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="form-label">Kata Sandi</label>
-                                    <input type="password" class="form-control" id="password" required>
-                                </div>
-                                <div class="d-grid">
-                                    <button type="submit" class="btn btn-primary" id="btn-login">
-                                        <span class="btn-text">Masuk</span>
-                                        <span class="spinner-border spinner-border-sm d-none"></span>
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
+                    <!-- Form Login -->
+                    <form id="form-login">
+                        <div class="mt-6">
+                            <label
+                                class="inline-block mb-2 group-[.form-inline]:mb-2 group-[.form-inline]:sm:mb-0 group-[.form-inline]:sm:mr-5 group-[.form-inline]:sm:text-right">
+                                Email*
+                            </label>
+                            <input id="identity" type="text" placeholder="brad.pitt@left4code.com"
+                                class="disabled:bg-slate-100 disabled:cursor-not-allowed dark:disabled:bg-darkmode-800/50 dark:disabled:border-transparent [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 [&[readonly]]:dark:border-transparent transition duration-200 ease-in-out w-full text-sm shadow-sm placeholder:text-slate-400/90 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 dark:bg-darkmode-800 dark:border-transparent dark:focus:ring-slate-700 dark:focus:ring-opacity-50 dark:placeholder:text-slate-500/80 block rounded-[0.6rem] border-slate-300/80 px-4 py-3.5">
+                        </div>
 
-                        <form id="form-otp" class="d-none">
-                            <div class="mb-3">
-                                <label class="form-label">Kode OTP</label>
-                                <input type="text" class="form-control" id="otp" placeholder="6 digit OTP"
-                                    inputmode="numeric" required>
-                                <small class="text-muted">
-                                    Kode OTP telah dikirim ke email Anda
-                                </small>
-                            </div>
-                            <div class="d-grid">
-                                <button type="submit" class="btn btn-success" id="btn-verify">
-                                    <span class="btn-text">Verifikasi OTP</span>
-                                    <span class="spinner-border spinner-border-sm d-none"></span>
-                                </button>
-                            </div>
-                            <button type="button" class="btn btn-link mt-3 w-100" id="btn-back-login">
-                                ← Kembali ke login
+                        <div class="mt-4">
+                            <label
+                                class="inline-block mb-2 group-[.form-inline]:mb-2 group-[.form-inline]:sm:mb-0 group-[.form-inline]:sm:mr-5 group-[.form-inline]:sm:text-right">
+                                Password*
+                            </label>
+                            <input id="password" type="password" placeholder="************"
+                                class="disabled:bg-slate-100 disabled:cursor-not-allowed dark:disabled:bg-darkmode-800/50 dark:disabled:border-transparent [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 [&[readonly]]:dark:border-transparent transition duration-200 ease-in-out w-full text-sm shadow-sm placeholder:text-slate-400/90 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 dark:bg-darkmode-800 dark:border-transparent dark:focus:ring-slate-700 dark:focus:ring-opacity-50 dark:placeholder:text-slate-500/80 block rounded-[0.6rem] border-slate-300/80 px-4 py-3.5">
+                        </div>
+
+                        <div class="mt-5 text-center xl:mt-8 xl:text-left">
+                            <button id="btn-login" type="submit"
+                                class="transition duration-200 border shadow-sm inline-flex items-center justify-center px-3 font-medium cursor-pointer focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus-visible:outline-none dark:focus:ring-slate-700 dark:focus:ring-opacity-50 [&:hover:not(:disabled)]:bg-opacity-90 [&:hover:not(:disabled)]:border-opacity-90 [&:not(button)]:text-center disabled:opacity-70 disabled:cursor-not-allowed bg-primary border-primary text-white dark:border-primary rounded-full w-full bg-gradient-to-r from-theme-1/70 to-theme-2/70 py-3.5 xl:mr-3">
+                                <span class="btn-text">Sign In</span>
+                                <svg class="spinner-border hidden animate-spin h-5 w-5 text-white ml-2"
+                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10"
+                                        stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                </svg>
                             </button>
-                        </form>
+                        </div>
+                    </form>
 
-                    </div>
+                    <!-- Form OTP -->
+                    <form id="form-otp" class="hidden mt-6">
+                        <label class="inline-block mb-2 font-medium">Enter OTP*</label>
+                        <div class="flex justify-between gap-2 mt-auto">
+                            <input type="text" maxlength="1"
+                                class="otp-input w-14 h-14 text-center text-xl rounded-[0.6rem] border border-slate-300 dark:border-darkmode-700 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:outline-none" />
+                            <input type="text" maxlength="1"
+                                class="otp-input w-14 h-14 text-center text-xl rounded-[0.6rem] border border-slate-300 dark:border-darkmode-700 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:outline-none" />
+                            <input type="text" maxlength="1"
+                                class="otp-input w-14 h-14 text-center text-xl rounded-[0.6rem] border border-slate-300 dark:border-darkmode-700 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:outline-none" />
+                            <input type="text" maxlength="1"
+                                class="otp-input w-14 h-14 text-center text-xl rounded-[0.6rem] border border-slate-300 dark:border-darkmode-700 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:outline-none" />
+                            <input type="text" maxlength="1"
+                                class="otp-input w-14 h-14 text-center text-xl rounded-[0.6rem] border border-slate-300 dark:border-darkmode-700 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:outline-none" />
+                            <input type="text" maxlength="1"
+                                class="otp-input w-14 h-14 text-center text-xl rounded-[0.6rem] border border-slate-300 dark:border-darkmode-700 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:outline-none" />
+                        </div>
+
+                        <div class="mt-5 text-center xl:mt-8 xl:text-left">
+                            <button id="btn-verify" type="submit"
+                                class="transition duration-200 border shadow-sm inline-flex items-center justify-center px-3 font-medium cursor-pointer focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus-visible:outline-none dark:focus:ring-slate-700 dark:focus:ring-opacity-50 disabled:opacity-70 disabled:cursor-not-allowed bg-primary border-primary text-white dark:border-primary rounded-full w-full bg-gradient-to-r from-theme-1/70 to-theme-2/70 py-3.5 xl:mr-3">
+                                <span class="btn-text">Verify OTP</span>
+                                <svg class="spinner-border hidden animate-spin h-5 w-5 text-white ml-2"
+                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10"
+                                        stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor"
+                                        d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                </svg>
+                            </button>
+                            <button id="btn-back-login" type="button"
+                                class="transition duration-200 border shadow-sm inline-flex items-center justify-center px-3 font-medium cursor-pointer focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus-visible:outline-none disabled:opacity-70 disabled:cursor-not-allowed border-secondary text-slate-500 dark:border-darkmode-100/40 dark:text-slate-300 [&:hover:not(:disabled)]:bg-secondary/20 [&:hover:not(:disabled)]:dark:bg-darkmode-100/10 rounded-full mt-3 w-full bg-white/70 py-3.5">
+                                Back
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
+    <div
+        class="container fixed inset-0 grid h-screen w-screen grid-cols-12 pl-14 pr-12 lg:max-w-[1550px] xl:px-24 2xl:max-w-[1750px]">
+        <div
+            class="relative h-screen col-span-12 lg:col-span-5 2xl:col-span-4 z-20 after:bg-white after:hidden after:lg:block after:content-[''] after:absolute after:right-0 after:inset-y-0 after:bg-gradient-to-b after:from-white after:to-slate-100/80 after:w-[800%] after:rounded-[0_1.2rem_1.2rem_0/0_1.7rem_1.7rem_0] before:content-[''] before:hidden before:lg:block before:absolute before:right-0 before:inset-y-0 before:my-6 before:bg-gradient-to-b before:from-white/10 before:to-slate-50/10 before:bg-white/50 before:w-[800%] before:-mr-4 before:rounded-[0_1.2rem_1.2rem_0/0_1.7rem_1.7rem_0]">
+        </div>
+        <div
+            class="h-full col-span-7 2xl:col-span-8 lg:relative before:content-[''] before:absolute before:lg:-ml-10 before:left-0 before:inset-y-0 before:bg-gradient-to-b before:from-theme-1 before:to-theme-2 before:w-screen before:lg:w-[800%] after:content-[''] after:absolute after:inset-y-0 after:left-0 after:w-screen after:lg:w-[800%] after:bg-texture-white after:bg-fixed after:bg-center after:lg:bg-[25rem_-25rem] after:bg-no-repeat">
+            <div class="sticky top-0 z-10 flex-col justify-center hidden h-screen ml-16 lg:flex xl:ml-28 2xl:ml-36">
+                <div class="text-[2.6rem] font-medium leading-[1.4] text-white xl:text-5xl xl:leading-[1.2]">
+                    Amankan Panel Anda <br> Bersama Virologi
+                </div>
+                <div class="mt-5 text-base leading-relaxed text-white/70 xl:text-lg">
+                    Lindungi panel dan data Anda dengan solusi keamanan siber terkini.
+                    Virologi memastikan dashboard Anda terlindungi dari ancaman,
+                    memberikan akses yang aman, handal, dan efisien ke sistem penting.
+                </div>
+            </div>
+        </div>
 
-    <script src="{{ asset('assets/js/vendors.min.js') }}"></script>
-    <script src="{{ asset('assets/js/app.js') }}"></script>
+    </div>
+    <!-- BEGIN: Vendor JS Assets-->
+    <script src="{{ asset('dist/js/vendors/dom.js') }}"></script>
+    <script src="{{ asset('dist/js/vendors/tailwind-merge.js') }}"></script>
+    <script src="{{ asset('dist/js/vendors/lucide.js') }}"></script>
+    <script src="{{ asset('dist/js/vendors/alert.js') }}"></script>
+    <script src="{{ asset('dist/js/vendors/tippy.js') }}"></script>
+    <script src="{{ asset('dist/js/vendors/modal.js') }}"></script>
+    <script src="{{ asset('dist/js/components/base/theme-color.js') }}"></script>
+    <script src="{{ asset('dist/js/components/base/lucide.js') }}"></script>
+    <script src="{{ asset('dist/js/components/base/tippy.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-
     <script>
         axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest'
-        axios.defaults.headers.common['X-CSRF-TOKEN'] =
-            document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute(
+            'content')
         axios.defaults.withCredentials = true
 
         const alertBox = document.getElementById('alert-box')
         const formLogin = document.getElementById('form-login')
         const formOtp = document.getElementById('form-otp')
+        const otpInputs = formOtp.querySelectorAll('.otp-input')
 
         const showAlert = (type, message) => {
             alertBox.innerHTML = `
-        <div class="alert alert-${type} alert-dismissible fade show">
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    `
+<div role="alert"
+    class="alert relative border rounded-md px-5 py-4 border-${type} text-${type} dark:border-${type} my-7 flex items-center rounded-[0.6rem] border-${type}/20 bg-${type}/5 px-4 py-3 leading-[1.7]">
+    <div>
+        <i data-tw-merge="" data-lucide="lightbulb" class="mr-2 h-7 w-7 fill-${type}/10 stroke-[0.8]"></i>
+    </div>
+    <div class="ml-1 mr-8">${message}</div>
+    <button data-tw-dismiss="alert" type="button" aria-label="Close"
+        class="py-2 px-3 absolute right-0 my-auto mr-2 btn-close text-${type}">
+        <i data-tw-merge="" data-lucide="x" class="stroke-[1] w-5 h-5"></i>
+    </button>
+</div>`
         }
 
         const setLoading = (btn, loading) => {
             btn.disabled = loading
-            btn.querySelector('.btn-text').classList.toggle('d-none', loading)
-            btn.querySelector('.spinner-border').classList.toggle('d-none', !loading)
+            btn.querySelector('.btn-text').classList.toggle('hidden', loading)
+            btn.querySelector('.spinner-border').classList.toggle('hidden', !loading)
         }
 
+        // Auto-focus OTP inputs & paste support
+        otpInputs.forEach((input, index) => {
+            input.addEventListener('input', () => {
+                if (input.value.length > 0 && index < otpInputs.length - 1) {
+                    otpInputs[index + 1].focus()
+                }
+            })
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && input.value === '' && index > 0) {
+                    otpInputs[index - 1].focus()
+                }
+            })
+            input.addEventListener('paste', (e) => {
+                e.preventDefault()
+                const pasteData = e.clipboardData.getData('text').slice(0, 6).split('')
+                pasteData.forEach((char, i) => {
+                    if (otpInputs[i]) otpInputs[i].value = char
+                })
+                otpInputs[Math.min(pasteData.length, 5)].focus()
+            })
+        })
+
         if (sessionStorage.getItem('otp_step') === '1') {
-            formLogin.classList.add('d-none')
-            formOtp.classList.remove('d-none')
+            formLogin.classList.add('hidden')
+            formOtp.classList.remove('hidden')
         }
 
         formLogin.addEventListener('submit', async (e) => {
             e.preventDefault()
             const btn = document.getElementById('btn-login')
             setLoading(btn, true)
-
             try {
                 await axios.post('{{ route('login.process') }}', {
                     identity: document.getElementById('identity').value.trim(),
                     password: document.getElementById('password').value
                 })
-
                 await axios.post('{{ route('login.sendOtp') }}')
-
                 sessionStorage.setItem('otp_step', '1')
-
-                showAlert('success', 'Login berhasil. Kode OTP telah dikirim ke email Anda.')
-                formLogin.classList.add('d-none')
-                formOtp.classList.remove('d-none')
-                document.getElementById('otp').focus()
+                showAlert('primary', 'Login berhasil. Kode OTP telah dikirim ke email Anda.')
+                formLogin.classList.add('hidden')
+                formOtp.classList.remove('hidden')
+                otpInputs[0].focus()
             } catch (e) {
                 showAlert('danger', e.response?.data?.message || 'Login gagal')
             }
-
             setLoading(btn, false)
         })
 
         formOtp.addEventListener('submit', async (e) => {
             e.preventDefault()
-
-            const otp = document.getElementById('otp').value.trim()
+            const otp = Array.from(otpInputs).map(i => i.value).join('')
             if (otp.length !== 6) {
                 showAlert('warning', 'Kode OTP harus 6 digit')
                 return
             }
-
             const btn = document.getElementById('btn-verify')
             setLoading(btn, true)
-
             try {
                 await axios.post('{{ route('login.verify') }}', {
                     otp
@@ -154,14 +248,13 @@
             } catch (e) {
                 showAlert('danger', e.response?.data?.message || 'Kode OTP salah atau sudah kedaluwarsa')
             }
-
             setLoading(btn, false)
         })
 
         document.getElementById('btn-back-login').onclick = () => {
             sessionStorage.removeItem('otp_step')
-            formOtp.classList.add('d-none')
-            formLogin.classList.remove('d-none')
+            formOtp.classList.add('hidden')
+            formLogin.classList.remove('hidden')
             alertBox.innerHTML = ''
             document.getElementById('identity').focus()
         }

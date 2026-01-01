@@ -19,11 +19,7 @@ class AboutUsController extends Controller
 
     private function authorizeManage(): void
     {
-        if (method_exists(auth()->user(), 'can') && auth()->user()->can('manage-website')) {
-            return;
-        }
-
-        if (Auth::user()->role === 'admin') {
+        if ((method_exists(auth()->user(), 'can') && auth()->user()->can('manage-website')) || Auth::user()->role === 'admin') {
             return;
         }
 
@@ -41,10 +37,7 @@ class AboutUsController extends Controller
 
     private function fail(string $message = 'Request failed', $errors = null, int $code = 400)
     {
-        $payload = [
-            'status' => false,
-            'message' => $message,
-        ];
+        $payload = ['status' => false, 'message' => $message];
 
         if ($errors) {
             $payload['errors'] = $errors;
@@ -53,37 +46,23 @@ class AboutUsController extends Controller
         return response()->json($payload, $code);
     }
 
-    /**
-     * =========================
-     * CMS PAGE (BLADE)
-     * =========================.
-     */
     public function index()
     {
         $this->authorizeManage();
 
-        return view('about_us.cms');
+        $aboutPage = AboutUs::first();
+
+        return view('about_us.cms', compact('aboutPage'));
     }
 
-    /**
-     * =========================
-     * API: SHOW (JSON)
-     * =========================.
-     */
     public function apiShow()
     {
         $this->authorizeManage();
-
         $about = AboutUs::first();
 
         return $this->ok($about);
     }
 
-    /**
-     * =========================
-     * API: STORE / UPDATE (JSON)
-     * =========================.
-     */
     public function store(Request $request)
     {
         $this->authorizeManage();
@@ -95,21 +74,12 @@ class AboutUsController extends Controller
             'headline' => ['nullable', 'string', 'max:255'],
             'left_content' => ['nullable', 'string'],
             'right_content' => ['nullable', 'string'],
-
-            // 'topics' => ['nullable', 'array'],
-            // 'topics.*' => ['string', 'max:255'],
-
-            // 'manifesto' => ['nullable', 'array'],
-            // 'manifesto.*' => ['string', 'max:255'],
-
             'seo_title' => ['nullable', 'string', 'max:255'],
             'seo_description' => ['nullable', 'string', 'max:300'],
             'seo_keywords' => ['nullable', 'string', 'max:500'],
-
             'og_title' => ['nullable', 'string', 'max:255'],
             'og_description' => ['nullable', 'string', 'max:300'],
             'canonical_url' => ['nullable', 'string', 'max:255'],
-
             'is_active' => ['required', Rule::in(['0', '1'])],
         ]);
 

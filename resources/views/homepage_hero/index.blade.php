@@ -1,110 +1,100 @@
-@extends('template.app')
-
-@section('title', 'Homepage Hero')
+@extends('layouts.app')
 
 @section('content')
-    <div class="container-fluid mt-3">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <div id="alert-box" class="alert d-none"></div>
+    <div class="col-span-12">
 
-        <div class="row g-4">
+        {{-- Header --}}
+        <div class="flex flex-col gap-1 mb-8">
+            <h2 class="text-xl font-semibold group-[.mode--light]:text-white">
+                Homepage Hero
+            </h2>
+            <p class="text-sm text-slate-500 group-[.mode--light]:text-white/80">
+                Kelola konten utama hero section tanpa overlay warna
+            </p>
+        </div>
 
-            <!-- FORM -->
-            <div class="col-lg-6">
-                <div class="card shadow-sm">
-                    <div class="card-header fw-semibold">Pengaturan Hero</div>
-                    <div class="card-body">
+        <div class="mt-3.5 grid grid-cols-12 gap-x-6 gap-y-10">
+            <div class="relative col-span-12 flex flex-col gap-y-7">
+                <div class="box box--stacked flex flex-col p-5">
 
-                        <form id="hero-form" onsubmit="return false">
-                            @csrf
+                    <form id="hero-form">
+                        @csrf
 
-                            <div class="mb-3">
-                                <label class="form-label">Pre Title</label>
-                                <input class="form-control" name="pre_title" placeholder="Contoh: Virologi">
-                            </div>
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
 
-                            <div class="mb-3">
-                                <label class="form-label">Judul Utama</label>
-                                <textarea class="form-control" rows="2" name="title" required></textarea>
-                            </div>
-
-                            <div class="mb-3">
-                                <label class="form-label">Sub Judul</label>
-                                <textarea class="form-control" rows="3" name="subtitle"></textarea>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Overlay Color</label>
-                                    <input type="color" name="overlay_color" class="form-control form-control-color"
-                                        value="#000000">
+                            {{-- LEFT --}}
+                            <div class="space-y-8 p-5">
+                                <div class="pb-3 border-b border-slate-200/70">
+                                    <h3 class="text-sm font-semibold text-slate-700">
+                                        Hero Content
+                                    </h3>
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <label class="form-label">Overlay Opacity</label>
-                                    <input type="number" step="0.05" min="0" max="1"
-                                        name="overlay_opacity" class="form-control" value="0.5">
+
+                                <div class="space-y-6">
+                                    <div>
+                                        <label class="block mt-5 mb-2 text-sm font-medium">Pre Title</label>
+                                        <input type="text" name="pre_title" class="disabled:bg-slate-100 disabled:cursor-not-allowed dark:disabled:bg-darkmode-800/50 dark:disabled:border-transparent [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 [&[readonly]]:dark:border-transparent transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md placeholder:text-slate-400/90 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 dark:bg-darkmode-800 dark:border-transparent dark:focus:ring-slate-700 dark:focus:ring-opacity-50 dark:placeholder:text-slate-500/80 [&[type='file']]:border file:mr-4 file:py-2 file:px-4 file:rounded-l-md file:border-0 file:border-r-[1px] file:border-slate-100/10 file:text-sm file:font-semibold file:bg-slate-100 file:text-slate-500/70 hover:file:bg-200 group-[.form-inline]:flex-1 group-[.input-group]:rounded-none group-[.input-group]:[&:not(:first-child)]:border-l-transparent group-[.input-group]:first:rounded-l group-[.input-group]:last:rounded-r group-[.input-group]:z-10 form-control">
+                                    </div>
+
+                                    <div>
+                                        <label class="block mt-5 mb-2 text-sm font-medium">Main Title</label>
+                                        <input type="text" name="title" required class="disabled:bg-slate-100 disabled:cursor-not-allowed dark:disabled:bg-darkmode-800/50 dark:disabled:border-transparent [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 [&[readonly]]:dark:border-transparent transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md placeholder:text-slate-400/90 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 dark:bg-darkmode-800 dark:border-transparent dark:focus:ring-slate-700 dark:focus:ring-opacity-50 dark:placeholder:text-slate-500/80 [&[type='file']]:border file:mr-4 file:py-2 file:px-4 file:rounded-l-md file:border-0 file:border-r-[1px] file:border-slate-100/10 file:text-sm file:font-semibold file:bg-slate-100 file:text-slate-500/70 hover:file:bg-200 group-[.form-inline]:flex-1 group-[.input-group]:rounded-none group-[.input-group]:[&:not(:first-child)]:border-l-transparent group-[.input-group]:first:rounded-l group-[.input-group]:last:rounded-r group-[.input-group]:z-10 form-control">
+                                    </div>
+
+                                    <div>
+                                        <label class="block mt-5 mb-2 text-sm font-medium">Subtitle</label>
+                                        <textarea name="subtitle" rows="5" class="disabled:bg-slate-100 disabled:cursor-not-allowed dark:disabled:bg-darkmode-800/50 dark:disabled:border-transparent [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 [&[readonly]]:dark:border-transparent transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md placeholder:text-slate-400/90 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 dark:bg-darkmode-800 dark:border-transparent dark:focus:ring-slate-700 dark:focus:ring-opacity-50 dark:placeholder:text-slate-500/80 [&[type='file']]:border file:mr-4 file:py-2 file:px-4 file:rounded-l-md file:border-0 file:border-r-[1px] file:border-slate-100/10 file:text-sm file:font-semibold file:bg-slate-100 file:text-slate-500/70 hover:file:bg-200 group-[.form-inline]:flex-1 group-[.input-group]:rounded-none group-[.input-group]:[&:not(:first-child)]:border-l-transparent group-[.input-group]:first:rounded-l group-[.input-group]:last:rounded-r group-[.input-group]:z-10 form-control"></textarea>
+                                    </div>
                                 </div>
                             </div>
 
-                            <hr>
+                            {{-- RIGHT --}}
+                            <div class="space-y-8 p-5">
+                                <div class="pb-3 border-b border-slate-200/70">
+                                    <h3 class="text-sm font-semibold text-slate-700">
+                                        Call To Action
+                                    </h3>
+                                </div>
 
-                            <h6 class="fw-semibold">Primary Button</h6>
-                            <div class="mb-2">
-                                <input class="form-control" name="primary_button_text" placeholder="Text tombol utama">
-                            </div>
-                            <div class="mb-3">
-                                <input class="form-control" name="primary_button_url" placeholder="URL tombol utama">
-                            </div>
+                                <div class="space-y-8">
+                                    <div>
+                                        <h4 class="mt-5 text-sm font-semibold text-slate-600">Primary Button</h4>
+                                        <input type="text" name="primary_button_text" class="disabled:bg-slate-100 disabled:cursor-not-allowed dark:disabled:bg-darkmode-800/50 dark:disabled:border-transparent [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 [&[readonly]]:dark:border-transparent transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md placeholder:text-slate-400/90 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 dark:bg-darkmode-800 dark:border-transparent dark:focus:ring-slate-700 dark:focus:ring-opacity-50 dark:placeholder:text-slate-500/80 [&[type='file']]:border file:mr-4 file:py-2 file:px-4 file:rounded-l-md file:border-0 file:border-r-[1px] file:border-slate-100/10 file:text-sm file:font-semibold file:bg-slate-100 file:text-slate-500/70 hover:file:bg-200 group-[.form-inline]:flex-1 group-[.input-group]:rounded-none group-[.input-group]:[&:not(:first-child)]:border-l-transparent group-[.input-group]:first:rounded-l group-[.input-group]:last:rounded-r group-[.input-group]:z-10 form-control mt-3">
+                                        <input type="text" name="primary_button_url" class="disabled:bg-slate-100 disabled:cursor-not-allowed dark:disabled:bg-darkmode-800/50 dark:disabled:border-transparent [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 [&[readonly]]:dark:border-transparent transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md placeholder:text-slate-400/90 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 dark:bg-darkmode-800 dark:border-transparent dark:focus:ring-slate-700 dark:focus:ring-opacity-50 dark:placeholder:text-slate-500/80 [&[type='file']]:border file:mr-4 file:py-2 file:px-4 file:rounded-l-md file:border-0 file:border-r-[1px] file:border-slate-100/10 file:text-sm file:font-semibold file:bg-slate-100 file:text-slate-500/70 hover:file:bg-200 group-[.form-inline]:flex-1 group-[.input-group]:rounded-none group-[.input-group]:[&:not(:first-child)]:border-l-transparent group-[.input-group]:first:rounded-l group-[.input-group]:last:rounded-r group-[.input-group]:z-10 form-control mt-3">
+                                    </div>
 
-                            <h6 class="fw-semibold">Secondary Button</h6>
-                            <div class="mb-2">
-                                <input class="form-control" name="secondary_button_text" placeholder="Text tombol kedua">
-                            </div>
-                            <div class="mb-3">
-                                <input class="form-control" name="secondary_button_url" placeholder="URL tombol kedua">
-                            </div>
+                                    <div>
+                                        <h4 class="mt-5 text-sm font-semibold text-slate-600">Secondary Button</h4>
+                                        <input type="text" name="secondary_button_text" class="disabled:bg-slate-100 disabled:cursor-not-allowed dark:disabled:bg-darkmode-800/50 dark:disabled:border-transparent [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 [&[readonly]]:dark:border-transparent transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md placeholder:text-slate-400/90 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 dark:bg-darkmode-800 dark:border-transparent dark:focus:ring-slate-700 dark:focus:ring-opacity-50 dark:placeholder:text-slate-500/80 [&[type='file']]:border file:mr-4 file:py-2 file:px-4 file:rounded-l-md file:border-0 file:border-r-[1px] file:border-slate-100/10 file:text-sm file:font-semibold file:bg-slate-100 file:text-slate-500/70 hover:file:bg-200 group-[.form-inline]:flex-1 group-[.input-group]:rounded-none group-[.input-group]:[&:not(:first-child)]:border-l-transparent group-[.input-group]:first:rounded-l group-[.input-group]:last:rounded-r group-[.input-group]:z-10 form-control mt-3">
+                                        <input type="text" name="secondary_button_url" class="disabled:bg-slate-100 disabled:cursor-not-allowed dark:disabled:bg-darkmode-800/50 dark:disabled:border-transparent [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 [&[readonly]]:dark:border-transparent transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md placeholder:text-slate-400/90 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 dark:bg-darkmode-800 dark:border-transparent dark:focus:ring-slate-700 dark:focus:ring-opacity-50 dark:placeholder:text-slate-500/80 [&[type='file']]:border file:mr-4 file:py-2 file:px-4 file:rounded-l-md file:border-0 file:border-r-[1px] file:border-slate-100/10 file:text-sm file:font-semibold file:bg-slate-100 file:text-slate-500/70 hover:file:bg-200 group-[.form-inline]:flex-1 group-[.input-group]:rounded-none group-[.input-group]:[&:not(:first-child)]:border-l-transparent group-[.input-group]:first:rounded-l group-[.input-group]:last:rounded-r group-[.input-group]:z-10 form-control mt-3">
+                                    </div>
 
-                            <div class="form-check form-switch mb-4">
-                                <input class="form-check-input" type="checkbox" name="is_active" value="1" checked>
-                                <label class="form-check-label">Aktifkan Hero</label>
-                            </div>
-
-                            <button class="btn btn-primary" id="btn-save">
-                                <span class="btn-text">Simpan Perubahan</span>
-                                <span class="spinner-border spinner-border-sm d-none"></span>
-                            </button>
-
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- PREVIEW -->
-            <div class="col-lg-6">
-                <div class="card shadow-sm">
-                    <div class="card-header fw-semibold">Live Preview</div>
-                    <div class="card-body">
-
-                        <div id="preview" class="p-4 rounded text-white" style="background:#000; opacity:.5">
-                            <p id="pv-pre" class="fw-semibold mb-1">Pre Title</p>
-                            <h3 id="pv-title" class="fw-bold">Judul Hero</h3>
-                            <p id="pv-sub" class="text-white-50">Sub judul hero</p>
-
-                            <div class="mt-3">
-                                <span id="pv-btn-1" class="badge bg-light text-dark d-none"></span>
-                                <span id="pv-btn-2" class="badge border border-light text-white d-none"></span>
+                                    <h4 class="text-sm font-semibold text-slate-600 mt-3">
+                                        Aktifkan Hero Section
+                                    </h4>
+                                    <div class=" mt-3">
+                                        <input type="checkbox" name="is_active" value="1"
+                                            class="transition-all duration-100 ease-in-out shadow-sm border-slate-200 cursor-pointer focus:ring-4 focus:ring-offset-0 focus:ring-primary focus:ring-opacity-20 dark:bg-darkmode-800 dark:border-transparent dark:focus:ring-slate-700 dark:focus:ring-opacity-50 [&[type='radio']]:checked:bg-primary [&[type='radio']]:checked:border-primary [&[type='radio']]:checked:border-opacity-10 [&[type='checkbox']]:checked:bg-primary [&[type='checkbox']]:checked:border-primary [&[type='checkbox']]:checked:border-opacity-10 [&:disabled:not(:checked)]:bg-slate-100 [&:disabled:not(:checked)]:cursor-not-allowed [&:disabled:not(:checked)]:dark:bg-darkmode-800/50 [&:disabled:checked]:opacity-70 [&:disabled:checked]:cursor-not-allowed [&:disabled:checked]:dark:bg-darkmode-800/50 w-[38px] h-[24px] p-px rounded-full relative before:w-[20px] before:h-[20px] before:shadow-[1px_1px_3px_rgba(0,0,0,0.25)] before:transition-[margin-left] before:duration-200 before:ease-in-out before:absolute before:inset-y-0 before:my-auto before:rounded-full before:dark:bg-darkmode-600 checked:bg-primary checked:border-primary checked:bg-none before:checked:ml-[14px] before:checked:bg-white mr-0">
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                    </div>
+                        <div class="flex justify-end pt-8 mt-10 border-t border-slate-200/70">
+                            <button type="submit" id="btn-save"
+                                class="px-8 py-2.5 text-sm font-semibold text-white rounded-md bg-primary hover:bg-primary/90">
+                                Simpan Hero
+                            </button>
+                        </div>
+
+                    </form>
                 </div>
             </div>
-
         </div>
     </div>
-@endsection
 
-@push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
         axios.defaults.headers.common['X-CSRF-TOKEN'] =
@@ -112,84 +102,42 @@
 
         const form = document.getElementById('hero-form')
         const btn = document.getElementById('btn-save')
-        const alertBox = document.getElementById('alert-box')
 
-        const pv = {
-            box: document.getElementById('preview'),
-            pre: document.getElementById('pv-pre'),
-            title: document.getElementById('pv-title'),
-            sub: document.getElementById('pv-sub'),
-            btn1: document.getElementById('pv-btn-1'),
-            btn2: document.getElementById('pv-btn-2'),
-        }
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault()
+            btn.disabled = true
 
-        function alertMsg(type, msg) {
-            alertBox.className = `alert alert-${type}`
-            alertBox.textContent = msg
-            alertBox.classList.remove('d-none')
-            setTimeout(() => alertBox.classList.add('d-none'), 4000)
-        }
-
-        function toggleLoading(on) {
-            btn.disabled = on
-            btn.querySelector('.spinner-border').classList.toggle('d-none', !on)
-            btn.querySelector('.btn-text').classList.toggle('d-none', on)
-        }
-
-        function updatePreview() {
-            const d = new FormData(form)
-
-            pv.pre.textContent = d.get('pre_title') || 'Pre Title'
-            pv.title.textContent = d.get('title') || 'Judul Hero'
-            pv.sub.textContent = d.get('subtitle') || 'Sub judul hero'
-
-            pv.box.style.background = d.get('overlay_color') || '#000'
-            pv.box.style.opacity = d.get('overlay_opacity') || 0.5
-
-            if (d.get('primary_button_text')) {
-                pv.btn1.textContent = d.get('primary_button_text')
-                pv.btn1.classList.remove('d-none')
-            } else pv.btn1.classList.add('d-none')
-
-            if (d.get('secondary_button_text')) {
-                pv.btn2.textContent = d.get('secondary_button_text')
-                pv.btn2.classList.remove('d-none')
-            } else pv.btn2.classList.add('d-none')
-        }
-
-        form.querySelectorAll('input,textarea').forEach(el =>
-            el.addEventListener('input', updatePreview)
-        )
-
-        btn.onclick = async () => {
-            toggleLoading(true)
             const data = new FormData(form)
             if (!data.has('is_active')) data.append('is_active', 0)
 
             try {
                 const res = await axios.post('/homepage-hero', data)
-                alertMsg('success', res.data.message || 'Berhasil disimpan')
-            } catch (e) {
-                alertMsg('danger', 'Gagal menyimpan data')
+                showToast('success', 'Success!', res.data.message || 'Hero berhasil disimpan')
+            } catch (err) {
+                showToast('failed', 'Registration failed!', 'Please check the field form.')
             }
-            toggleLoading(false)
-        }
+
+            btn.disabled = false
+        })
 
         async function loadHero() {
             try {
                 const res = await axios.get('/homepage-hero/show')
-                if (!res.data.data) return
 
-                Object.entries(res.data.data).forEach(([k, v]) => {
-                    const el = form.querySelector(`[name="${k}"]`)
+                if (!res.data || !res.data.data) return
+
+                Object.entries(res.data.data).forEach(([key, value]) => {
+                    const el = form.querySelector(`[name="${key}"]`)
                     if (!el) return
-                    if (el.type === 'checkbox') el.checked = v
-                    else el.value = v ?? ''
+
+                    if (el.type === 'checkbox') el.checked = Boolean(value)
+                    else el.value = value ?? ''
                 })
-                updatePreview()
-            } catch {}
+            } catch (e) {
+                console.error('Load hero failed', e)
+            }
         }
 
         loadHero()
     </script>
-@endpush
+@endsection

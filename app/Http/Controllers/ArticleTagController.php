@@ -75,14 +75,17 @@ class ArticleTagController extends Controller
     {
         $this->authorizeManage();
 
-        $query = ArticleTag::query()->orderBy('name');
+        $query = ArticleTag::query()
+            ->orderBy('name');
 
-        if ($request->filled('q')) { // Menggunakan 'q' untuk query, sesuai dengan JS sebelumnya
+        if ($request->filled('q')) {
             $query->where('name', 'like', '%'.$request->q.'%');
         }
 
+        $perPage = (int) $request->get('per_page', 10);
+
         return $this->ok(
-            $query->get(['id', 'name', 'slug'])
+            $query->paginate($perPage, ['id', 'name', 'slug'])
         );
     }
 

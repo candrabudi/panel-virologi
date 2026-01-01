@@ -44,8 +44,8 @@ Route::post('/logout', [AuthController::class, 'logout'])
     ->name('logout');
 
 Route::middleware(['auth', 'throttle:300,1'])->group(function () {
-    Route::get('/dashboard', fn () => view('welcome'))->name('dashboard');
-    Route::get('/dashboard/summary', [DashboardController::class, 'summary'])
+    Route::get('/dashboard', fn () => view('dashboard.index'))->name('dashboard');
+    Route::get('/dashboard/summary', [DashboardController::class, 'aiAnalyticsSummary'])
         ->middleware('auth');
 
     Route::get('/dashboard/ai-traffic-daily', [DashboardController::class, 'aiTrafficDaily'])
@@ -96,26 +96,25 @@ Route::middleware(['auth', 'throttle:300,1'])->group(function () {
     Route::get('/product-page', [ProductPageController::class, 'index']);
     Route::post('/product-page', [ProductPageController::class, 'store'])->name('product.page.store');
 
-    Route::prefix('api/products')
-        ->middleware('throttle:120,1')
+    Route::prefix('products')
         ->group(function () {
-            Route::get('/', [ProductController::class, 'list']);
-            Route::post('/', [ProductController::class, 'store']);
-            Route::put('/{product}', [ProductController::class, 'update']);
-            Route::delete('/{product}', [ProductController::class, 'destroy']);
+            Route::get('/list', [ProductController::class, 'list'])->name('products.list');
+            Route::post('/store', [ProductController::class, 'store'])->name('products.store');
+            Route::put('/{product}/update', [ProductController::class, 'update'])->name('products.update');
+            Route::delete('/{product}/delete', [ProductController::class, 'destroy'])->name('products.destroy');
         });
 
     Route::prefix('products')->group(function () {
-        Route::get('/', [ProductController::class, 'index']);
-        Route::get('/create', [ProductController::class, 'create']);
-        Route::get('/{product}/edit', [ProductController::class, 'edit']);
+        Route::get('/', [ProductController::class, 'index'])->name('products.index');
+        Route::get('/create', [ProductController::class, 'create'])->name('products.create');
+        Route::get('/{product}/edit', [ProductController::class, 'edit'])->name('products.edit');
     });
 
-    Route::prefix('/api/cyber-security-services')->group(function () {
-        Route::get('/', [CyberSecurityServiceController::class, 'list']);
-        Route::post('/', [CyberSecurityServiceController::class, 'store']);
-        Route::post('/{cyberSecurityService}', [CyberSecurityServiceController::class, 'update']);
-        Route::delete('/{cyberSecurityService}', [CyberSecurityServiceController::class, 'destroy']);
+    Route::prefix('/cyber-security-services')->group(function () {
+        Route::get('/list', [CyberSecurityServiceController::class, 'list']);
+        Route::post('/store', [CyberSecurityServiceController::class, 'store']);
+        Route::put('/{cyberSecurityService}/update', [CyberSecurityServiceController::class, 'update']);
+        Route::delete('/{cyberSecurityService}/delete', [CyberSecurityServiceController::class, 'destroy']);
     });
     Route::prefix('cyber-security-services')->group(function () {
         Route::get('/', [CyberSecurityServiceController::class, 'index']);
@@ -159,7 +158,7 @@ Route::middleware(['auth', 'throttle:300,1'])->group(function () {
         Route::get('/list', [ArticleCategoryController::class, 'list']);
         Route::post('/', [ArticleCategoryController::class, 'store']);
         Route::put('/{id}', [ArticleCategoryController::class, 'update']);
-        Route::delete('/{id}', [ArticleCategoryController::class, 'destroy']);
+        Route::delete('/{id}/delete', [ArticleCategoryController::class, 'destroy']);
     });
     Route::prefix('articles/tags')
             ->middleware('throttle:120,1')
@@ -168,7 +167,7 @@ Route::middleware(['auth', 'throttle:300,1'])->group(function () {
                 Route::get('/list', [ArticleTagController::class, 'list']);
                 Route::post('/', [ArticleTagController::class, 'store']);
                 Route::put('/{id}', [ArticleTagController::class, 'update']);
-                Route::delete('/{id}', [ArticleTagController::class, 'destroy']);
+                Route::delete('/{id}/delete', [ArticleTagController::class, 'destroy']);
             });
 
     Route::prefix('articles')->group(function () {
@@ -180,14 +179,18 @@ Route::middleware(['auth', 'throttle:300,1'])->group(function () {
 
         Route::post('/', [ArticleController::class, 'store'])->name('articles.store');
         Route::put('/{article}', [ArticleController::class, 'update'])->name('articles.update');
-        Route::delete('/{article}', [ArticleController::class, 'destroy'])->name('articles.destroy');
-
-        Route::post('/upload-image', [ArticleController::class, 'uploadImage']);
+        Route::delete('/{article}/delete', [ArticleController::class, 'destroy'])->name('articles.destroy');
     });
+    Route::post('/upload-image', [ArticleController::class, 'uploadImage']);
 
     Route::prefix('users')->name('users.')->group(function () {
         Route::get('/', [UserManagementController::class, 'index'])
             ->name('index');
+        Route::get('/create', [UserManagementController::class, 'create'])
+            ->name('create');
+
+        Route::get('/{user}/edit', [UserManagementController::class, 'edit'])
+            ->name('edit');
 
         Route::get('/list', [UserManagementController::class, 'list'])
             ->name('list');
@@ -195,23 +198,35 @@ Route::middleware(['auth', 'throttle:300,1'])->group(function () {
         Route::post('/', [UserManagementController::class, 'store'])
             ->name('store');
 
-        Route::put('/{id}', [UserManagementController::class, 'update'])
+        Route::put('/{user}/update', [UserManagementController::class, 'update'])
             ->name('update');
 
-        Route::delete('/{id}', [UserManagementController::class, 'destroy'])
+        Route::delete('/{user}', [UserManagementController::class, 'destroy'])
             ->name('destroy');
     });
 
-    Route::get('/ebooks', [EbookController::class, 'index'])->name('ebooks.index');
-    Route::get('/ebooks/list', [EbookController::class, 'list'])->name('ebooks.list');
+    Route::prefix('ebooks')->name('ebooks.')->group(function () {
+        Route::get('/', [EbookController::class, 'index'])
+            ->name('index');
 
-    Route::get('/ebooks/create', [EbookController::class, 'create'])->name('ebooks.create');
-    Route::post('/ebooks', [EbookController::class, 'store'])->name('ebooks.store');
+        Route::get('/list', [EbookController::class, 'list'])
+            ->name('list');
 
-    Route::get('/ebooks/{ebook}/edit', [EbookController::class, 'edit'])->name('ebooks.edit');
-    Route::put('/ebooks/{ebook}', [EbookController::class, 'update'])->name('ebooks.update');
+        Route::get('/create', [EbookController::class, 'create'])
+            ->name('create');
 
-    Route::delete('/ebooks/{ebook}', [EbookController::class, 'destroy'])->name('ebooks.destroy');
+        Route::post('/', [EbookController::class, 'store'])
+            ->name('store');
+
+        Route::get('/{ebook}/edit', [EbookController::class, 'edit'])
+            ->name('edit');
+
+        Route::put('/{ebook}', [EbookController::class, 'update'])
+            ->name('update');
+
+        Route::delete('/{ebook}/delete', [EbookController::class, 'destroy'])
+            ->name('destroy');
+    });
 
     Route::prefix('ai/chat')->group(function () {
         Route::get('/', [AiChatController::class, 'index']);

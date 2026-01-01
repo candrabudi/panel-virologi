@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use Carbon\Carbon;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
@@ -35,48 +34,82 @@ class DashboardController extends Controller
         ]);
     }
 
-    public function aiTrafficDaily(Request $request)
+    public function aiAnalyticsSummary()
     {
-        $days = (int) $request->get('days', 30);
-        $startDate = Carbon::now()->subDays($days - 1)->startOfDay();
+        $now = Carbon::now();
+        $startThisPeriod = $now->copy()->subDays(30);
+        $startPrevPeriod = $now->copy()->subDays(60);
+
+        $current = DB::table('ai_usage_logs')
+            ->where('created_at', '>=', $startThisPeriod)
+            ->selectRaw('
+            SUM(total_tokens) as total_units,
+            COUNT(*) as total_requests,
+            COUNT(DISTINCT ip_address) as active_ips,
+            SUM(CASE WHEN is_blocked = 1 THEN 1 ELSE 0 END) as blocked
+        ')
+            ->first();
+
+        $previous = DB::table('ai_usage_logs')
+            ->whereBetween('created_at', [$startPrevPeriod, $startThisPeriod])
+            ->selectRaw('SUM(total_tokens) as total_units')
+            ->first();
+
+        $growth = 0;
+        if ($previous->total_units > 0) {
+            $growth = round(
+                (($current->total_units - $previous->total_units) / $previous->total_units) * 100,
+                1
+            );
+        }
+
+        return response()->json([
+            'total_units' => (int) $current->total_units,
+            'total_requests' => (int) $current->total_requests,
+            'active_ips' => (int) $current->active_ips,
+            'success_rate' => $current->total_requests > 0
+                ? round((($current->total_requests - $current->blocked) / $current->total_requests) * 100, 2)
+                : 100,
+            'growth' => $growth,
+        ]);
+    }
+
+    public function aiTrafficDaily()
+    {
+        $start = Carbon::now()->startOfMonth();
+        $end = Carbon::now()->endOfDay();
 
         $rows = DB::table('ai_usage_logs')
+            ->whereBetween('created_at', [$start, $end])
             ->selectRaw('
-                DATE(created_at) as date,
-                COUNT(*) as total_requests,
-                COUNT(DISTINCT ip_address) as active_ips,
-                SUM(total_tokens) as total_tokens,
-                SUM(CASE WHEN is_blocked = 1 THEN 1 ELSE 0 END) as blocked_requests
-            ')
-            ->where('created_at', '>=', $startDate)
+            DATE(created_at) as date,
+            SUM(total_tokens) as tokens,
+            COUNT(*) as requests
+        ')
             ->groupBy(DB::raw('DATE(created_at)'))
             ->orderBy('date')
-            ->get();
+            ->get()
+            ->keyBy('date');
 
         $labels = [];
-        $requests = [];
-        $activeIps = [];
-        $successRate = [];
         $tokens = [];
+        $requests = [];
 
-        foreach ($rows as $row) {
-            $labels[] = Carbon::parse($row->date)->format('d M');
-            $requests[] = (int) $row->total_requests;
-            $activeIps[] = (int) $row->active_ips;
-            $tokens[] = (int) $row->total_tokens;
+        $period = Carbon::parse($start)->daysUntil($end);
 
-            $successRate[] = $row->total_requests > 0
-                ? round((($row->total_requests - $row->blocked_requests) / $row->total_requests) * 100, 2)
-                : 0;
+        foreach ($period as $date) {
+            $key = $date->format('Y-m-d');
+
+            $labels[] = $date->format('d M');
+            $tokens[] = isset($rows[$key]) ? (int) $rows[$key]->tokens : 0;
+            $requests[] = isset($rows[$key]) ? (int) $rows[$key]->requests : 0;
         }
 
         return response()->json([
             'labels' => $labels,
             'series' => [
-                'requests' => $requests,
-                'active_ips' => $activeIps,
-                'success_rate' => $successRate,
                 'tokens' => $tokens,
+                'requests' => $requests,
             ],
         ]);
     }

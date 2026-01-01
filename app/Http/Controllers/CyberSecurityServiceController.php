@@ -8,6 +8,15 @@ use Illuminate\Support\Str;
 
 class CyberSecurityServiceController extends Controller
 {
+    private function ok($data = null, string $message = 'OK', int $code = 200)
+    {
+        return response()->json([
+            'status' => true,
+            'message' => $message,
+            'data' => $data,
+        ], $code);
+    }
+
     protected function normalizeJson(Request $request, array $fields): array
     {
         $payload = $request->all();
@@ -36,11 +45,20 @@ class CyberSecurityServiceController extends Controller
         return view('cyber_security_services.edit', compact('cyberSecurityService'));
     }
 
-    public function list()
+    public function list(Request $request)
     {
-        return response()->json(
-            CyberSecurityService::orderByDesc('id')->get()
-        );
+        $query = CyberSecurityService::query()->orderByDesc('id');
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where('name', 'like', "%{$search}%")
+                  ->orWhere('short_name', 'like', "%{$search}%");
+        }
+
+        $perPage = $request->get('per_page', 10);
+        $services = $query->paginate($perPage);
+
+        return $this->ok($services);
     }
 
     public function store(Request $request)
@@ -57,34 +75,28 @@ class CyberSecurityServiceController extends Controller
             'name' => 'required|string|max:255',
             'short_name' => 'nullable|string|max:255',
             'category' => 'required|in:soc,pentest,audit,incident_response,cloud_security,governance,training,consulting',
-
             'summary' => 'nullable|string',
             'description' => 'nullable|string',
-
             'service_scope' => 'nullable|array',
             'deliverables' => 'nullable|array',
             'target_audience' => 'nullable|array',
-
             'ai_keywords' => 'nullable|array',
             'ai_domain' => 'nullable|string',
             'is_ai_visible' => 'boolean',
-
             'cta_label' => 'nullable|string|max:255',
             'cta_url' => 'nullable|string|max:255',
-
             'seo_title' => 'nullable|string|max:255',
             'seo_description' => 'nullable|string|max:300',
             'seo_keywords' => 'nullable|array',
-
             'is_active' => 'boolean',
             'sort_order' => 'nullable|integer|min:0',
         ])->validate();
 
         $data['slug'] = Str::slug($data['name']);
 
-        CyberSecurityService::create($data);
+        $service = CyberSecurityService::create($data);
 
-        return response()->json(['success' => true]);
+        return $this->ok($service, 'Layanan berhasil disimpan');
     }
 
     public function update(Request $request, CyberSecurityService $cyberSecurityService)
@@ -101,25 +113,19 @@ class CyberSecurityServiceController extends Controller
             'name' => 'required|string|max:255',
             'short_name' => 'nullable|string|max:255',
             'category' => 'required|in:soc,pentest,audit,incident_response,cloud_security,governance,training,consulting',
-
             'summary' => 'nullable|string',
             'description' => 'nullable|string',
-
             'service_scope' => 'nullable|array',
             'deliverables' => 'nullable|array',
             'target_audience' => 'nullable|array',
-
             'ai_keywords' => 'nullable|array',
             'ai_domain' => 'nullable|string',
             'is_ai_visible' => 'boolean',
-
             'cta_label' => 'nullable|string|max:255',
             'cta_url' => 'nullable|string|max:255',
-
             'seo_title' => 'nullable|string|max:255',
             'seo_description' => 'nullable|string|max:300',
             'seo_keywords' => 'nullable|array',
-
             'is_active' => 'boolean',
             'sort_order' => 'nullable|integer|min:0',
         ])->validate();
@@ -128,13 +134,13 @@ class CyberSecurityServiceController extends Controller
 
         $cyberSecurityService->update($data);
 
-        return response()->json(['success' => true]);
+        return $this->ok($cyberSecurityService, 'Layanan berhasil diperbarui');
     }
 
     public function destroy(CyberSecurityService $cyberSecurityService)
     {
         $cyberSecurityService->delete();
 
-        return response()->json(['success' => true]);
+        return $this->ok(null, 'Layanan berhasil dihapus');
     }
 }

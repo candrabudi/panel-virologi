@@ -70,14 +70,17 @@ class ArticleCategoryController extends Controller
     {
         $this->authorizeManage();
 
-        $query = ArticleCategory::query()->orderBy('name');
+        $query = ArticleCategory::query()
+            ->orderBy('name');
 
         if ($request->filled('search')) {
             $query->where('name', 'like', '%'.$request->search.'%');
         }
 
+        $perPage = (int) $request->get('per_page', 10);
+
         return $this->ok(
-            $query->get(['id', 'name', 'slug'])
+            $query->paginate($perPage, ['id', 'name', 'slug'])
         );
     }
 

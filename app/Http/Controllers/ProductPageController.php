@@ -38,20 +38,19 @@ class ProductPageController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'success' => false,
+                'status' => false,
                 'errors' => $validator->errors(),
             ], 422);
         }
 
         $page = ProductPageSetting::first() ?? new ProductPageSetting();
         $data = $validator->validated();
-
-        $data['is_active'] = $request->boolean('is_active');
+        $data['is_active'] = $request->boolean('is_active', false);
 
         $page->fill($data)->save();
 
         return response()->json([
-            'success' => true,
+            'status' => true,
             'message' => 'Pengaturan halaman produk berhasil disimpan',
         ]);
     }
