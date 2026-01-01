@@ -85,22 +85,52 @@
     </div>
     <!-- BEGIN: Vendor JS Assets-->
     <script src="{{ asset('dist/js/vendors/dom.js') }}"></script>
-<script src="{{ asset('dist/js/vendors/tailwind-merge.js') }}"></script>
-<script src="{{ asset('dist/js/vendors/lucide.js') }}"></script>
-<script src="{{ asset('dist/js/vendors/tippy.js') }}"></script>
-<script src="{{ asset('dist/js/vendors/simplebar.js') }}"></script>
-<script src="{{ asset('dist/js/vendors/transition.js') }}"></script>
-<script src="{{ asset('dist/js/vendors/popper.js') }}"></script>
-<script src="{{ asset('dist/js/vendors/dropdown.js') }}"></script>
-<script src="{{ asset('dist/js/vendors/modal.js') }}"></script>
+    <script src="{{ asset('dist/js/vendors/tailwind-merge.js') }}"></script>
+    <script src="{{ asset('dist/js/vendors/lucide.js') }}"></script>
+    <script src="{{ asset('dist/js/vendors/tippy.js') }}"></script>
+    <script src="{{ asset('dist/js/vendors/simplebar.js') }}"></script>
+    <script src="{{ asset('dist/js/vendors/transition.js') }}"></script>
+    <script src="{{ asset('dist/js/vendors/popper.js') }}"></script>
+    <script src="{{ asset('dist/js/vendors/dropdown.js') }}"></script>
+    <script src="{{ asset('dist/js/vendors/modal.js') }}"></script>
 
-<script src="{{ asset('dist/js/components/base/theme-color.js') }}"></script>
-<script src="{{ asset('dist/js/components/base/lucide.js') }}"></script>
-<script src="{{ asset('dist/js/components/base/tippy.js') }}"></script>
+    <script src="{{ asset('dist/js/components/base/theme-color.js') }}"></script>
+    <script src="{{ asset('dist/js/components/base/lucide.js') }}"></script>
+    <script src="{{ asset('dist/js/components/base/tippy.js') }}"></script>
 
-<script src="{{ asset('dist/js/themes/havoc.js') }}"></script>
-<script src="{{ asset('dist/js/components/quick-search.js') }}"></script>
-
+    <script src="{{ asset('dist/js/themes/havoc.js') }}"></script>
+    <script src="{{ asset('dist/js/components/quick-search.js') }}"></script>
+    <script>
+        function logout() {
+            Swal.fire({
+                title: 'Keluar dari akun?',
+                text: 'Anda akan logout dari sistem',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Logout',
+                cancelButtonText: 'Batal'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    axios.post('/logout')
+                        .then(res => {
+                            if (res.data.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Logout berhasil',
+                                    timer: 1200,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    window.location.href = '/login'
+                                })
+                            }
+                        })
+                        .catch(() => {
+                            Swal.fire('Error', 'Gagal logout', 'error')
+                        })
+                }
+            })
+        }
+    </script>
     <script>
         function showToast(type, title, message) {
             const toast = document.createElement('div')
@@ -121,22 +151,22 @@
             ${
                 type === 'success'
                     ? `
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                class="lucide lucide-check-circle stroke-[1] w-5 h-5 text-success">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <path d="M20 6 9 17l-5-5"></path>
-                            </svg>`
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                    class="lucide lucide-check-circle stroke-[1] w-5 h-5 text-success">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <path d="M20 6 9 17l-5-5"></path>
+                                </svg>`
                     : `
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                                class="lucide lucide-x-circle stroke-[1] w-5 h-5 text-danger">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <path d="m15 9-6 6"></path>
-                                <path d="m9 9 6 6"></path>
-                            </svg>`
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                    class="lucide lucide-x-circle stroke-[1] w-5 h-5 text-danger">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <path d="m15 9-6 6"></path>
+                                    <path d="m9 9 6 6"></path>
+                                </svg>`
             }
 
             <div class="ml-4 mr-4">
