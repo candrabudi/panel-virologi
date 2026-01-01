@@ -242,13 +242,18 @@
                                     class="rounded-full shadow cursor-pointer">
                             </div>
                             <div class="ml-3.5">
-                                <a class="whitespace-nowrap font-medium" href="#">
-                                    ${article.title}
+                                <a class="whitespace-nowrap font-medium" href="#" title="${article.title}">
+                                    ${(article.title || '').length > 80
+                                        ? (article.title || '').substring(0, 80) + '...'
+                                        : article.title || ''}
                                 </a>
-                                <div class="mt-0.5 whitespace-nowrap text-xs text-slate-500">
-                                    ${article.slug}
+                                <div class="mt-0.5 whitespace-nowrap text-xs text-slate-500" title="${article.slug}">
+                                    ${(article.slug || '').length > 80
+                                        ? (article.slug || '').substring(0, 80) + '...'
+                                        : article.slug || ''}
                                 </div>
                             </div>
+
                         </div>
                     </td>
 
