@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ResponseHelper;
+use App\Http\Requests\StoreAiContextRequest;
 use App\Models\AiContext;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
 
 class AiContextController extends Controller
 {
@@ -18,38 +18,13 @@ class AiContextController extends Controller
 
     private function authorizeManage(): void
     {
-        if (method_exists(auth()->user(), 'can') && auth()->user()->can('manage-ai')) {
-            return;
+        $user = auth()->user();
+        $isAuthorized = (method_exists($user, 'can') && $user->can('manage-ai')) || $user->role === 'admin';
+
+        if (!$isAuthorized) {
+            Log::warning("Unauthorized attempt to manage AI contexts by User ID: " . $user->id);
+            abort(403, 'Forbidden');
         }
-
-        if (Auth::user()->role == 'admin') {
-            return;
-        }
-
-        abort(403, 'Forbidden');
-    }
-
-    private function ok($data = null, string $message = 'OK', int $code = 200)
-    {
-        return response()->json([
-            'status' => true,
-            'message' => $message,
-            'data' => $data,
-        ], $code);
-    }
-
-    private function fail(string $message = 'Request failed', $errors = null, int $code = 400)
-    {
-        $payload = [
-            'status' => false,
-            'message' => $message,
-        ];
-
-        if (!is_null($errors)) {
-            $payload['errors'] = $errors;
-        }
-
-        return response()->json($payload, $code);
     }
 
     public function index()
@@ -62,16 +37,6 @@ class AiContextController extends Controller
     public function list(Request $request)
     {
         $this->authorizeManage();
-
-        $validator = Validator::make($request->all(), [
-            'q' => ['nullable', 'string', 'max:100'],
-            'is_active' => ['nullable', Rule::in(['0', '1'])],
-            'per_page' => ['nullable', 'integer', 'min:1', 'max:200'],
-        ]);
-
-        if ($validator->fails()) {
-            return $this->fail('Validation error', $validator->errors(), 422);
-        }
 
         $q = trim((string) $request->get('q', ''));
         $perPage = (int) $request->get('per_page', 100);
@@ -88,101 +53,104 @@ class AiContextController extends Controller
         }
 
         if ($request->filled('is_active')) {
-            $query->where('is_active', (int) $request->is_active === 1);
+            $query->where('is_active', filter_var($request->is_active, FILTER_VALIDATE_BOOLEAN));
         }
 
         $data = $query->paginate($perPage);
 
-        return $this->ok($data, 'Contexts retrieved');
+        return ResponseHelper::ok($data, 'Contexts retrieved');
     }
 
-    public function store(Request $request)
+    public function store(StoreAiContextRequest $request)
     {
         $this->authorizeManage();
-
-        $validator = Validator::make($request->all(), [
-            'code' => [
-                'required',
-                'string',
-                'min:3',
-                'max:50',
-                'regex:/^[a-z0-9_\-]+$/i',
-                'unique:ai_contexts,code',
-            ],
-            'name' => ['required', 'string', 'min:3', 'max:100'],
-            'use_internal_source' => ['required', Rule::in(['0', '1'])],
-        ]);
-
-        if ($validator->fails()) {
-            return $this->fail('Validation error', $validator->errors(), 422);
-        }
 
         try {
             $context = DB::transaction(function () use ($request) {
                 return AiContext::create([
-                    'code' => strtolower(trim($request->code)),
-                    'name' => trim($request->name),
-                    'use_internal_source' => (int) $request->use_internal_source === 1,
-                    'is_active' => true,
+                    'code'                => $request->code, // Sanitized in FormRequest
+                    'name'                => $request->name, // Sanitized in FormRequest
+                    'use_internal_source' => $request->use_internal_source,
+                    'is_active'           => true,
                 ]);
             });
 
-            return $this->ok([
-                'id' => $context->id,
-                'code' => $context->code,
-                'name' => $context->name,
+            Log::info("AI Context created: ID {$context->id} by User ID " . auth()->id());
+
+            return ResponseHelper::ok([
+                'id'                  => $context->id,
+                'code'                => $context->code,
+                'name'                => $context->name,
                 'use_internal_source' => (bool) $context->use_internal_source,
-                'is_active' => (bool) $context->is_active,
+                'is_active'           => (bool) $context->is_active,
             ], 'Context created', 201);
         } catch (\Throwable $e) {
-            return $this->fail('Request failed', null, 500);
+            Log::error("Failed to create AI context: " . $e->getMessage());
+            return ResponseHelper::fail('Gagal membuat context AI.', null, 500);
         }
     }
 
-    public function update(Request $request, $id)
+    public function update(StoreAiContextRequest $request, $id)
     {
         $this->authorizeManage();
 
         if (!ctype_digit((string) $id)) {
-            return $this->fail('Invalid id', null, 400);
+            return ResponseHelper::fail('Invalid id', null, 400);
         }
 
-        $context = AiContext::query()
-            ->select('id', 'code', 'name', 'use_internal_source', 'is_active')
-            ->find($id);
+        $context = AiContext::find($id);
 
         if (!$context) {
-            return $this->fail('Context not found', null, 404);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'name' => ['required', 'string', 'min:3', 'max:100'],
-            'use_internal_source' => ['required', Rule::in(['0', '1'])],
-            'is_active' => ['required', Rule::in(['0', '1'])],
-        ]);
-
-        if ($validator->fails()) {
-            return $this->fail('Validation error', $validator->errors(), 422);
+            return ResponseHelper::fail('Context not found', null, 404);
         }
 
         try {
             DB::transaction(function () use ($request, $context) {
                 $context->update([
-                    'name' => trim($request->name),
-                    'use_internal_source' => (int) $request->use_internal_source === 1,
-                    'is_active' => (int) $request->is_active === 1,
+                    'name'                => $request->name,
+                    'use_internal_source' => $request->use_internal_source,
+                    'is_active'           => $request->has('is_active') ? $request->is_active : $context->is_active,
                 ]);
             });
 
-            return $this->ok([
-                'id' => $context->id,
-                'code' => $context->code,
-                'name' => $context->name,
+            Log::info("AI Context updated: ID {$context->id} by User ID " . auth()->id());
+
+            return ResponseHelper::ok([
+                'id'                  => $context->id,
+                'code'                => $context->code,
+                'name'                => $context->name,
                 'use_internal_source' => (bool) $context->use_internal_source,
-                'is_active' => (bool) $context->is_active,
+                'is_active'           => (bool) $context->is_active,
             ], 'Context updated');
         } catch (\Throwable $e) {
-            return $this->fail('Request failed', null, 500);
+            Log::error("Failed to update AI context ID {$id}: " . $e->getMessage());
+            return ResponseHelper::fail('Gagal memperbarui context AI.', null, 500);
+        }
+    }
+
+    public function destroy($id)
+    {
+        $this->authorizeManage();
+
+        if (!ctype_digit((string) $id)) {
+            return ResponseHelper::fail('Invalid id', null, 400);
+        }
+
+        $context = AiContext::find($id);
+        if (!$context) {
+            return ResponseHelper::fail('Context not found', null, 404);
+        }
+
+        try {
+            DB::transaction(function () use ($context) {
+                $context->delete();
+            });
+
+            Log::info("AI Context deleted: ID {$id} by User ID " . auth()->id());
+            return ResponseHelper::ok(null, 'Context deleted');
+        } catch (\Throwable $e) {
+            Log::error("Failed to delete AI context ID {$id}: " . $e->getMessage());
+            return ResponseHelper::fail('Gagal menghapus context AI.', null, 500);
         }
     }
 }

@@ -2,11 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ResponseHelper;
+use App\Http\Requests\StoreEbookRequest;
 use App\Models\Ebook;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 
 class EbookController extends Controller
 {
@@ -15,203 +20,192 @@ class EbookController extends Controller
         $this->middleware(['auth', 'throttle:60,1']);
     }
 
-    private function ok($data = null, string $message = 'OK', int $code = 200)
+    /**
+     * Consistent authorization check.
+     */
+    private function authorizeManage(): void
     {
-        return response()->json([
-            'status' => true,
-            'message' => $message,
-            'data' => $data,
-        ], $code);
-    }
+        $user = auth()->user();
 
-    private function fail(string $message = 'Request failed', $errors = null, int $code = 400)
-    {
-        $payload = [
-            'status' => false,
-            'message' => $message,
-        ];
-
-        if (!is_null($errors)) {
-            $payload['errors'] = $errors;
+        if ($user && ($user->role === 'admin' || $user->role === 'editor' || (method_exists($user, 'can') && $user->can('manage-ebook')))) {
+            return;
         }
 
-        return response()->json($payload, $code);
+        Log::warning("Unauthorized attempt to manage ebooks by User ID: " . (auth()->id() ?? 'Guest'));
+        abort(403, 'Unauthorized access to ebook management');
     }
 
-    public function index()
+    /**
+     * Display the index page (Blade).
+     */
+    public function index(): View
     {
+        $this->authorizeManage();
         return view('ebooks.index', [
             'ebooks' => Ebook::orderByDesc('id')->get(),
         ]);
     }
 
-    public function list(Request $request)
+    /**
+     * API: List ebooks with pagination and search.
+     */
+    public function list(Request $request): JsonResponse
     {
+        $this->authorizeManage();
+
         $query = Ebook::query()->orderByDesc('id');
 
         if ($request->filled('q')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('title', 'like', '%'.$request->q.'%')
-                  ->orWhere('summary', 'like', '%'.$request->q.'%');
+            $search = $request->q;
+            $query->where(function ($q) use ($search) {
+                $q->where('title', 'like', "%{$search}%")
+                  ->orWhere('summary', 'like', "%{$search}%");
             });
         }
 
         $ebooks = $query->paginate(10);
 
-        return $this->ok($ebooks);
+        return ResponseHelper::ok($ebooks);
     }
 
-    public function create()
+    /**
+     * Display creation form.
+     */
+    public function create(): View
     {
-        return view('ebooks.form', [
-            'ebook' => null,
-        ]);
+        $this->authorizeManage();
+        return view('ebooks.form', ['ebook' => null]);
     }
 
-    public function edit(Ebook $ebook)
+    /**
+     * Display editing form.
+     */
+    public function edit(Ebook $ebook): View
     {
-        return view('ebooks.form', [
-            'ebook' => $ebook,
-        ]);
+        $this->authorizeManage();
+        return view('ebooks.form', ['ebook' => $ebook]);
     }
 
-    public function store(Request $request)
+    /**
+     * API: Store a new ebook.
+     */
+    public function store(StoreEbookRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'title' => 'required|string|max:255',
-            'summary' => 'nullable|string',
-            'content' => 'nullable|string',
-            'level' => 'required|in:beginner,intermediate,advanced',
-            'topic' => 'required|in:general,network_security,application_security,cloud_security,soc,pentest,malware,incident_response,governance',
+        $this->authorizeManage();
 
-            'ai_keywords' => 'nullable|array',
-            'ai_keywords.*' => 'string|max:100',
+        try {
+            $data = $request->validated();
+            
+            $data['uuid'] = (string) Str::uuid();
+            $data['slug'] = Str::slug($data['title']) . '-' . Str::random(6);
+            $data['file_type'] = 'pdf'; // Fixed for now based on validation
 
-            'cover_image' => 'nullable|image|max:2048',
-            'file' => 'required|file|mimes:pdf|max:20480',
-            'author' => 'nullable|string|max:255',
-            'published_at' => 'nullable|date',
-            'is_active' => 'sometimes|boolean',
-        ]);
-
-        if ($validator->fails()) {
-            return $this->fail('Validation error', $validator->errors(), 422);
-        }
-
-        $aiKeywords = null;
-        if ($request->filled('ai_keywords')) {
-            $aiKeywords = collect($request->ai_keywords)
-                ->map(fn ($k) => trim($k))
-                ->filter()
-                ->unique()
-                ->values()
-                ->toArray();
-        }
-
-        $coverImage = null;
-        if ($request->hasFile('cover_image')) {
-            $coverImage = $request->file('cover_image')->store('ebooks/covers', 'public');
-        }
-
-        $filePath = $request->file('file')->store('ebooks/files', 'public');
-
-        Ebook::create([
-            'uuid' => Str::uuid(),
-            'title' => $request->title,
-            'slug' => Str::slug($request->title).'-'.Str::random(6),
-            'summary' => $request->summary,
-            'content' => $request->content,
-            'level' => $request->level,
-            'topic' => $request->topic,
-            'ai_keywords' => $aiKeywords,
-
-            'cover_image' => $coverImage ? asset('storage/'.$coverImage) : null,
-            'file_path' => asset('storage/'.$filePath),
-            'file_type' => 'pdf',
-            'author' => $request->author,
-            'published_at' => $request->published_at,
-            'is_active' => $request->boolean('is_active', true),
-        ]);
-
-        return $this->ok([
-            'redirect' => '/ebooks',
-        ], 'Ebook created');
-    }
-
-    public function update(Request $request, Ebook $ebook)
-    {
-        $validator = Validator::make($request->all(), [
-            'title' => 'required|string|max:255',
-            'summary' => 'nullable|string',
-            'content' => 'nullable|string',
-            'level' => 'required|in:beginner,intermediate,advanced',
-            'topic' => 'required|in:general,network_security,application_security,cloud_security,soc,pentest,malware,incident_response,governance',
-            // 'ai_keywords' => 'nullable|array',
-            'ai_keywords.*' => 'string|max:100',
-            'cover_image' => 'nullable|image|max:2048',
-            'file' => 'nullable|file|mimes:pdf|max:20480',
-            'author' => 'nullable|string|max:255',
-            'published_at' => 'nullable|date',
-            'is_active' => 'sometimes|boolean',
-        ]);
-
-        if ($validator->fails()) {
-            return $this->fail('Validation error', $validator->errors(), 422);
-        }
-
-        $coverImage = $ebook->cover_image;
-        if ($request->hasFile('cover_image')) {
-            if ($ebook->cover_image) {
-                $oldPath = str_replace(asset('storage/'), '', $ebook->cover_image);
-                Storage::disk('public')->delete($oldPath);
+            // File Handling
+            if ($request->hasFile('cover_image')) {
+                $path = $request->file('cover_image')->store('ebooks/covers', 'public');
+                $data['cover_image'] = asset('storage/' . $path);
             }
-            $coverImage = $request->file('cover_image')->store('ebooks/covers', 'public');
-            $coverImage = asset('storage/'.$coverImage);
-        }
 
-        $filePath = $ebook->file_path;
-        if ($request->hasFile('file')) {
-            if ($ebook->file_path) {
-                $oldFile = str_replace(asset('storage/'), '', $ebook->file_path);
-                Storage::disk('public')->delete($oldFile);
+            if ($request->hasFile('file')) {
+                $path = $request->file('file')->store('ebooks/files', 'public');
+                $data['file_path'] = asset('storage/' . $path);
             }
-            $filePath = $request->file('file')->store('ebooks/files', 'public');
-            $filePath = asset('storage/'.$filePath);
+
+            $ebook = DB::transaction(function () use ($data) {
+                return Ebook::create($data);
+            });
+
+            Log::info("Ebook created: ID {$ebook->id} ('{$ebook->title}') by User ID " . auth()->id());
+
+            return ResponseHelper::ok([
+                'redirect' => '/ebooks',
+                'id' => $ebook->id,
+            ], 'Ebook berhasil disimpan', 201);
+        } catch (\Throwable $e) {
+            Log::error("Failed to create ebook: " . $e->getMessage());
+            return ResponseHelper::fail('Gagal menyimpan ebook', null, 500);
         }
-
-        $ebook->update([
-            'title' => $request->title,
-            'slug' => Str::slug($request->title).'-'.Str::random(6),
-            'summary' => $request->summary,
-            'content' => $request->content,
-            'level' => $request->level,
-            'topic' => $request->topic,
-            'ai_keywords' => $request->ai_keywords, // <<< array langsung
-            'cover_image' => $coverImage,
-            'file_path' => $filePath,
-            'author' => $request->author,
-            'published_at' => $request->published_at,
-            'is_active' => $request->boolean('is_active', true),
-        ]);
-
-        return $this->ok([
-            'redirect' => '/ebooks',
-        ], 'Ebook updated');
     }
 
-    public function destroy(Ebook $ebook)
+    /**
+     * API: Update an existing ebook.
+     */
+    public function update(StoreEbookRequest $request, Ebook $ebook): JsonResponse
     {
-        if ($ebook->cover_image) {
-            $oldCover = str_replace(asset('storage/'), '', $ebook->cover_image);
-            Storage::disk('public')->delete($oldCover);
-        }
-        if ($ebook->file_path) {
-            $oldFile = str_replace(asset('storage/'), '', $ebook->file_path);
-            Storage::disk('public')->delete($oldFile);
-        }
+        $this->authorizeManage();
 
-        $ebook->delete();
+        try {
+            $data = $request->validated();
+            
+            // Re-generate slug if title changed (optional, but keep for consistency)
+            if ($request->filled('title')) {
+                $data['slug'] = Str::slug($data['title']) . '-' . Str::random(6);
+            }
 
-        return $this->ok(null, 'Ebook deleted');
+            // Cover Image Handling
+            if ($request->hasFile('cover_image')) {
+                $this->safeDelete($ebook->cover_image);
+                $path = $request->file('cover_image')->store('ebooks/covers', 'public');
+                $data['cover_image'] = asset('storage/' . $path);
+            }
+
+            // File Handling
+            if ($request->hasFile('file')) {
+                $this->safeDelete($ebook->file_path);
+                $path = $request->file('file')->store('ebooks/files', 'public');
+                $data['file_path'] = asset('storage/' . $path);
+            }
+
+            DB::transaction(function () use ($ebook, $data) {
+                $ebook->update($data);
+            });
+
+            Log::info("Ebook updated: ID {$ebook->id} by User ID " . auth()->id());
+
+            return ResponseHelper::ok([
+                'redirect' => '/ebooks',
+            ], 'Ebook berhasil diperbarui');
+        } catch (\Throwable $e) {
+            Log::error("Failed to update ebook ID {$ebook->id}: " . $e->getMessage());
+            return ResponseHelper::fail('Gagal memperbarui ebook', null, 500);
+        }
+    }
+
+    /**
+     * API: Delete an ebook.
+     */
+    public function destroy(Ebook $ebook): JsonResponse
+    {
+        $this->authorizeManage();
+
+        try {
+            $ebookId = $ebook->id;
+            $ebookTitle = $ebook->title;
+
+            $this->safeDelete($ebook->cover_image);
+            $this->safeDelete($ebook->file_path);
+
+            DB::transaction(fn () => $ebook->delete());
+
+            Log::info("Ebook deleted: ID {$ebookId} ('{$ebookTitle}') by User ID " . auth()->id());
+
+            return ResponseHelper::ok(null, 'Ebook berhasil dihapus');
+        } catch (\Throwable $e) {
+            Log::error("Failed to delete ebook ID {$ebook->id}: " . $e->getMessage());
+            return ResponseHelper::fail('Gagal menghapus ebook', null, 500);
+        }
+    }
+
+    /**
+     * Safe file deletion from asset URL.
+     */
+    private function safeDelete(?string $url): void
+    {
+        if (!$url) return;
+
+        $path = str_replace(asset('storage/'), '', $url);
+        if (Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
+        }
     }
 }

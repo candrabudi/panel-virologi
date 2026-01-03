@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ResponseHelper;
+use App\Http\Requests\StoreAiChatMessageRequest;
 use App\Models\AiChatMessage;
 use App\Models\AiChatSession;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class AiChatController extends Controller
@@ -15,50 +18,44 @@ class AiChatController extends Controller
         $this->middleware(['auth', 'throttle:60,1']);
     }
 
-    private function ok($data = null, string $message = 'OK', int $code = 200)
+    private function authorizeSession(AiChatSession $session): void
     {
-        return response()->json([
-            'status' => true,
-            'message' => $message,
-            'data' => $data,
-        ], $code);
-    }
-
-    private function fail(string $message = 'Request failed', $errors = null, int $code = 400)
-    {
-        $payload = [
-            'status' => false,
-            'message' => $message,
-        ];
-
-        if (!is_null($errors)) {
-            $payload['errors'] = $errors;
+        if ($session->user_id !== auth()->id()) {
+            Log::warning("Unauthorized chat session access attempt: ID {$session->id} by User ID " . auth()->id());
+            abort(403, 'Forbidden');
         }
-
-        return response()->json($payload, $code);
     }
 
     public function index()
     {
         return view('ai_chat.sessions', [
-            'sessions' => AiChatSession::orderByDesc('last_activity_at')->get(),
+            'sessions' => AiChatSession::where('user_id', auth()->id())
+                ->orderByDesc('last_activity_at')
+                ->get(),
         ]);
     }
 
     public function list(Request $request)
     {
-        $query = AiChatSession::query()->orderByDesc('last_activity_at');
+        $query = AiChatSession::query()
+            ->where('user_id', auth()->id())
+            ->orderByDesc('last_activity_at');
 
         if ($request->filled('q')) {
-            $query->where('title', 'like', '%'.$request->q.'%')
-                  ->orWhere('model', 'like', '%'.$request->q.'%');
+            $q = trim($request->q);
+            $query->where(function ($w) use ($q) {
+                $w->where('title', 'like', '%' . $q . '%')
+                  ->orWhere('model', 'like', '%' . $q . '%');
+            });
         }
 
-        return $this->ok($query->get());
+        return ResponseHelper::ok($query->get());
     }
 
     public function show(AiChatSession $session)
     {
+        $this->authorizeSession($session);
+
         return view('ai_chat.session_detail', [
             'session' => $session->load([
                 'messages' => fn ($q) => $q->orderBy('id'),
@@ -68,7 +65,9 @@ class AiChatController extends Controller
 
     public function detail(AiChatSession $session)
     {
-        return $this->ok([
+        $this->authorizeSession($session);
+
+        return ResponseHelper::ok([
             'session' => [
                 'id' => $session->id,
                 'title' => $session->title,
@@ -80,64 +79,75 @@ class AiChatController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreAiChatMessageRequest $request)
     {
-        $validator = Validator::make($request->all(), [
-            'message' => 'required|string',
-            'session_id' => 'nullable|exists:ai_chat_sessions,id',
-        ]);
+        try {
+            return DB::transaction(function () use ($request) {
+                if ($request->filled('session_id')) {
+                    $session = AiChatSession::where('user_id', auth()->id())
+                        ->findOrFail($request->session_id);
+                } else {
+                    $session = AiChatSession::create([
+                        'user_id'          => auth()->id(),
+                        'title'            => Str::limit($request->message, 50),
+                        'model'            => 'Virologi-o1',
+                        'session_token'    => Str::random(40),
+                        'ip_address'       => $request->ip(),
+                        'user_agent'       => $request->userAgent(),
+                        'last_activity_at' => now(),
+                    ]);
+                    Log::info("Chat session created: ID {$session->id} by User ID " . auth()->id());
+                }
 
-        if ($validator->fails()) {
-            return $this->fail('Validation error', $validator->errors(), 422);
+                $userMessage = AiChatMessage::create([
+                    'session_id' => $session->id,
+                    'role'       => 'user',
+                    'content'    => $request->message,
+                ]);
+
+                // Simulation AI response
+                $aiContent = 'Permintaan Anda sedang diproses oleh Virologi AI.';
+
+                $aiMessage = AiChatMessage::create([
+                    'session_id'      => $session->id,
+                    'role'            => 'assistant',
+                    'content'         => $aiContent,
+                    'response_engine' => 'Virologi-o1',
+                ]);
+
+                $session->update([
+                    'last_activity_at' => now(),
+                ]);
+
+                return ResponseHelper::ok([
+                    'session_id' => $session->id,
+                    'messages'   => [
+                        $userMessage,
+                        $aiMessage,
+                    ],
+                ], 'Message sent', 201);
+            });
+        } catch (\Throwable $e) {
+            Log::error("Failed to process chat: " . $e->getMessage());
+            return ResponseHelper::fail('Gagal memproses pesan chat.', null, 500);
         }
-
-        if ($request->filled('session_id')) {
-            $session = AiChatSession::find($request->session_id);
-        } else {
-            $session = AiChatSession::create([
-                'user_id' => auth()->id(),
-                'title' => Str::limit($request->message, 50),
-                'model' => 'Virologi-o1',
-                'session_token' => Str::random(40),
-                'ip_address' => $request->ip(),
-                'user_agent' => $request->userAgent(),
-                'last_activity_at' => now(),
-            ]);
-        }
-
-        $userMessage = AiChatMessage::create([
-            'session_id' => $session->id,
-            'role' => 'user',
-            'content' => $request->message,
-        ]);
-
-        $aiContent = 'Permintaan Anda sedang diproses oleh Virologi AI.';
-
-        $aiMessage = AiChatMessage::create([
-            'session_id' => $session->id,
-            'role' => 'assistant',
-            'content' => $aiContent,
-            'response_engine' => 'Virologi-o1',
-        ]);
-
-        $session->update([
-            'last_activity_at' => now(),
-        ]);
-
-        return $this->ok([
-            'session_id' => $session->id,
-            'messages' => [
-                $userMessage,
-                $aiMessage,
-            ],
-        ], 'Message sent');
     }
 
     public function destroy(AiChatSession $session)
     {
-        $session->messages()->delete();
-        $session->delete();
+        $this->authorizeSession($session);
 
-        return $this->ok(null, 'Chat session deleted');
+        try {
+            DB::transaction(function () use ($session) {
+                $session->messages()->delete();
+                $session->delete();
+            });
+
+            Log::info("Chat session deleted: ID {$session->id} by User ID " . auth()->id());
+            return ResponseHelper::ok(null, 'Chat session deleted');
+        } catch (\Throwable $e) {
+            Log::error("Failed to delete chat session: " . $e->getMessage());
+            return ResponseHelper::fail('Gagal menghapus sesi chat.', null, 500);
+        }
     }
 }

@@ -2,145 +2,153 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ResponseHelper;
+use App\Http\Requests\StoreCyberSecurityServiceRequest;
 use App\Models\CyberSecurityService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 
 class CyberSecurityServiceController extends Controller
 {
-    private function ok($data = null, string $message = 'OK', int $code = 200)
+    public function __construct()
     {
-        return response()->json([
-            'status' => true,
-            'message' => $message,
-            'data' => $data,
-        ], $code);
+        $this->middleware(['auth', 'throttle:60,1']);
     }
 
-    protected function normalizeJson(Request $request, array $fields): array
+    /**
+     * Consistent authorization check.
+     */
+    private function authorizeManage(): void
     {
-        $payload = $request->all();
+        $user = auth()->user();
 
-        foreach ($fields as $field) {
-            if (isset($payload[$field]) && is_string($payload[$field])) {
-                $payload[$field] = json_decode($payload[$field], true) ?: [];
-            }
+        if ($user && ($user->role === 'admin' || (method_exists($user, 'can') && $user->can('manage-cyber-security')))) {
+            return;
         }
 
-        return $payload;
+        Log::warning("Unauthorized attempt to access Cyber Security Service management by User ID: " . (auth()->id() ?? 'Guest'));
+        abort(403, 'Unauthorized access to cyber security service management');
     }
 
-    public function index()
+    /**
+     * Display the index page.
+     */
+    public function index(): View
     {
+        $this->authorizeManage();
         return view('cyber_security_services.index');
     }
 
-    public function create()
+    /**
+     * Display the creation page.
+     */
+    public function create(): View
     {
+        $this->authorizeManage();
         return view('cyber_security_services.create');
     }
 
-    public function edit(CyberSecurityService $cyberSecurityService)
+    /**
+     * Display the editing page.
+     */
+    public function edit(CyberSecurityService $cyberSecurityService): View
     {
+        $this->authorizeManage();
         return view('cyber_security_services.edit', compact('cyberSecurityService'));
     }
 
-    public function list(Request $request)
+    /**
+     * API: List services with pagination and search.
+     */
+    public function list(Request $request): JsonResponse
     {
+        $this->authorizeManage();
+
         $query = CyberSecurityService::query()->orderByDesc('id');
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where('name', 'like', "%{$search}%")
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
                   ->orWhere('short_name', 'like', "%{$search}%");
+            });
         }
 
-        $perPage = $request->get('per_page', 10);
+        $perPage = (int) $request->get('per_page', 10);
         $services = $query->paginate($perPage);
 
-        return $this->ok($services);
+        return ResponseHelper::ok($services);
     }
 
-    public function store(Request $request)
+    /**
+     * API: Store a new service.
+     */
+    public function store(StoreCyberSecurityServiceRequest $request): JsonResponse
     {
-        $payload = $this->normalizeJson($request, [
-            'service_scope',
-            'deliverables',
-            'target_audience',
-            'ai_keywords',
-            'seo_keywords',
-        ]);
+        $this->authorizeManage();
 
-        $data = validator($payload, [
-            'name' => 'required|string|max:255',
-            'short_name' => 'nullable|string|max:255',
-            'category' => 'required|in:soc,pentest,audit,incident_response,cloud_security,governance,training,consulting',
-            'summary' => 'nullable|string',
-            'description' => 'nullable|string',
-            'service_scope' => 'nullable|array',
-            'deliverables' => 'nullable|array',
-            'target_audience' => 'nullable|array',
-            'ai_keywords' => 'nullable|array',
-            'ai_domain' => 'nullable|string',
-            'is_ai_visible' => 'boolean',
-            'cta_label' => 'nullable|string|max:255',
-            'cta_url' => 'nullable|string|max:255',
-            'seo_title' => 'nullable|string|max:255',
-            'seo_description' => 'nullable|string|max:300',
-            'seo_keywords' => 'nullable|array',
-            'is_active' => 'boolean',
-            'sort_order' => 'nullable|integer|min:0',
-        ])->validate();
+        try {
+            $data = $request->validated();
+            $data['slug'] = Str::slug($data['name']);
 
-        $data['slug'] = Str::slug($data['name']);
+            $service = DB::transaction(function () use ($data) {
+                return CyberSecurityService::create($data);
+            });
 
-        $service = CyberSecurityService::create($data);
+            Log::info("Cyber Security Service created: ID {$service->id} by User ID " . auth()->id());
 
-        return $this->ok($service, 'Layanan berhasil disimpan');
+            return ResponseHelper::ok($service, 'Layanan berhasil disimpan', 201);
+        } catch (\Throwable $e) {
+            Log::error("Failed to create Cyber Security Service: " . $e->getMessage());
+            return ResponseHelper::fail('Gagal menyimpan layanan', null, 500);
+        }
     }
 
-    public function update(Request $request, CyberSecurityService $cyberSecurityService)
+    /**
+     * API: Update an existing service.
+     */
+    public function update(StoreCyberSecurityServiceRequest $request, CyberSecurityService $cyberSecurityService): JsonResponse
     {
-        $payload = $this->normalizeJson($request, [
-            'service_scope',
-            'deliverables',
-            'target_audience',
-            'ai_keywords',
-            'seo_keywords',
-        ]);
+        $this->authorizeManage();
 
-        $data = validator($payload, [
-            'name' => 'required|string|max:255',
-            'short_name' => 'nullable|string|max:255',
-            'category' => 'required|in:soc,pentest,audit,incident_response,cloud_security,governance,training,consulting',
-            'summary' => 'nullable|string',
-            'description' => 'nullable|string',
-            'service_scope' => 'nullable|array',
-            'deliverables' => 'nullable|array',
-            'target_audience' => 'nullable|array',
-            'ai_keywords' => 'nullable|array',
-            'ai_domain' => 'nullable|string',
-            'is_ai_visible' => 'boolean',
-            'cta_label' => 'nullable|string|max:255',
-            'cta_url' => 'nullable|string|max:255',
-            'seo_title' => 'nullable|string|max:255',
-            'seo_description' => 'nullable|string|max:300',
-            'seo_keywords' => 'nullable|array',
-            'is_active' => 'boolean',
-            'sort_order' => 'nullable|integer|min:0',
-        ])->validate();
+        try {
+            $data = $request->validated();
+            $data['slug'] = Str::slug($data['name']);
 
-        $data['slug'] = Str::slug($data['name']);
+            DB::transaction(function () use ($cyberSecurityService, $data) {
+                $cyberSecurityService->update($data);
+            });
 
-        $cyberSecurityService->update($data);
+            Log::info("Cyber Security Service updated: ID {$cyberSecurityService->id} by User ID " . auth()->id());
 
-        return $this->ok($cyberSecurityService, 'Layanan berhasil diperbarui');
+            return ResponseHelper::ok($cyberSecurityService, 'Layanan berhasil diperbarui');
+        } catch (\Throwable $e) {
+            Log::error("Failed to update Cyber Security Service ID {$cyberSecurityService->id}: " . $e->getMessage());
+            return ResponseHelper::fail('Gagal memperbarui layanan', null, 500);
+        }
     }
 
-    public function destroy(CyberSecurityService $cyberSecurityService)
+    /**
+     * API: Delete a service.
+     */
+    public function destroy(CyberSecurityService $cyberSecurityService): JsonResponse
     {
-        $cyberSecurityService->delete();
+        $this->authorizeManage();
 
-        return $this->ok(null, 'Layanan berhasil dihapus');
+        try {
+            $serviceId = $cyberSecurityService->id;
+            DB::transaction(fn () => $cyberSecurityService->delete());
+
+            Log::info("Cyber Security Service deleted: ID {$serviceId} by User ID " . auth()->id());
+
+            return ResponseHelper::ok(null, 'Layanan berhasil dihapus');
+        } catch (\Throwable $e) {
+            Log::error("Failed to delete Cyber Security Service ID {$cyberSecurityService->id}: " . $e->getMessage());
+            return ResponseHelper::fail('Gagal menghapus layanan', null, 500);
+        }
     }
 }

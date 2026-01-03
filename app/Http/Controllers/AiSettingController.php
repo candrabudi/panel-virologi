@@ -2,60 +2,41 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ResponseHelper;
+use App\Http\Requests\StoreAiSettingRequest;
 use App\Models\AiSetting;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
 
 class AiSettingController extends Controller
 {
     public function __construct()
     {
+        // Auth is required, with a tighter throttle for sensitive settings
         $this->middleware(['auth', 'throttle:30,1']);
     }
 
+    /**
+     * Authorization check for AI management.
+     */
     private function authorizeManage(): void
     {
-        if (method_exists(auth()->user(), 'can') && auth()->user()->can('manage-ai')) {
+        $user = auth()->user();
+
+        if ($user && ($user->role === 'admin' || (method_exists($user, 'can') && $user->can('manage-ai')))) {
             return;
         }
 
-        if (Auth::user()->role === 'admin') {
-            return;
-        }
-
-        abort(403, 'Forbidden');
-    }
-
-    private function ok($data = null, string $message = 'OK', int $code = 200)
-    {
-        return response()->json([
-            'status' => true,
-            'message' => $message,
-            'data' => $data,
-        ], $code);
-    }
-
-    private function fail(string $message = 'Request failed', $errors = null, int $code = 400)
-    {
-        $payload = [
-            'status' => false,
-            'message' => $message,
-        ];
-
-        if (!is_null($errors)) {
-            $payload['errors'] = $errors;
-        }
-
-        return response()->json($payload, $code);
+        Log::warning("Unauthorized attempt to access AI settings by User ID: " . (auth()->id() ?? 'Guest'));
+        abort(403, 'Unauthorized access to AI settings');
     }
 
     /**
-     * PAGE.
+     * Display the AI settings page.
      */
-    public function index()
+    public function index(): View
     {
         $this->authorizeManage();
 
@@ -77,55 +58,40 @@ class AiSettingController extends Controller
     }
 
     /**
-     * STORE / UPDATE (singleton).
+     * Update or create the singleton AI setting.
      */
-    public function store(Request $request)
+    public function store(StoreAiSettingRequest $request): JsonResponse
     {
-        $this->authorizeManage();
-
-        $validator = Validator::make($request->all(), [
-            'provider' => [
-                'required',
-                'string',
-                Rule::in(['openai', 'azure', 'custom']),
-            ],
-            'base_url' => ['nullable', 'string', 'max:255'],
-            'api_key' => ['nullable', 'string', 'max:255'],
-            'model' => ['required', 'string', 'max:100'],
-            'temperature' => ['required', 'numeric', 'min:0', 'max:2'],
-            'max_tokens' => ['required', 'integer', 'min:1', 'max:8192'],
-            'timeout' => ['required', 'integer', 'min:1', 'max:120'],
-            'is_active' => ['required', Rule::in(['0', '1'])],
-            'cybersecurity_only' => ['required', Rule::in(['0', '1'])],
-        ]);
-
-        if ($validator->fails()) {
-            return $this->fail('Validation error', $validator->errors(), 422);
-        }
-
         try {
             DB::transaction(function () use ($request) {
-                AiSetting::updateOrCreate(
-                    ['id' => 1],
-                    [
-                        'provider' => $request->provider,
-                        'base_url' => $request->base_url,
-                        'api_key' => $request->filled('api_key')
-                            ? $request->api_key
-                            : AiSetting::value('api_key'),
-                        'model' => $request->model,
-                        'temperature' => $request->temperature,
-                        'max_tokens' => $request->max_tokens,
-                        'timeout' => $request->timeout,
-                        'is_active' => (int) $request->is_active === 1,
-                        'cybersecurity_only' => (int) $request->cybersecurity_only === 1,
-                    ]
-                );
+                $setting = AiSetting::first();
+                
+                $data = [
+                    'provider'           => $request->provider,
+                    'base_url'           => $request->base_url,
+                    'model'              => $request->model,
+                    'temperature'        => $request->temperature,
+                    'max_tokens'         => $request->max_tokens,
+                    'timeout'            => $request->timeout,
+                    'is_active'          => filter_var($request->is_active, FILTER_VALIDATE_BOOLEAN),
+                    'cybersecurity_only' => filter_var($request->cybersecurity_only, FILTER_VALIDATE_BOOLEAN),
+                ];
+
+                // Only update API key if provided to prevent accidental deletion
+                if ($request->filled('api_key')) {
+                    $data['api_key'] = $request->api_key;
+                    Log::info("AI API Key updated by User ID: " . auth()->id());
+                }
+
+                AiSetting::updateOrCreate(['id' => 1], $data);
             });
 
-            return $this->ok(null, 'AI setting saved');
+            Log::info("AI settings updated by User ID: " . auth()->id());
+
+            return ResponseHelper::ok(null, 'Konfigurasi AI berhasil disimpan');
         } catch (\Throwable $e) {
-            return $this->fail('Request failed', null, 500);
+            Log::error("Failed to save AI settings: " . $e->getMessage());
+            return ResponseHelper::fail('Gagal menyimpan konfigurasi AI', null, 500);
         }
     }
 }

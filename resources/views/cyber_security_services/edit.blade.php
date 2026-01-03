@@ -170,27 +170,49 @@
         axios.defaults.headers.common['X-CSRF-TOKEN'] =
             document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
-        tinymce.init({
+         tinymce.init({
             selector: '#content-editor',
-            plugins: 'advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime table help wordcount',
-            toolbar: 'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image | removeformat | help',
-            menubar: 'file edit view insert format tools help',
             height: 500,
-            skin: 'oxide',
-            content_css: 'default',
+
+            plugins: [
+                'advlist', 'autolink', 'lists', 'link', 'image',
+                'charmap', 'preview', 'anchor', 'searchreplace',
+                'visualblocks', 'code', 'fullscreen',
+                'insertdatetime', 'table', 'help', 'wordcount'
+            ],
+
+            toolbar: `
+            undo redo |
+            formatselect |
+            bold italic underline backcolor |
+            alignleft aligncenter alignright alignjustify |
+            bullist numlist outdent indent |
+            link image |
+            removeformat | help
+        `,
+
             automatic_uploads: true,
+
+            /* 🔥 INI KUNCI UTAMA */
+            relative_urls: false,
+            remove_script_host: false,
+            convert_urls: false,
+
             images_upload_handler: function(blobInfo) {
                 return new Promise((resolve, reject) => {
-                    const fd = new FormData();
-                    fd.append('file', blobInfo.blob());
+                    const fd = new FormData()
+                    fd.append('file', blobInfo.blob())
 
                     axios.post('/upload-image', fd)
                         .then(res => {
-                            if (res.data.location) resolve(res.data.location);
-                            else reject('Upload gagal');
+                            if (res.data.location) {
+                                resolve(res.data.location)
+                            } else {
+                                reject('Upload gagal')
+                            }
                         })
-                        .catch(() => reject('Upload error'));
-                });
+                        .catch(() => reject('Upload error'))
+                })
             }
         });
 

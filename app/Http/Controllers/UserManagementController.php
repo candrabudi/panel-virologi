@@ -2,14 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ResponseHelper;
+use App\Http\Requests\StoreUserRequest;
 use App\Models\User;
 use App\Models\UserDetail;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
 
 class UserManagementController extends Controller
 {
@@ -18,60 +20,44 @@ class UserManagementController extends Controller
         $this->middleware(['auth', 'throttle:60,1']);
     }
 
+    /**
+     * Consistent authorization check.
+     */
     private function authorizeManage(): void
     {
-        if (method_exists(auth()->user(), 'can') && auth()->user()->can('manage-user')) {
+        $user = auth()->user();
+
+        if ($user && ($user->role === 'admin' || (method_exists($user, 'can') && $user->can('manage-user')))) {
             return;
         }
 
-        if (auth()->user()->role === 'admin') {
-            return;
-        }
-
-        abort(403, 'Forbidden');
+        Log::warning("Unauthorized attempt to manage users by User ID: " . (auth()->id() ?? 'Guest'));
+        abort(403, 'Unauthorized access to user management');
     }
 
-    private function ok($data = null, string $message = 'OK', int $code = 200)
-    {
-        return response()->json([
-            'status' => true,
-            'message' => $message,
-            'data' => $data,
-        ], $code);
-    }
-
-    private function fail(string $message = 'Request failed', $errors = null, int $code = 400)
-    {
-        $payload = [
-            'status' => false,
-            'message' => $message,
-        ];
-
-        if (!is_null($errors)) {
-            $payload['errors'] = $errors;
-        }
-
-        return response()->json($payload, $code);
-    }
-
-    public function index()
+    /**
+     * Display the index page (Blade).
+     */
+    public function index(): View
     {
         $this->authorizeManage();
-
         return view('users.index');
     }
 
-    public function list(Request $request)
+    /**
+     * API: List users with pagination and search.
+     */
+    public function list(Request $request): JsonResponse
     {
         $this->authorizeManage();
 
-        $query = User::with('detail')
-            ->orderByDesc('id');
+        $query = User::with('detail')->orderByDesc('id');
 
         if ($request->filled('q')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('username', 'like', '%'.$request->q.'%')
-                  ->orWhere('email', 'like', '%'.$request->q.'%');
+            $search = $request->q;
+            $query->where(function ($q) use ($search) {
+                $q->where('username', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%");
             });
         }
 
@@ -83,145 +69,135 @@ class UserManagementController extends Controller
             $query->where('status', $request->status);
         }
 
-        return $this->ok(
-            $query->paginate(10)
-        );
+        return ResponseHelper::ok($query->paginate(10));
     }
 
-    public function create()
+    /**
+     * Display creation form.
+     */
+    public function create(): View
     {
         $this->authorizeManage();
-
-        return view('users.create', [
-            'user' => null,
-        ]);
+        return view('users.create', ['user' => null]);
     }
 
-    public function edit(User $user)
+    /**
+     * Display editing form.
+     */
+    public function edit(User $user): View
     {
         $this->authorizeManage();
-
         $user->load('detail');
-
-        return view('users.edit', [
-            'user' => $user,
-        ]);
+        return view('users.edit', ['user' => $user]);
     }
 
-    public function store(Request $request)
+    /**
+     * API: Store a new user.
+     */
+    public function store(StoreUserRequest $request): JsonResponse
     {
+        // Authorization is handled by StoreUserRequest
         $this->authorizeManage();
-
-        $validator = Validator::make($request->all(), [
-            'username' => 'required|string|max:100|unique:users,username',
-            'email' => 'required|email|max:150|unique:users,email',
-            'password' => 'required|string|min:6',
-            'role' => ['required', Rule::in(['admin', 'editor', 'user'])],
-            'status' => ['required', Rule::in(['active', 'inactive', 'blocked'])],
-            'full_name' => 'required|string|max:150',
-            'phone_number' => 'nullable|string|max:20',
-        ]);
-
-        if ($validator->fails()) {
-            return $this->fail('Validation error', $validator->errors(), 422);
-        }
-
-        DB::transaction(function () use ($request) {
-            $user = User::create([
-                'username' => trim($request->username),
-                'email' => trim($request->email),
-                'password' => Hash::make($request->password),
-                'role' => $request->role,
-                'status' => $request->status,
-            ]);
-
-            UserDetail::create([
-                'user_id' => $user->id,
-                'full_name' => trim($request->full_name),
-                'phone_number' => $request->phone_number,
-            ]);
-        });
-
-        return $this->ok([
-            'redirect' => '/users',
-        ], 'Pengguna berhasil dibuat');
-    }
-
-    public function update(Request $request, User $user)
-    {
-        $this->authorizeManage();
-
-        $userKey = $user->getKey();
-        $userKeyName = $user->getKeyName();
-
-        $validator = Validator::make($request->all(), [
-            'username' => [
-                'required',
-                'string',
-                'max:100',
-                Rule::unique('users', 'username')
-                    ->ignore($userKey, $userKeyName),
-            ],
-            'email' => [
-                'required',
-                'email',
-                'max:150',
-                Rule::unique('users', 'email')
-                    ->ignore($userKey, $userKeyName),
-            ],
-            'password' => 'nullable|string|min:6',
-            'role' => ['required', Rule::in(['admin', 'editor', 'user'])],
-            'status' => ['required', Rule::in(['active', 'inactive', 'blocked'])],
-            'full_name' => 'required|string|max:150',
-            'phone_number' => 'nullable|string|max:20',
-        ]);
-
-        if ($validator->fails()) {
-            return $this->fail('Validation error', $validator->errors(), 422);
-        }
 
         try {
-            DB::transaction(function () use ($request, $user) {
-                $data = [
-                    'username' => trim($request->username),
-                    'email' => trim($request->email),
-                    'role' => $request->role,
-                    'status' => $request->status,
+            $data = $request->validated();
+            
+            DB::transaction(function () use ($data) {
+                $user = User::create([
+                    'username' => $data['username'],
+                    'email'    => $data['email'],
+                    'password' => Hash::make($data['password']),
+                    'role'     => $data['role'],
+                    'status'   => $data['status'],
+                ]);
+
+                UserDetail::create([
+                    'user_id'      => $user->id,
+                    'full_name'    => $data['full_name'],
+                    'phone_number' => $data['phone_number'] ?? null,
+                ]);
+
+                Log::info("User created: ID {$user->id} ('{$user->username}') by User ID " . auth()->id());
+            });
+
+            return ResponseHelper::ok([
+                'redirect' => '/users',
+            ], 'Pengguna berhasil dibuat', 201);
+        } catch (\Throwable $e) {
+            Log::error("Failed to create user: " . $e->getMessage());
+            return ResponseHelper::fail('Gagal membuat pengguna', null, 500);
+        }
+    }
+
+    /**
+     * API: Update an existing user.
+     */
+    public function update(StoreUserRequest $request, User $user): JsonResponse
+    {
+        // Authorization is handled by StoreUserRequest
+        $this->authorizeManage();
+
+        try {
+            $data = $request->validated();
+
+            DB::transaction(function () use ($request, $user, $data) {
+                $userData = [
+                    'username' => $data['username'],
+                    'email'    => $data['email'],
+                    'role'     => $data['role'],
+                    'status'   => $data['status'],
                 ];
 
                 if ($request->filled('password')) {
-                    $data['password'] = Hash::make($request->password);
+                    $userData['password'] = Hash::make($data['password']);
                 }
 
-                $user->update($data);
+                $user->update($userData);
 
                 $user->detail()->updateOrCreate(
-                    ['user_id' => $user->getKey()],
+                    ['user_id' => $user->id],
                     [
-                        'full_name' => trim($request->full_name),
-                        'phone_number' => $request->phone_number,
+                        'full_name'    => $data['full_name'],
+                        'phone_number' => $data['phone_number'] ?? null,
                     ]
                 );
+
+                Log::info("User updated: ID {$user->id} by User ID " . auth()->id());
             });
 
-            return $this->ok([
+            return ResponseHelper::ok([
                 'redirect' => '/users',
-            ], 'Pengguna berhasil dirubah');
+            ], 'Pengguna berhasil diperbarui');
         } catch (\Throwable $e) {
-            return $this->fail('Failed to update user', null, 500);
+            Log::error("Failed to update user ID {$user->id}: " . $e->getMessage());
+            return ResponseHelper::fail('Gagal memperbarui pengguna', null, 500);
         }
     }
 
-    public function destroy(User $user)
+    /**
+     * API: Delete a user.
+     */
+    public function destroy(User $user): JsonResponse
     {
         $this->authorizeManage();
 
-        if ($user->id === Auth::id()) {
-            return $this->fail('Cannot delete your own account', null, 403);
+        if ($user->id === auth()->id()) {
+            Log::warning("Self-deletion attempt blocked for User ID: " . $user->id);
+            return ResponseHelper::fail('Tidak dapat menghapus akun Anda sendiri', null, 403);
         }
 
-        DB::transaction(fn () => $user->delete());
+        try {
+            $userId = $user->id;
+            $username = $user->username;
 
-        return $this->ok(null, 'User deleted');
+            DB::transaction(fn () => $user->delete());
+
+            Log::info("User deleted: ID {$userId} ('{$username}') by User ID " . auth()->id());
+
+            return ResponseHelper::ok(null, 'Pengguna berhasil dihapus');
+        } catch (\Throwable $e) {
+            Log::error("Failed to delete user ID {$user->id}: " . $e->getMessage());
+            return ResponseHelper::fail('Gagal menghapus pengguna', null, 500);
+        }
     }
 }

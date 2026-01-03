@@ -2,36 +2,43 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ResponseHelper;
 use App\Models\Otp;
 use App\Models\User;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 
 class AuthController extends Controller
 {
+    /**
+     * Show the login view.
+     */
     public function showLogin()
     {
         return view('auth.login');
     }
 
-    public function login(Request $request)
+    /**
+     * Step 1: Validate credentials and prepare for OTP.
+     */
+    public function login(Request $request): JsonResponse
     {
         $request->validate([
             'identity' => 'required|string',
             'password' => 'required|string',
         ]);
 
-        $ipKey = 'login-ip:'.$request->ip();
+        $ipKey = 'login-ip:' . $request->ip();
         if (RateLimiter::tooManyAttempts($ipKey, 10)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Terlalu banyak percobaan login, silakan tunggu sebentar',
-            ], 429);
+            Log::warning('Brute force attempt detected on IP: ' . $request->ip());
+            return ResponseHelper::fail('Terlalu banyak percobaan login, silakan tunggu sebentar', null, 429);
         }
         RateLimiter::hit($ipKey, 60);
 
@@ -46,31 +53,35 @@ class AuthController extends Controller
             ->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Username, email, atau kata sandi tidak valid',
-            ], 401);
+            Log::info('Failed login attempt for identity: ' . $identity . ' from IP: ' . $request->ip());
+            return ResponseHelper::fail('Username, email, atau kata sandi tidak valid', null, 401);
         }
+
+        // Regenerate session to prevent fixation and fixation during 2FA
+        $request->session()->regenerate();
 
         session([
             'step1_user_id' => $user->id,
+            'step1_user_ip' => $request->ip(), // Bind user id to IP for security
         ]);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Kredensial valid',
-        ]);
+        Log::info('Successful Step 1 login for User ID: ' . $user->id);
+
+        return ResponseHelper::ok(null, 'Kredensial valid, silakan verifikasi OTP');
     }
 
-    public function sendOtp(Request $request)
+    /**
+     * Send OTP to the user's email.
+     */
+    public function sendOtp(Request $request): JsonResponse
     {
         $userId = session('step1_user_id');
+        $sessionIp = session('step1_user_ip');
 
-        if (!$userId) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Sesi login telah berakhir, silakan login ulang',
-            ], 419);
+        // Verify session and it belongs to the same requester IP
+        if (!$userId || $sessionIp !== $request->ip()) {
+            Log::warning('OTP request from invalid session or IP mismatch. IP: ' . $request->ip());
+            return ResponseHelper::fail('Sesi login telah berakhir, silakan login ulang', null, 419);
         }
 
         $user = User::where('id', $userId)
@@ -79,24 +90,19 @@ class AuthController extends Controller
             ->first();
 
         if (!$user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Akses ditolak',
-            ], 403);
+            return ResponseHelper::fail('Akses ditolak', null, 403);
         }
 
-        $otpKey = 'otp-send-user:'.$user->id;
+        $otpKey = 'otp-send-user:' . $user->id;
         if (RateLimiter::tooManyAttempts($otpKey, 5)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Terlalu sering meminta OTP, silakan tunggu',
-            ], 429);
+            return ResponseHelper::fail('Terlalu sering meminta OTP, silakan tunggu', null, 429);
         }
         RateLimiter::hit($otpKey, 60);
 
         $otp = (string) random_int(100000, 999999);
         $expiresAt = Carbon::now()->addMinutes(5);
 
+        // Invalidate previous unused OTPs
         Otp::where('user_id', $user->id)
             ->where('purpose', 'login')
             ->whereNull('verified_at')
@@ -112,62 +118,57 @@ class AuthController extends Controller
             'user_agent' => Str::limit($request->userAgent(), 255),
         ]);
 
-        $body =
-            "Halo {$user->username}\n\n".
-            "Kode OTP Login Panel Virologi:\n\n".
-            "{$otp}\n\n".
-            "Berlaku sampai {$expiresAt->format('Y-m-d H:i:s')} WIB\n\n".
-            'Jika ini bukan Anda, abaikan email ini.';
+        $body = "Halo {$user->username}\n\n" .
+                "Kode OTP Login Panel Virologi:\n\n" .
+                "{$otp}\n\n" .
+                "Berlaku sampai {$expiresAt->format('Y-m-d H:i:s')} WIB\n\n" .
+                "Jika ini bukan Anda, segera amankan akun Anda.";
 
         Mail::raw($body, function ($message) use ($user) {
             $message->to($user->email)->subject('Kode OTP Login Panel Virologi');
         });
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Kode OTP telah dikirim ke email Anda',
-        ]);
+        Log::info('OTP sent to email for User ID: ' . $user->id);
+
+        return ResponseHelper::ok(null, 'Kode OTP telah dikirim ke email Anda');
     }
 
-    public function verifyOtp(Request $request)
+    /**
+     * Step 2: Verify OTP and complete login.
+     */
+    public function verifyOtp(Request $request): JsonResponse
     {
         $request->validate([
             'otp' => 'required|digits:6',
         ]);
 
         $userId = session('step1_user_id');
+        $sessionIp = session('step1_user_ip');
 
-        if (!$userId) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Sesi login telah berakhir, silakan login ulang',
-            ], 419);
+        if (!$userId || $sessionIp !== $request->ip()) {
+            return ResponseHelper::fail('Sesi login telah berakhir, silakan login ulang', null, 419);
         }
 
-        $verifyKey = 'otp-verify-user:'.$userId;
+        $verifyKey = 'otp-verify-user:' . $userId;
         if (RateLimiter::tooManyAttempts($verifyKey, 8)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Terlalu banyak percobaan OTP, silakan tunggu',
-            ], 429);
+            Log::warning('Too many OTP verification attempts for User ID: ' . $userId);
+            return ResponseHelper::fail('Terlalu banyak percobaan OTP, silakan tunggu', null, 429);
         }
         RateLimiter::hit($verifyKey, 60);
 
-        $otp = Otp::where('user_id', $userId)
+        $otpRecord = Otp::where('user_id', $userId)
             ->where('purpose', 'login')
             ->whereNull('verified_at')
             ->where('expires_at', '>', Carbon::now())
             ->latest()
             ->first();
 
-        if (!$otp || !password_verify($request->otp, $otp->code_hash)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Kode OTP salah atau sudah kedaluwarsa',
-            ], 401);
+        if (!$otpRecord || !password_verify($request->otp, $otpRecord->code_hash)) {
+            Log::info('Failed OTP verification for User ID: ' . $userId);
+            return ResponseHelper::fail('Kode OTP salah atau sudah kedaluwarsa', null, 401);
         }
 
-        $otp->update([
+        $otpRecord->update([
             'verified_at' => Carbon::now(),
         ]);
 
@@ -176,6 +177,7 @@ class AuthController extends Controller
             ->where('status', 'active')
             ->firstOrFail();
 
+        // Final authentication step
         Auth::login($user, true);
         $request->session()->regenerate();
 
@@ -183,24 +185,26 @@ class AuthController extends Controller
             'last_login_at' => Carbon::now(),
         ]);
 
-        session()->forget('step1_user_id');
+        // Cleanup temporary session data
+        session()->forget(['step1_user_id', 'step1_user_ip']);
         RateLimiter::clear($verifyKey);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Login berhasil',
-        ]);
+        Log::info('Successful full login (including OTP) for User ID: ' . $user->id);
+
+        return ResponseHelper::ok(null, 'Login berhasil');
     }
 
-    public function logout(Request $request)
+    /**
+     * Log out the user.
+     */
+    public function logout(Request $request): JsonResponse
     {
+        Log::info('User logged out: ' . (auth()->id() ?? 'Unknown'));
+
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Berhasil logout',
-        ]);
+        return ResponseHelper::ok(null, 'Berhasil logout');
     }
 }

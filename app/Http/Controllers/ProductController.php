@@ -2,198 +2,208 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ResponseHelper;
+use App\Http\Requests\StoreProductRequest;
 use App\Models\Product;
 use App\Models\ProductImage;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Illuminate\View\View;
 
 class ProductController extends Controller
 {
-    public function index()
+    public function __construct()
     {
+        $this->middleware(['auth', 'throttle:60,1']);
+    }
+
+    /**
+     * Consistent authorization check.
+     */
+    private function authorizeManage(): void
+    {
+        $user = auth()->user();
+
+        if ($user && ($user->role === 'admin' || (method_exists($user, 'can') && $user->can('manage-product')))) {
+            return;
+        }
+
+        Log::warning("Unauthorized attempt to manage products by User ID: " . (auth()->id() ?? 'Guest'));
+        abort(403, 'Unauthorized access to product management');
+    }
+
+    /**
+     * Display the index page (Blade).
+     */
+    public function index(): View
+    {
+        $this->authorizeManage();
         return view('products.index');
     }
 
-    public function create()
+    /**
+     * Display creation form.
+     */
+    public function create(): View
     {
+        $this->authorizeManage();
         return view('products.create');
     }
 
-    public function edit(Product $product)
+    /**
+     * Display editing form.
+     */
+    public function edit(Product $product): View
     {
+        $this->authorizeManage();
         $product->load('images');
-
         return view('products.edit', compact('product'));
     }
 
-    private function ok($data = null, string $message = 'OK', int $code = 200)
+    /**
+     * API: List products with pagination and search.
+     */
+    public function list(Request $request): JsonResponse
     {
-        return response()->json([
-            'status' => true,
-            'message' => $message,
-            'data' => $data,
-        ], $code);
-    }
+        $this->authorizeManage();
 
-    public function list(Request $request)
-    {
         $query = Product::query()->orderByDesc('id');
 
-        // Search by name (bisa diganti field lain sesuai kebutuhan)
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where('name', 'like', "%{$search}%");
+            $query->where('name', 'like', "%{$search}%")
+                  ->orWhere('subtitle', 'like', "%{$search}%");
         }
 
-        // Pagination
         $perPage = $request->get('per_page', 10);
-        $products = $query->paginate($perPage);
-
-        return $this->ok($products);
+        return ResponseHelper::ok($query->paginate($perPage));
     }
 
-    public function store(Request $request)
+    /**
+     * API: Store a new product.
+     */
+    public function store(StoreProductRequest $request): JsonResponse
     {
-        $payload = $request->all();
+        // Authorization is handled by StoreProductRequest
+        $this->authorizeManage();
 
-        foreach (['ai_keywords', 'ai_intents', 'ai_use_cases', 'seo_keywords'] as $field) {
-            if (isset($payload[$field]) && is_string($payload[$field])) {
-                $payload[$field] = json_decode($payload[$field], true) ?: [];
-            }
+        try {
+            $data = $request->validated();
+            $data['slug'] = Str::slug($data['product_name']);
+            $data['name'] = $data['product_name'];
+
+            $product = DB::transaction(function () use ($request, $data) {
+                if ($request->hasFile('thumbnail')) {
+                    $path = $request->file('thumbnail')->store('products', 'public');
+                    $data['thumbnail'] = asset('storage/' . $path);
+                }
+
+                $product = Product::create($data);
+
+                if ($request->hasFile('images')) {
+                    foreach ($request->file('images') as $i => $img) {
+                        $path = $img->store('products/gallery', 'public');
+                        ProductImage::create([
+                            'product_id' => $product->id,
+                            'image_path' => asset('storage/' . $path),
+                            'is_primary' => $i === 0,
+                        ]);
+                    }
+                }
+
+                return $product;
+            });
+
+            Log::info("Product created: ID {$product->id} ('{$product->name}') by User ID " . auth()->id());
+
+            return ResponseHelper::ok([
+                'id' => $product->id,
+            ], 'Produk berhasil disimpan', 201);
+        } catch (\Throwable $e) {
+            Log::error("Failed to create product: " . $e->getMessage());
+            return ResponseHelper::fail('Gagal membuat produk', null, 500);
         }
-
-        $data = validator($payload, [
-            'product_name' => 'required|string|max:255',
-            'subtitle' => 'nullable|string|max:255',
-            'summary' => 'nullable|string',
-            'content' => 'nullable|string',
-
-            'product_type' => 'required|in:digital,hardware,service,bundle',
-            'ai_domain' => 'nullable|string',
-            'ai_level' => 'nullable|string',
-
-            'ai_keywords' => 'nullable|array',
-            'ai_intents' => 'nullable|array',
-            'ai_use_cases' => 'nullable|array',
-
-            'ai_priority' => 'nullable|integer|min:0',
-            'is_ai_visible' => 'boolean',
-            'is_ai_recommended' => 'boolean',
-
-            'cta_label' => 'nullable|string|max:255',
-            'cta_url' => 'nullable|string|max:255',
-            'cta_type' => 'nullable|string',
-
-            'thumbnail' => 'nullable|image|max:2048',
-            'images.*' => 'nullable|image|max:4096',
-
-            'seo_title' => 'nullable|string|max:255',
-            'seo_description' => 'nullable|string|max:300',
-            'seo_keywords' => 'nullable|array',
-            'canonical_url' => 'nullable|string|max:255',
-        ])->validate();
-
-        $data['slug'] = \Str::slug($data['product_name']);
-        $data['name'] = $data['product_name'];
-
-        if ($request->hasFile('thumbnail')) {
-            $data['thumbnail'] = asset('storage/'.$request->file('thumbnail')->store('products', 'public'));
-        }
-
-        $product = Product::create($data);
-
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $i => $img) {
-                ProductImage::create([
-                    'product_id' => $product->id,
-                    'image_path' => asset('storage/'.$img->store('products/gallery', 'public')),
-                    'is_primary' => $i === 0,
-                ]);
-            }
-        }
-
-        // Response disesuaikan untuk showToast()
-        return response()->json([
-            'status' => true,
-            'message' => 'Produk berhasil disimpan',
-        ]);
     }
 
-    public function update(Request $request, Product $product)
+    /**
+     * API: Update an existing product.
+     */
+    public function update(StoreProductRequest $request, Product $product): JsonResponse
     {
-        $payload = $request->all();
+        // Authorization is handled by StoreProductRequest
+        $this->authorizeManage();
 
-        foreach (['ai_keywords', 'ai_intents', 'ai_use_cases', 'seo_keywords'] as $field) {
-            if (isset($payload[$field]) && is_string($payload[$field])) {
-                $payload[$field] = json_decode($payload[$field], true) ?: [];
-            }
+        try {
+            $data = $request->validated();
+            $data['slug'] = Str::slug($data['product_name']);
+            $data['name'] = $data['product_name'];
+
+            DB::transaction(function () use ($request, $product, $data) {
+                if ($request->hasFile('thumbnail')) {
+                    // Delete old thumbnail if exists
+                    if ($product->thumbnail) {
+                        $oldPath = str_replace(asset('storage/'), '', $product->thumbnail);
+                        Storage::disk('public')->delete($oldPath);
+                    }
+                    $path = $request->file('thumbnail')->store('products', 'public');
+                    $data['thumbnail'] = asset('storage/' . $path);
+                }
+
+                $product->update($data);
+                
+                // Note: Gallery update logic usually handled separately or via another endpoint
+                // if needed to add images during update, but here we just follow the controller update scope.
+            });
+
+            Log::info("Product updated: ID {$product->id} by User ID " . auth()->id());
+
+            return ResponseHelper::ok(null, 'Produk berhasil diperbarui');
+        } catch (\Throwable $e) {
+            Log::error("Failed to update product ID {$product->id}: " . $e->getMessage());
+            return ResponseHelper::fail('Gagal memperbarui produk', null, 500);
         }
-
-        $data = validator($payload, [
-            'product_name' => 'required|string|max:255',
-            'subtitle' => 'nullable|string|max:255',
-            'summary' => 'nullable|string',
-            'content' => 'nullable|string',
-
-            'product_type' => 'required|in:digital,hardware,service,bundle',
-            'ai_domain' => 'nullable|string',
-            'ai_level' => 'nullable|string',
-
-            'ai_keywords' => 'nullable|array',
-            'ai_intents' => 'nullable|array',
-            'ai_use_cases' => 'nullable|array',
-
-            'ai_priority' => 'nullable|integer|min:0',
-            'is_ai_visible' => 'boolean',
-            'is_ai_recommended' => 'boolean',
-
-            'cta_label' => 'nullable|string|max:255',
-            'cta_url' => 'nullable|string|max:255',
-            'cta_type' => 'nullable|string',
-
-            'thumbnail' => 'nullable|image|max:2048',
-            'images.*' => 'nullable|image|max:4096',
-
-            'seo_title' => 'nullable|string|max:255',
-            'seo_description' => 'nullable|string|max:300',
-            'seo_keywords' => 'nullable|array',
-            'canonical_url' => 'nullable|string|max:255',
-        ])->validate();
-
-        $data['slug'] = \Str::slug($data['product_name']);
-        $data['name'] = $data['product_name'];
-
-        if ($request->hasFile('thumbnail')) {
-            if ($product->thumbnail) {
-                \Storage::disk('public')->delete(str_replace(asset('storage/'), '', $product->thumbnail));
-            }
-            $data['thumbnail'] = asset('storage/'.$request->file('thumbnail')->store('products', 'public'));
-        }
-
-        $product->update($data);
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Produk berhasil diperbarui',
-        ]);
     }
 
-    public function destroy(Product $product)
+    /**
+     * API: Delete a product.
+     */
+    public function destroy(Product $product): JsonResponse
     {
-        if ($product->thumbnail) {
-            \Storage::disk('public')->delete(str_replace(asset('storage/'), '', $product->thumbnail));
+        $this->authorizeManage();
+
+        try {
+            $productId = $product->id;
+            $productName = $product->name;
+
+            DB::transaction(function () use ($product) {
+                // Delete thumbnail
+                if ($product->thumbnail) {
+                    $oldPath = str_replace(asset('storage/'), '', $product->thumbnail);
+                    Storage::disk('public')->delete($oldPath);
+                }
+
+                // Delete gallery images
+                foreach ($product->images as $img) {
+                    $oldPath = str_replace(asset('storage/'), '', $img->image_path);
+                    Storage::disk('public')->delete($oldPath);
+                    $img->delete();
+                }
+
+                $product->delete();
+            });
+
+            Log::info("Product deleted: ID {$productId} ('{$productName}') by User ID " . auth()->id());
+
+            return ResponseHelper::ok([
+                'redirect' => route('products.index'),
+            ], 'Produk berhasil dihapus');
+        } catch (\Throwable $e) {
+            Log::error("Failed to delete product ID {$product->id}: " . $e->getMessage());
+            return ResponseHelper::fail('Gagal menghapus produk', null, 500);
         }
-
-        foreach ($product->images as $img) {
-            \Storage::disk('public')->delete(str_replace(asset('storage/'), '', $img->image_path));
-            $img->delete();
-        }
-
-        $product->delete();
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Produk berhasil dihapus',
-            'redirect' => route('products.index'),
-        ]);
     }
 }

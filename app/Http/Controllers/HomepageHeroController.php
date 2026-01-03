@@ -2,229 +2,103 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ResponseHelper;
+use App\Http\Requests\StoreHomepageHeroRequest;
 use App\Models\HomepageHero;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
 
 class HomepageHeroController extends Controller
 {
-    /**
-     * Field yang BOLEH diterima (whitelist).
-     */
-    private const ALLOWED_FIELDS = [
-        '_token',
-        'pre_title',
-        'title',
-        'subtitle',
-        'primary_button_text',
-        'primary_button_url',
-        'secondary_button_text',
-        'secondary_button_url',
-        'is_active',
-    ];
-
-    /**
-     * Field yang WAJIB ada.
-     */
-    private const REQUIRED_FIELDS = [
-        '_token',
-        'pre_title',
-        'title',
-        'subtitle',
-        'primary_button_text',
-        'primary_button_url',
-        'secondary_button_text',
-        'secondary_button_url',
-        'is_active',
-    ];
-
-    /**
-     * ==================================================
-     * INDEX (Blade CMS)
-     * ==================================================.
-     */
-    public function index()
+    public function __construct()
     {
-        if (!Auth::check()) {
-            abort(401);
+        $this->middleware(['auth', 'throttle:60,1']);
+    }
+
+    /**
+     * Consistent authorization check.
+     */
+    private function authorizeManage(): void
+    {
+        $user = auth()->user();
+
+        if ($user && ($user->role === 'admin' || (method_exists($user, 'can') && $user->can('manage-cms')))) {
+            return;
         }
 
+        Log::warning("Unauthorized attempt to manage homepage hero by User ID: " . (auth()->id() ?? 'Guest'));
+        abort(403, 'Unauthorized access to homepage CMS management');
+    }
+
+    /**
+     * Display the index page (Blade).
+     */
+    public function index(): View
+    {
+        $this->authorizeManage();
         return view('homepage_hero.index');
     }
 
     /**
-     * ==================================================
-     * SHOW (JSON – fetch current hero)
-     * ==================================================.
+     * API: Get the current active hero or latest one.
      */
-    public function show()
+    public function show(): JsonResponse
     {
-        if (!Auth::check()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Unauthenticated',
-            ], 401);
-        }
+        $this->authorizeManage();
 
-        $hero = HomepageHero::latest()->first();
+        $hero = HomepageHero::where('is_active', 1)->latest()->first() 
+                ?? HomepageHero::latest()->first();
 
         if (!$hero) {
-            return response()->json([
-                'status' => true,
-                'message' => 'No hero configured',
-                'data' => null,
-            ]);
+            return ResponseHelper::ok(null, 'Belum ada konfigurasi hero');
         }
 
-        return response()->json([
-            'status' => true,
-            'message' => 'OK',
-            'data' => [
-                'id' => $hero->id,
-                'pre_title' => $hero->pre_title,
-                'title' => $hero->title,
-                'subtitle' => $hero->subtitle,
-                'primary_button_text' => $hero->primary_button_text,
-                'primary_button_url' => $hero->primary_button_url,
-                'secondary_button_text' => $hero->secondary_button_text,
-                'secondary_button_url' => $hero->secondary_button_url,
-                'is_active' => (bool) $hero->is_active,
-                'updated_at' => $hero->updated_at,
-            ],
+        return ResponseHelper::ok([
+            'id'                    => $hero->id,
+            'pre_title'             => $hero->pre_title,
+            'title'                 => $hero->title,
+            'subtitle'              => $hero->subtitle,
+            'primary_button_text'   => $hero->primary_button_text,
+            'primary_button_url'    => $hero->primary_button_url,
+            'secondary_button_text' => $hero->secondary_button_text,
+            'secondary_button_url'  => $hero->secondary_button_url,
+            'is_active'             => (bool) $hero->is_active,
+            'updated_at'            => $hero->updated_at,
         ]);
     }
 
     /**
-     * ==================================================
-     * STORE / UPDATE (JSON – ultra secure)
-     * ==================================================.
+     * API: Store a new hero configuration.
+     * Note: This implementation follows the previous behavior of creating a new record 
+     * and optionally deactivating others if the new one is active.
      */
-    public function store(Request $request)
+    public function store(StoreHomepageHeroRequest $request): JsonResponse
     {
-        // =========================
-        // 1. AUTH CHECK
-        // =========================
-        if (!Auth::check()) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Unauthenticated',
-            ], 401);
-        }
-
-        // =========================
-        // 2. ILLEGAL PAYLOAD CHECK
-        // =========================
-        $incomingKeys = array_keys($request->all());
-
-        $illegalFields = array_diff($incomingKeys, self::ALLOWED_FIELDS);
-        if (!empty($illegalFields)) {
-            Log::warning('HomepageHero blocked: illegal payload', [
-                'user_id' => Auth::id(),
-                'ip' => $request->ip(),
-                'illegal_fields' => array_values($illegalFields),
-            ]);
-
-            return response()->json([
-                'status' => false,
-                'message' => 'Illegal payload detected',
-                'errors' => [
-                    'illegal_fields' => array_values($illegalFields),
-                ],
-            ], 422);
-        }
-
-        $missingFields = array_diff(self::REQUIRED_FIELDS, $incomingKeys);
-        if (!empty($missingFields)) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Missing required fields',
-                'errors' => [
-                    'missing_fields' => array_values($missingFields),
-                ],
-            ], 422);
-        }
-
-        // =========================
-        // 3. VALIDATION
-        // =========================
-        try {
-            $validated = $request->validate([
-                'pre_title' => 'required|string|max:100',
-                'title' => 'required|string|max:255',
-                'subtitle' => 'required|string|max:500',
-                'primary_button_text' => 'required|string|max:100',
-                'primary_button_url' => 'required|string|max:255',
-                'secondary_button_text' => 'required|string|max:100',
-                'secondary_button_url' => 'required|string|max:255',
-                'is_active' => 'required|boolean',
-            ]);
-        } catch (ValidationException $e) {
-            return response()->json([
-                'status' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
-        }
-
-        // =========================
-        // 4. SANITIZE
-        // =========================
-        $data = [
-            'pre_title' => strip_tags(trim($validated['pre_title'])),
-            'title' => strip_tags(trim($validated['title'])),
-            'subtitle' => strip_tags(trim($validated['subtitle'])),
-            'primary_button_text' => strip_tags(trim($validated['primary_button_text'])),
-            'primary_button_url' => trim($validated['primary_button_url']),
-            'secondary_button_text' => strip_tags(trim($validated['secondary_button_text'])),
-            'secondary_button_url' => trim($validated['secondary_button_url']),
-            'is_active' => (bool) $validated['is_active'],
-        ];
-
-        // =========================
-        // 5. DB TRANSACTION
-        // =========================
-        DB::beginTransaction();
+        // Authorization is handled by StoreHomepageHeroRequest
+        $this->authorizeManage();
 
         try {
-            if ($data['is_active']) {
-                HomepageHero::where('is_active', 1)->update([
-                    'is_active' => 0,
-                ]);
-            }
+            $data = $request->validated();
 
-            $hero = HomepageHero::create($data);
+            $hero = DB::transaction(function () use ($data) {
+                if ($data['is_active']) {
+                    HomepageHero::where('is_active', 1)->update(['is_active' => 0]);
+                }
 
-            DB::commit();
+                return HomepageHero::create($data);
+            });
 
-            Log::info('HomepageHero saved', [
-                'user_id' => Auth::id(),
-                'hero_id' => $hero->id,
-                'ip' => $request->ip(),
-            ]);
+            Log::info("Homepage hero updated: ID {$hero->id} by User ID " . auth()->id());
 
-            return response()->json([
-                'status' => true,
-                'message' => 'Homepage hero saved successfully',
-                'data' => [
-                    'id' => $hero->id,
-                ],
-            ], 201);
+            return ResponseHelper::ok([
+                'id' => $hero->id,
+            ], 'Homepage hero berhasil disimpan', 201);
         } catch (\Throwable $e) {
-            DB::rollBack();
-
-            Log::error('HomepageHero error', [
-                'user_id' => Auth::id(),
-                'ip' => $request->ip(),
-                'error' => $e->getMessage(),
-            ]);
-
-            return response()->json([
-                'status' => false,
-                'message' => 'Internal server error',
-            ], 500);
+            Log::error("Failed to save homepage hero: " . $e->getMessage());
+            return ResponseHelper::fail('Gagal menyimpan konfigurasi hero', null, 500);
         }
     }
 }

@@ -2,13 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ResponseHelper;
+use App\Http\Requests\StoreArticleCategoryRequest;
 use App\Models\ArticleCategory;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
+use Illuminate\View\View;
 
 class ArticleCategoryController extends Controller
 {
@@ -17,182 +19,135 @@ class ArticleCategoryController extends Controller
         $this->middleware(['auth', 'throttle:60,1']);
     }
 
+    /**
+     * Consistent authorization check.
+     */
     private function authorizeManage(): void
     {
-        if (method_exists(auth()->user(), 'can') && auth()->user()->can('manage-article')) {
+        $user = auth()->user();
+
+        if ($user && ($user->role === 'admin' || (method_exists($user, 'can') && $user->can('manage-article')))) {
             return;
         }
 
-        if (Auth::user()->role === 'admin') {
-            return;
-        }
-
-        abort(403, 'Forbidden');
-    }
-
-    private function ok($data = null, string $message = 'OK', int $code = 200)
-    {
-        return response()->json([
-            'status' => true,
-            'message' => $message,
-            'data' => $data,
-        ], $code);
-    }
-
-    private function fail(string $message = 'Request failed', $errors = null, int $code = 400)
-    {
-        $payload = [
-            'status' => false,
-            'message' => $message,
-        ];
-
-        if (!is_null($errors)) {
-            $payload['errors'] = $errors;
-        }
-
-        return response()->json($payload, $code);
+        Log::warning("Unauthorized attempt to manage article categories by User ID: " . (auth()->id() ?? 'Guest'));
+        abort(403, 'Unauthorized access to article category management');
     }
 
     /**
-     * Blade only.
+     * Display the index page (Blade).
      */
-    public function index()
+    public function index(): View
     {
         $this->authorizeManage();
-
         return view('articles.categories.index');
     }
 
     /**
-     * JSON list.
+     * API: List categories with pagination and search.
      */
-    public function list(Request $request)
+    public function list(Request $request): JsonResponse
     {
         $this->authorizeManage();
 
-        $query = ArticleCategory::query()
-            ->orderBy('name');
+        $query = ArticleCategory::query()->orderBy('name');
 
         if ($request->filled('search')) {
-            $query->where('name', 'like', '%'.$request->search.'%');
+            $query->where('name', 'like', '%' . $request->search . '%');
         }
 
         $perPage = (int) $request->get('per_page', 10);
+        $categories = $query->paginate($perPage, ['id', 'name', 'slug']);
 
-        return $this->ok(
-            $query->paginate($perPage, ['id', 'name', 'slug'])
-        );
+        return ResponseHelper::ok($categories);
     }
 
     /**
-     * Store.
+     * API: Store a new category.
      */
-    public function store(Request $request)
+    public function store(StoreArticleCategoryRequest $request): JsonResponse
     {
+        // Authorization is handled by the FormRequest class but we keep this for consistency if called directly via other means
         $this->authorizeManage();
 
-        $validator = Validator::make($request->all(), [
-            'name' => [
-                'required',
-                'string',
-                'max:150',
-                'unique:article_categories,name',
-            ],
-        ]);
-
-        if ($validator->fails()) {
-            return $this->fail('Validation error', $validator->errors(), 422);
-        }
-
         try {
-            $category = DB::transaction(function () use ($request) {
-                return ArticleCategory::create([
-                    'name' => trim($request->name),
-                    'slug' => Str::slug($request->name),
-                ]);
+            $data = $request->validated();
+            $data['slug'] = Str::slug($data['name']);
+
+            $category = DB::transaction(function () use ($data) {
+                return ArticleCategory::create($data);
             });
 
-            return $this->ok([
-                'id' => $category->id,
+            Log::info("Article category created: ID {$category->id} ('{$category->name}') by User ID " . auth()->id());
+
+            return ResponseHelper::ok([
+                'id'   => $category->id,
                 'name' => $category->name,
                 'slug' => $category->slug,
-            ], 'Category created', 201);
+            ], 'Kategori berhasil disimpan', 201);
         } catch (\Throwable $e) {
-            return $this->fail('Failed to create category', null, 500);
+            Log::error("Failed to create article category: " . $e->getMessage());
+            return ResponseHelper::fail('Gagal menyimpan kategori', null, 500);
         }
     }
 
     /**
-     * Update.
+     * API: Update an existing category.
      */
-    public function update(Request $request, $id)
+    public function update(StoreArticleCategoryRequest $request, $id): JsonResponse
     {
         $this->authorizeManage();
 
-        if (!ctype_digit((string) $id)) {
-            return $this->fail('Invalid id', null, 400);
-        }
-
         $category = ArticleCategory::find($id);
-
         if (!$category) {
-            return $this->fail('Category not found', null, 404);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'name' => [
-                'required',
-                'string',
-                'max:150',
-                Rule::unique('article_categories', 'name')->ignore($category->id),
-            ],
-        ]);
-
-        if ($validator->fails()) {
-            return $this->fail('Validation error', $validator->errors(), 422);
+            return ResponseHelper::fail('Kategori tidak ditemukan', null, 404);
         }
 
         try {
-            DB::transaction(function () use ($request, $category) {
-                $category->update([
-                    'name' => trim($request->name),
-                    'slug' => Str::slug($request->name),
-                ]);
+            $data = $request->validated();
+            $data['slug'] = Str::slug($data['name']);
+
+            DB::transaction(function () use ($category, $data) {
+                $category->update($data);
             });
 
-            return $this->ok([
-                'id' => $category->id,
+            Log::info("Article category updated: ID {$category->id} by User ID " . auth()->id());
+
+            return ResponseHelper::ok([
+                'id'   => $category->id,
                 'name' => $category->name,
                 'slug' => $category->slug,
-            ], 'Category updated');
+            ], 'Kategori berhasil diperbarui');
         } catch (\Throwable $e) {
-            return $this->fail('Failed to update category', null, 500);
+            Log::error("Failed to update article category ID {$id}: " . $e->getMessage());
+            return ResponseHelper::fail('Gagal memperbarui kategori', null, 500);
         }
     }
 
     /**
-     * Delete.
+     * API: Delete a category.
      */
-    public function destroy($id)
+    public function destroy($id): JsonResponse
     {
         $this->authorizeManage();
 
-        if (!ctype_digit((string) $id)) {
-            return $this->fail('Invalid id', null, 400);
-        }
-
         $category = ArticleCategory::find($id);
-
         if (!$category) {
-            return $this->fail('Category not found', null, 404);
+            return ResponseHelper::fail('Kategori tidak ditemukan', null, 404);
         }
 
         try {
+            $categoryId = $category->id;
+            $categoryName = $category->name;
+            
             DB::transaction(fn () => $category->delete());
 
-            return $this->ok(null, 'Category deleted');
+            Log::info("Article category deleted: ID {$categoryId} ('{$categoryName}') by User ID " . auth()->id());
+
+            return ResponseHelper::ok(null, 'Kategori berhasil dihapus');
         } catch (\Throwable $e) {
-            return $this->fail('Failed to delete category', null, 500);
+            Log::error("Failed to delete article category ID {$id}: " . $e->getMessage());
+            return ResponseHelper::fail('Gagal menghapus kategori', null, 500);
         }
     }
 }

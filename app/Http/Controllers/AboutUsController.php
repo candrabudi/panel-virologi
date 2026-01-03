@@ -2,51 +2,25 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ResponseHelper;
+use App\Http\Requests\StoreAboutUsRequest;
 use App\Models\AboutUs;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
 
 class AboutUsController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['auth', 'throttle:60,1'])
-             ->except(['frontend']);
+        $this->middleware(['auth', 'throttle:60,1']);
     }
 
-    private function authorizeManage(): void
-    {
-        if ((method_exists(auth()->user(), 'can') && auth()->user()->can('manage-website')) || Auth::user()->role === 'admin') {
-            return;
-        }
-
-        abort(403, 'Forbidden');
-    }
-
-    private function ok($data = null, string $message = 'OK', int $code = 200)
-    {
-        return response()->json([
-            'status' => true,
-            'message' => $message,
-            'data' => $data,
-        ], $code);
-    }
-
-    private function fail(string $message = 'Request failed', $errors = null, int $code = 400)
-    {
-        $payload = ['status' => false, 'message' => $message];
-
-        if ($errors) {
-            $payload['errors'] = $errors;
-        }
-
-        return response()->json($payload, $code);
-    }
-
-    public function index()
+    /**
+     * Display the CMS page for About Us.
+     */
+    public function index(): View
     {
         $this->authorizeManage();
 
@@ -55,49 +29,57 @@ class AboutUsController extends Controller
         return view('about_us.cms', compact('aboutPage'));
     }
 
-    public function apiShow()
+    /**
+     * Return the About Us data for API consumption.
+     */
+    public function apiShow(): JsonResponse
     {
         $this->authorizeManage();
+        
         $about = AboutUs::first();
 
-        return $this->ok($about);
+        return ResponseHelper::ok($about);
     }
 
-    public function store(Request $request)
+    /**
+     * Store or update the About Us information.
+     */
+    public function store(StoreAboutUsRequest $request): JsonResponse
     {
-        $this->authorizeManage();
-
-        $validator = Validator::make($request->all(), [
-            'breadcrumb_pre' => ['nullable', 'string', 'max:100'],
-            'breadcrumb_bg' => ['nullable', 'string', 'max:100'],
-            'page_title' => ['nullable', 'string', 'max:150'],
-            'headline' => ['nullable', 'string', 'max:255'],
-            'left_content' => ['nullable', 'string'],
-            'right_content' => ['nullable', 'string'],
-            'seo_title' => ['nullable', 'string', 'max:255'],
-            'seo_description' => ['nullable', 'string', 'max:300'],
-            'seo_keywords' => ['nullable', 'string', 'max:500'],
-            'og_title' => ['nullable', 'string', 'max:255'],
-            'og_description' => ['nullable', 'string', 'max:300'],
-            'canonical_url' => ['nullable', 'string', 'max:255'],
-            'is_active' => ['required', Rule::in(['0', '1'])],
-        ]);
-
-        if ($validator->fails()) {
-            return $this->fail('Validation error', $validator->errors(), 422);
-        }
-
         try {
-            DB::transaction(function () use ($validator) {
+            return DB::transaction(function () use ($request) {
                 $about = AboutUs::first() ?? new AboutUs();
-                $about->fill($validator->validated());
-                $about->is_active = (int) request('is_active') === 1;
-                $about->save();
-            });
+                
+                $data = $request->validated();
+                $data['is_active'] = (int) $request->is_active === 1;
 
-            return $this->ok(null, 'Tentang Kami berhasil disimpan');
+                $about->fill($data);
+                $about->save();
+
+                Log::info('About Us updated by User ID: ' . auth()->id());
+
+                return ResponseHelper::ok(null, 'Halaman Tentang Kami berhasil diperbarui');
+            });
         } catch (\Throwable $e) {
-            return $this->fail('Request failed', null, 500);
+            Log::error('Failed to update About Us: ' . $e->getMessage(), [
+                'user_id' => auth()->id(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return ResponseHelper::fail('Gagal menyimpan data: ' . $e->getMessage(), null, 500);
+        }
+    }
+
+    /**
+     * Internal authorization check for administrative tasks.
+     */
+    private function authorizeManage(): void
+    {
+        $user = auth()->user();
+        
+        if (!$user || !((method_exists($user, 'can') && $user->can('manage-website')) || $user->role === 'admin')) {
+            Log::warning('Unauthorized access attempt to AboutUsController by User ID: ' . ($user->id ?? 'Guest'));
+            abort(403, 'Forbidden');
         }
     }
 }

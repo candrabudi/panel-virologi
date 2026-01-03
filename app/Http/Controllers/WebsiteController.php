@@ -2,15 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ResponseHelper;
+use App\Http\Requests\StoreWebsiteGeneralRequest;
+use App\Http\Requests\StoreWebsiteContactRequest;
+use App\Http\Requests\StoreWebsiteBrandingRequest;
 use App\Models\Website;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
 use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\ImageManager;
+use Illuminate\View\View;
 
 class WebsiteController extends Controller
 {
@@ -19,43 +23,19 @@ class WebsiteController extends Controller
         $this->middleware(['auth', 'throttle:30,1']);
     }
 
-    /* =========================
-     | AUTH & RESPONSE HELPERS
-     ========================= */
+    /**
+     * Consistent authorization check.
+     */
     private function authorizeManage(): void
     {
-        if (method_exists(auth()->user(), 'can') && auth()->user()->can('manage-website')) {
+        $user = auth()->user();
+
+        if ($user && ($user->role === 'admin' || (method_exists($user, 'can') && $user->can('manage-website')))) {
             return;
         }
 
-        if (Auth::user()->role === 'admin') {
-            return;
-        }
-
-        abort(403, 'Forbidden');
-    }
-
-    private function ok($data = null, string $message = 'OK', int $code = 200)
-    {
-        return response()->json([
-            'status' => true,
-            'message' => $message,
-            'data' => $data,
-        ], $code);
-    }
-
-    private function fail(string $message = 'Request failed', $errors = null, int $code = 400)
-    {
-        $payload = [
-            'status' => false,
-            'message' => $message,
-        ];
-
-        if ($errors !== null) {
-            $payload['errors'] = $errors;
-        }
-
-        return response()->json($payload, $code);
+        Log::warning("Unauthorized attempt to manage website settings by User ID: " . (auth()->id() ?? 'Guest'));
+        abort(403, 'Unauthorized access to website management');
     }
 
     private function website(): Website
@@ -63,9 +43,9 @@ class WebsiteController extends Controller
         return Website::first() ?? new Website();
     }
 
-    /* =========================
-     | FILE SIZE COMPRESSION
-     ========================= */
+    /**
+     * Compress image to target size in KB.
+     */
     private function compressToTargetSize(
         $image,
         string $path,
@@ -84,10 +64,10 @@ class WebsiteController extends Controller
         } while ($sizeKb > $targetKb && $quality >= $minQuality);
     }
 
-    /* =========================
-     | PAGES
-     ========================= */
-    public function index()
+    /**
+     * Display the index page (Blade).
+     */
+    public function index(): View
     {
         $this->authorizeManage();
 
@@ -96,85 +76,58 @@ class WebsiteController extends Controller
         ]);
     }
 
-    /* =========================
-     | GENERAL
-     ========================= */
-    public function saveGeneral(Request $request)
+    /**
+     * API: Save general information.
+     */
+    public function saveGeneral(StoreWebsiteGeneralRequest $request): JsonResponse
     {
         $this->authorizeManage();
 
-        $validator = Validator::make($request->all(), [
-            'name' => ['required', 'string', 'max:255'],
-            'tagline' => ['nullable', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:1000'],
-        ]);
-
-        if ($validator->fails()) {
-            return $this->fail('Validation error', $validator->errors(), 422);
-        }
-
         try {
-            DB::transaction(function () use ($validator) {
+            DB::transaction(function () use ($request) {
                 $website = $this->website();
-                $website->fill($validator->validated());
+                $website->fill($request->validated());
                 $website->save();
             });
 
-            return $this->ok(null, 'Informasi website berhasil disimpan');
-        } catch (\Throwable $e) {
-            report($e);
+            Log::info("Website general information updated by User ID " . auth()->id());
 
-            return $this->fail('Request failed', $e->getMessage(), 500);
+            return ResponseHelper::ok(null, 'Informasi website berhasil disimpan');
+        } catch (\Throwable $e) {
+            Log::error("Failed to save website general info: " . $e->getMessage());
+            return ResponseHelper::fail('Gagal menyimpan informasi website', null, 500);
         }
     }
 
-    /* =========================
-     | CONTACT
-     ========================= */
-    public function saveContact(Request $request)
+    /**
+     * API: Save contact information.
+     */
+    public function saveContact(StoreWebsiteContactRequest $request): JsonResponse
     {
         $this->authorizeManage();
 
-        $validator = Validator::make($request->all(), [
-            'email' => ['nullable', 'email', 'max:255'],
-            'phone' => ['nullable', 'string', 'max:30'],
-        ]);
-
-        if ($validator->fails()) {
-            return $this->fail('Validation error', $validator->errors(), 422);
-        }
-
         try {
-            DB::transaction(function () use ($validator) {
+            DB::transaction(function () use ($request) {
                 $website = $this->website();
-                $website->fill($validator->validated());
+                $website->fill($request->validated());
                 $website->save();
             });
 
-            return $this->ok(null, 'Kontak website berhasil disimpan');
-        } catch (\Throwable $e) {
-            report($e);
+            Log::info("Website contact information updated by User ID " . auth()->id());
 
-            return $this->fail('Request failed', $e->getMessage(), 500);
+            return ResponseHelper::ok(null, 'Kontak website berhasil disimpan');
+        } catch (\Throwable $e) {
+            Log::error("Failed to save website contact info: " . $e->getMessage());
+            return ResponseHelper::fail('Gagal menyimpan kontak website', null, 500);
         }
     }
 
-    /* =========================
-     | BRANDING (TARGET FILE SIZE)
-     ========================= */
-    public function saveBranding(Request $request)
+    /**
+     * API: Save branding information (logos, favicon).
+     */
+    public function saveBranding(StoreWebsiteBrandingRequest $request): JsonResponse
     {
         $this->authorizeManage();
-
-        $validator = Validator::make($request->all(), [
-            'logo_rectangle' => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:4096'],
-            'logo_square' => ['nullable', 'image', 'mimes:png,jpg,jpeg', 'max:4096'],
-            'favicon' => ['nullable', 'image', 'mimes:png,ico', 'max:1024'],
-        ]);
-
-        if ($validator->fails()) {
-            return $this->fail('Validation error', $validator->errors(), 422);
-        }
 
         try {
             DB::transaction(function () use ($request) {
@@ -191,15 +144,20 @@ class WebsiteController extends Controller
                         continue;
                     }
 
-                    if ($website->$field && $disk->exists($website->$field)) {
-                        $disk->delete($website->$field);
+                    // Delete old file
+                    if ($website->$field) {
+                        $oldPath = str_replace(asset('storage/'), '', $website->$field);
+                        if ($disk->exists($oldPath)) {
+                            $disk->delete($oldPath);
+                        }
                     }
 
                     $file = $request->file($field);
                     $image = $manager->read($file->getPathname());
 
-                    $filename = $field.'_'.Str::uuid().'.jpg';
-                    $absolutePath = storage_path('app/public/website/'.$filename);
+                    $filename = $field . '_' . Str::uuid() . '.jpg';
+                    $relativePath = 'website/' . $filename;
+                    $absolutePath = $disk->path($relativePath);
 
                     // TARGET FILE SIZE PER FIELD
                     $targetKb = match ($field) {
@@ -209,30 +167,21 @@ class WebsiteController extends Controller
                         default => 100,
                     };
 
-                    $this->compressToTargetSize(
-                        $image,
-                        $absolutePath,
-                        targetKb: $targetKb,
-                        startQuality: 85,
-                        minQuality: 40
-                    );
+                    $this->compressToTargetSize($image, $absolutePath, $targetKb);
 
-                    $data[$field] = asset('storage/website/'.$filename);
+                    $data[$field] = asset('storage/' . $relativePath);
                 }
 
                 $website->fill($data);
                 $website->save();
             });
 
-            return $this->ok(null, 'Branding website berhasil disimpan');
-        } catch (\Throwable $e) {
-            report($e);
+            Log::info("Website branding information updated by User ID " . auth()->id());
 
-            return $this->fail('Request failed', [
-                'error' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-            ], 500);
+            return ResponseHelper::ok(null, 'Branding website berhasil disimpan');
+        } catch (\Throwable $e) {
+            Log::error("Failed to save website branding: " . $e->getMessage());
+            return ResponseHelper::fail('Gagal menyimpan branding website', null, 500);
         }
     }
 }

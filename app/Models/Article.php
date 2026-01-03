@@ -27,6 +27,18 @@ class Article extends Model
         'published_at' => 'datetime',
     ];
 
+    public function getThumbnailAttribute($value)
+    {
+        if (!$value) return null;
+        
+        // If it's already a full URL (legacy or external), return it
+        if (filter_var($value, FILTER_VALIDATE_URL)) {
+            return $value;
+        }
+
+        return asset('storage/' . $value);
+    }
+
     public function categories()
     {
         return $this->belongsToMany(

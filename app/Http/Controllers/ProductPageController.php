@@ -2,56 +2,65 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ResponseHelper;
+use App\Http\Requests\StoreProductPageRequest;
 use App\Models\ProductPageSetting;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
 
 class ProductPageController extends Controller
 {
-    public function index()
+    public function __construct()
     {
-        $page = ProductPageSetting::first();
+        $this->middleware(['auth', 'throttle:60,1']);
+    }
 
+    /**
+     * Consistent authorization check.
+     */
+    private function authorizeManage(): void
+    {
+        $user = auth()->user();
+
+        if ($user && ($user->role === 'admin' || (method_exists($user, 'can') && $user->can('manage-cms')))) {
+            return;
+        }
+
+        Log::warning("Unauthorized attempt to manage product page settings by User ID: " . (auth()->id() ?? 'Guest'));
+        abort(403, 'Unauthorized access to product page CMS management');
+    }
+
+    /**
+     * Display the index page (Blade).
+     */
+    public function index(): View
+    {
+        $this->authorizeManage();
+        $page = ProductPageSetting::first();
         return view('product_page.index', compact('page'));
     }
 
-    public function store(Request $request)
+    /**
+     * API: Store or Update the product page settings.
+     */
+    public function store(StoreProductPageRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'page_title' => 'required|string|max:255',
-            'page_subtitle' => 'nullable|string|max:255',
-            'cta_text' => 'nullable|string|max:100',
-            'cta_url' => 'nullable|string|max:255',
+        // Authorization is handled by StoreProductPageRequest
+        $this->authorizeManage();
 
-            'seo_title' => 'nullable|string|max:255',
-            'seo_description' => 'nullable|string|max:300',
-            'seo_keywords' => 'nullable|string|max:500',
+        try {
+            $data = $request->validated();
 
-            'og_title' => 'nullable|string|max:255',
-            'og_description' => 'nullable|string|max:300',
-            'canonical_url' => 'nullable|string|max:255',
+            $page = ProductPageSetting::first() ?? new ProductPageSetting();
+            $page->fill($data)->save();
 
-            'is_active' => 'nullable|boolean',
-        ], [
-            'page_title.required' => 'Judul halaman wajib diisi',
-        ]);
+            Log::info("Product page settings updated by User ID " . auth()->id());
 
-        if ($validator->fails()) {
-            return response()->json([
-                'status' => false,
-                'errors' => $validator->errors(),
-            ], 422);
+            return ResponseHelper::ok(null, 'Pengaturan halaman produk berhasil disimpan');
+        } catch (\Throwable $e) {
+            Log::error("Failed to save product page settings: " . $e->getMessage());
+            return ResponseHelper::fail('Gagal menyimpan pengaturan halaman', null, 500);
         }
-
-        $page = ProductPageSetting::first() ?? new ProductPageSetting();
-        $data = $validator->validated();
-        $data['is_active'] = $request->boolean('is_active', false);
-
-        $page->fill($data)->save();
-
-        return response()->json([
-            'status' => true,
-            'message' => 'Pengaturan halaman produk berhasil disimpan',
-        ]);
     }
 }
