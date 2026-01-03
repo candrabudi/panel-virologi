@@ -80,8 +80,7 @@
                             class="disabled:bg-slate-100 disabled:cursor-not-allowed dark:disabled:bg-darkmode-800/50 dark:disabled:border-transparent [&[readonly]]:bg-slate-100 [&[readonly]]:cursor-not-allowed [&[readonly]]:dark:bg-darkmode-800/50 [&[readonly]]:dark:border-transparent transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md placeholder:text-slate-400/90 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 dark:bg-darkmode-800 dark:border-transparent dark:focus:ring-slate-700 dark:focus:ring-opacity-50 dark:placeholder:text-slate-500/80 form-control"
                             placeholder="contoh: SOC monitoring, enterprise security, incident response">{{ is_array(old('ai_use_cases', $product->ai_use_cases))
                                 ? implode(', ', old('ai_use_cases', $product->ai_use_cases))
-                                : old('ai_use_cases', $product->ai_use_cases) }}
-</textarea>
+                                : old('ai_use_cases', $product->ai_use_cases) }}</textarea>
                     </div>
                 </div>
             </div>
@@ -219,7 +218,7 @@
 
                     <div class="mt-3">
                         @if ($product->thumbnail)
-                            <img id="thumb-preview" src="{{ asset('storage/' . $product->thumbnail) }}"
+                            <img id="thumb-preview" src="{{ $product->thumbnail }}"
                                 class="img-fluid rounded" style="max-height:180px">
                         @else
                             <img id="thumb-preview" class="img-fluid rounded d-none" style="max-height:180px">
