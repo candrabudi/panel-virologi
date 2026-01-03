@@ -10,7 +10,13 @@ class StoreWebsiteGeneralRequest extends FormRequest
     public function authorize(): bool
     {
         $user = $this->user();
-        return $user && ($user->role === 'admin' || (method_exists($user, 'can') && $user->can('manage-website')));
+
+        if (!$user) {
+            return false;
+        }
+
+        return $user->role === 'admin'
+            || (method_exists($user, 'can') && $user->can('manage-website'));
     }
 
     public function rules(): array
@@ -24,10 +30,22 @@ class StoreWebsiteGeneralRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $this->merge([
-            'name' => SecurityHelper::cleanString($this->name),
-            'tagline' => SecurityHelper::cleanString($this->tagline),
-            'description' => SecurityHelper::cleanString($this->description),
-        ]);
+        $toMerge = [];
+
+        if ($this->has('name')) {
+            $toMerge['name'] = SecurityHelper::cleanString($this->name);
+        }
+
+        if ($this->has('tagline')) {
+            $toMerge['tagline'] = SecurityHelper::cleanString($this->tagline);
+        }
+
+        if ($this->has('description')) {
+            $toMerge['description'] = SecurityHelper::cleanString($this->description);
+        }
+
+        if (!empty($toMerge)) {
+            $this->merge($toMerge);
+        }
     }
 }

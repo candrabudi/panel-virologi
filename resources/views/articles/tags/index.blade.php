@@ -336,7 +336,7 @@
 
             const req = idEl.value ?
                 axios.put(`/articles/tags/${idEl.value}`, payload) :
-                axios.post('/articles/categories', payload)
+                axios.post('/articles/tags', payload)
 
             req.then(() => {
                 showToast(

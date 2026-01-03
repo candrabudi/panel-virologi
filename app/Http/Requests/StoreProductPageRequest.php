@@ -18,8 +18,8 @@ class StoreProductPageRequest extends FormRequest
         }
 
         // Restrict management to admin or manage-cms permission
-        return $user->role === 'admin' || 
-               (method_exists($user, 'can') && $user->can('manage-cms'));
+        return $user->role === 'admin'
+               || (method_exists($user, 'can') && $user->can('manage-cms'));
     }
 
     /**
@@ -28,20 +28,20 @@ class StoreProductPageRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'page_title'       => 'required|string|max:255',
-            'page_subtitle'    => 'nullable|string|max:255',
-            'cta_text'         => 'nullable|string|max:100',
-            'cta_url'          => 'nullable|string|max:255',
+            'page_title' => 'required|string|max:255',
+            'page_subtitle' => 'nullable|string|max:255',
+            'cta_text' => 'nullable|string|max:100',
+            'cta_url' => 'nullable|string|max:255',
 
-            'seo_title'        => 'nullable|string|max:255',
-            'seo_description'  => 'nullable|string|max:300',
-            'seo_keywords'     => 'nullable|string|max:500',
+            'seo_title' => 'nullable|string|max:255',
+            'seo_description' => 'nullable|string|max:300',
+            'seo_keywords' => 'nullable|string|max:500',
 
-            'og_title'         => 'nullable|string|max:255',
-            'og_description'   => 'nullable|string|max:300',
-            'canonical_url'    => 'nullable|string|max:255',
+            'og_title' => 'nullable|string|max:255',
+            'og_description' => 'nullable|string|max:300',
+            'canonical_url' => 'nullable|string|max:255',
 
-            'is_active'        => 'required|boolean',
+            'is_active' => 'required|boolean',
         ];
     }
 
@@ -55,7 +55,7 @@ class StoreProductPageRequest extends FormRequest
         $fieldsToClean = [
             'page_title', 'page_subtitle', 'cta_text', 'cta_url',
             'seo_title', 'seo_description', 'seo_keywords',
-            'og_title', 'og_description', 'canonical_url'
+            'og_title', 'og_description', 'canonical_url',
         ];
 
         foreach ($fieldsToClean as $field) {

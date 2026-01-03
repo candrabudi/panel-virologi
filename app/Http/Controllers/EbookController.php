@@ -31,7 +31,7 @@ class EbookController extends Controller
             return;
         }
 
-        Log::warning("Unauthorized attempt to manage ebooks by User ID: " . (auth()->id() ?? 'Guest'));
+        Log::warning('Unauthorized attempt to manage ebooks by User ID: '.(auth()->id() ?? 'Guest'));
         abort(403, 'Unauthorized access to ebook management');
     }
 
@@ -41,6 +41,7 @@ class EbookController extends Controller
     public function index(): View
     {
         $this->authorizeManage();
+
         return view('ebooks.index', [
             'ebooks' => Ebook::orderByDesc('id')->get(),
         ]);
@@ -74,6 +75,7 @@ class EbookController extends Controller
     public function create(): View
     {
         $this->authorizeManage();
+
         return view('ebooks.form', ['ebook' => null]);
     }
 
@@ -83,6 +85,7 @@ class EbookController extends Controller
     public function edit(Ebook $ebook): View
     {
         $this->authorizeManage();
+
         return view('ebooks.form', ['ebook' => $ebook]);
     }
 
@@ -95,34 +98,35 @@ class EbookController extends Controller
 
         try {
             $data = $request->validated();
-            
+
             $data['uuid'] = (string) Str::uuid();
-            $data['slug'] = Str::slug($data['title']) . '-' . Str::random(6);
+            $data['slug'] = Str::slug($data['title']).'-'.Str::random(6);
             $data['file_type'] = 'pdf'; // Fixed for now based on validation
 
             // File Handling
             if ($request->hasFile('cover_image')) {
                 $path = $request->file('cover_image')->store('ebooks/covers', 'public');
-                $data['cover_image'] = asset('storage/' . $path);
+                $data['cover_image'] = asset('storage/'.$path);
             }
 
             if ($request->hasFile('file')) {
                 $path = $request->file('file')->store('ebooks/files', 'public');
-                $data['file_path'] = asset('storage/' . $path);
+                $data['file_path'] = asset('storage/'.$path);
             }
 
             $ebook = DB::transaction(function () use ($data) {
                 return Ebook::create($data);
             });
 
-            Log::info("Ebook created: ID {$ebook->id} ('{$ebook->title}') by User ID " . auth()->id());
+            Log::info("Ebook created: ID {$ebook->id} ('{$ebook->title}') by User ID ".auth()->id());
 
             return ResponseHelper::ok([
                 'redirect' => '/ebooks',
                 'id' => $ebook->id,
             ], 'Ebook berhasil disimpan', 201);
         } catch (\Throwable $e) {
-            Log::error("Failed to create ebook: " . $e->getMessage());
+            Log::error('Failed to create ebook: '.$e->getMessage());
+
             return ResponseHelper::fail('Gagal menyimpan ebook', null, 500);
         }
     }
@@ -130,50 +134,45 @@ class EbookController extends Controller
     /**
      * API: Update an existing ebook.
      */
-    public function update(StoreEbookRequest $request, Ebook $ebook): JsonResponse
+    public function update(StoreEbookRequest $request, Ebook $ebook)
     {
         $this->authorizeManage();
 
         try {
             $data = $request->validated();
-            
-            // Re-generate slug if title changed (optional, but keep for consistency)
+
             if ($request->filled('title')) {
-                $data['slug'] = Str::slug($data['title']) . '-' . Str::random(6);
+                $data['slug'] = Str::slug($data['title']).'-'.Str::random(6);
             }
 
-            // Cover Image Handling
             if ($request->hasFile('cover_image')) {
                 $this->safeDelete($ebook->cover_image);
                 $path = $request->file('cover_image')->store('ebooks/covers', 'public');
-                $data['cover_image'] = asset('storage/' . $path);
+                $data['cover_image'] = asset('storage/'.$path);
             }
 
-            // File Handling
             if ($request->hasFile('file')) {
                 $this->safeDelete($ebook->file_path);
                 $path = $request->file('file')->store('ebooks/files', 'public');
-                $data['file_path'] = asset('storage/' . $path);
+                $data['file_path'] = asset('storage/'.$path);
             }
 
             DB::transaction(function () use ($ebook, $data) {
                 $ebook->update($data);
             });
 
-            Log::info("Ebook updated: ID {$ebook->id} by User ID " . auth()->id());
+            Log::info("Ebook updated: ID {$ebook->id} by User ID ".auth()->id());
 
             return ResponseHelper::ok([
                 'redirect' => '/ebooks',
             ], 'Ebook berhasil diperbarui');
         } catch (\Throwable $e) {
-            Log::error("Failed to update ebook ID {$ebook->id}: " . $e->getMessage());
+            Log::error("Failed to update ebook ID {$ebook->id}: ".$e->getMessage());
+
             return ResponseHelper::fail('Gagal memperbarui ebook', null, 500);
         }
     }
 
-    /**
-     * API: Delete an ebook.
-     */
     public function destroy(Ebook $ebook): JsonResponse
     {
         $this->authorizeManage();
@@ -187,11 +186,12 @@ class EbookController extends Controller
 
             DB::transaction(fn () => $ebook->delete());
 
-            Log::info("Ebook deleted: ID {$ebookId} ('{$ebookTitle}') by User ID " . auth()->id());
+            Log::info("Ebook deleted: ID {$ebookId} ('{$ebookTitle}') by User ID ".auth()->id());
 
             return ResponseHelper::ok(null, 'Ebook berhasil dihapus');
         } catch (\Throwable $e) {
-            Log::error("Failed to delete ebook ID {$ebook->id}: " . $e->getMessage());
+            Log::error("Failed to delete ebook ID {$ebook->id}: ".$e->getMessage());
+
             return ResponseHelper::fail('Gagal menghapus ebook', null, 500);
         }
     }
@@ -201,7 +201,9 @@ class EbookController extends Controller
      */
     private function safeDelete(?string $url): void
     {
-        if (!$url) return;
+        if (!$url) {
+            return;
+        }
 
         $path = str_replace(asset('storage/'), '', $url);
         if (Storage::disk('public')->exists($path)) {

@@ -32,7 +32,7 @@ class ProductController extends Controller
             return;
         }
 
-        Log::warning("Unauthorized attempt to manage products by User ID: " . (auth()->id() ?? 'Guest'));
+        Log::warning('Unauthorized attempt to manage products by User ID: '.(auth()->id() ?? 'Guest'));
         abort(403, 'Unauthorized access to product management');
     }
 
@@ -42,6 +42,7 @@ class ProductController extends Controller
     public function index(): View
     {
         $this->authorizeManage();
+
         return view('products.index');
     }
 
@@ -51,6 +52,7 @@ class ProductController extends Controller
     public function create(): View
     {
         $this->authorizeManage();
+
         return view('products.create');
     }
 
@@ -61,6 +63,7 @@ class ProductController extends Controller
     {
         $this->authorizeManage();
         $product->load('images');
+
         return view('products.edit', compact('product'));
     }
 
@@ -80,6 +83,7 @@ class ProductController extends Controller
         }
 
         $perPage = $request->get('per_page', 10);
+
         return ResponseHelper::ok($query->paginate($perPage));
     }
 
@@ -99,7 +103,7 @@ class ProductController extends Controller
             $product = DB::transaction(function () use ($request, $data) {
                 if ($request->hasFile('thumbnail')) {
                     $path = $request->file('thumbnail')->store('products', 'public');
-                    $data['thumbnail'] = asset('storage/' . $path);
+                    $data['thumbnail'] = asset('storage/'.$path);
                 }
 
                 $product = Product::create($data);
@@ -109,7 +113,7 @@ class ProductController extends Controller
                         $path = $img->store('products/gallery', 'public');
                         ProductImage::create([
                             'product_id' => $product->id,
-                            'image_path' => asset('storage/' . $path),
+                            'image_path' => asset('storage/'.$path),
                             'is_primary' => $i === 0,
                         ]);
                     }
@@ -118,13 +122,14 @@ class ProductController extends Controller
                 return $product;
             });
 
-            Log::info("Product created: ID {$product->id} ('{$product->name}') by User ID " . auth()->id());
+            Log::info("Product created: ID {$product->id} ('{$product->name}') by User ID ".auth()->id());
 
             return ResponseHelper::ok([
                 'id' => $product->id,
             ], 'Produk berhasil disimpan', 201);
         } catch (\Throwable $e) {
-            Log::error("Failed to create product: " . $e->getMessage());
+            Log::error('Failed to create product: '.$e->getMessage());
+
             return ResponseHelper::fail('Gagal membuat produk', null, 500);
         }
     }
@@ -150,21 +155,22 @@ class ProductController extends Controller
                         Storage::disk('public')->delete($oldPath);
                     }
                     $path = $request->file('thumbnail')->store('products', 'public');
-                    $data['thumbnail'] = asset('storage/' . $path);
+                    $data['thumbnail'] = asset('storage/'.$path);
                 }
 
                 $product->update($data);
-                
+
                 // Note: Gallery update logic usually handled separately or via another endpoint
                 // if needed to add images during update, but here we just follow the controller update scope.
             });
 
-            Log::info("Product updated: ID {$product->id} by User ID " . auth()->id());
+            Log::info("Product updated: ID {$product->id} by User ID ".auth()->id());
 
             return ResponseHelper::ok(null, 'Produk berhasil diperbarui');
         } catch (\Throwable $e) {
-            Log::error("Failed to update product ID {$product->id}: " . $e->getMessage());
-            return ResponseHelper::fail('Gagal memperbarui produk', null, 500);
+            Log::error("Failed to update product ID {$product->id}: ".$e->getMessage());
+
+            return ResponseHelper::fail('Gagal memperbarui produk '.$e->getMessage(), null, 500);
         }
     }
 
@@ -196,13 +202,14 @@ class ProductController extends Controller
                 $product->delete();
             });
 
-            Log::info("Product deleted: ID {$productId} ('{$productName}') by User ID " . auth()->id());
+            Log::info("Product deleted: ID {$productId} ('{$productName}') by User ID ".auth()->id());
 
             return ResponseHelper::ok([
                 'redirect' => route('products.index'),
             ], 'Produk berhasil dihapus');
         } catch (\Throwable $e) {
-            Log::error("Failed to delete product ID {$product->id}: " . $e->getMessage());
+            Log::error("Failed to delete product ID {$product->id}: ".$e->getMessage());
+
             return ResponseHelper::fail('Gagal menghapus produk', null, 500);
         }
     }

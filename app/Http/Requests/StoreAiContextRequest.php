@@ -8,17 +8,15 @@ use Illuminate\Validation\Rule;
 
 class StoreAiContextRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return auth()->check() && (auth()->user()->role === 'admin' || (method_exists(auth()->user(), 'can') && auth()->user()->can('manage-ai')));
+        $user = auth()->user();
+
+        return $user
+            && ($user->role === 'admin'
+                || (method_exists($user, 'can') && $user->can('manage-ai')));
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     */
     public function rules(): array
     {
         $id = $this->route('id');
@@ -32,25 +30,40 @@ class StoreAiContextRequest extends FormRequest
                 'regex:/^[a-z0-9_\-]+$/i',
                 Rule::unique('ai_contexts', 'code')->ignore($id),
             ],
-            'name'                => 'required|string|min:3|max:100',
+            'name' => 'required|string|min:3|max:100',
             'use_internal_source' => 'required|boolean',
-            'is_active'           => 'sometimes|boolean',
+            'is_active' => 'sometimes|boolean',
         ];
     }
 
-    /**
-     * Prepare the data for validation.
-     */
     protected function prepareForValidation(): void
     {
-        $this->merge([
-            'code'                => $this->code ? strtolower(trim($this->code)) : null,
-            'name'                => SecurityHelper::cleanString($this->name),
-            'use_internal_source' => filter_var($this->use_internal_source, FILTER_VALIDATE_BOOLEAN),
-            'is_active'           => $this->has('is_active') ? filter_var($this->is_active, FILTER_VALIDATE_BOOLEAN) : null,
-        ]);
-        
-        // Remove nulls so 'sometimes' works correctly
-        $this->replace(array_filter($this->all(), fn($v) => !is_null($v)));
+        $toMerge = [];
+
+        if ($this->has('code')) {
+            $toMerge['code'] = strtolower(trim($this->input('code')));
+        }
+
+        if ($this->has('name')) {
+            $toMerge['name'] = SecurityHelper::cleanString($this->input('name'));
+        }
+
+        if ($this->has('use_internal_source')) {
+            $toMerge['use_internal_source'] = filter_var(
+                $this->input('use_internal_source'),
+                FILTER_VALIDATE_BOOLEAN
+            );
+        }
+
+        if ($this->has('is_active')) {
+            $toMerge['is_active'] = filter_var(
+                $this->input('is_active'),
+                FILTER_VALIDATE_BOOLEAN
+            );
+        }
+
+        if (!empty($toMerge)) {
+            $this->merge($toMerge);
+        }
     }
 }

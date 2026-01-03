@@ -48,10 +48,6 @@
                                     <path d="M11 12h4"></path>
                                 </svg>
                                 Filter
-                                <span
-                                    class="ml-2 flex h-5 items-center justify-center rounded-full border bg-slate-100 px-1.5 text-xs font-medium">
-                                    3
-                                </span></button>
                             <div data-transition="" data-selector=".show"
                                 data-enter="transition-all ease-linear duration-150"
                                 data-enter-from="absolute !mt-5 invisible opacity-0 translate-y-1"
@@ -73,7 +69,7 @@
                                             <select id="filter-status"
                                                 class="disabled:bg-slate-100 disabled:cursor-not-allowed disabled:dark:bg-darkmode-800/50 [&amp;[readonly]]:bg-slate-100 [&amp;[readonly]]:cursor-not-allowed [&amp;[readonly]]:dark:bg-darkmode-800/50 transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md py-2 px-3 pr-8 focus:ring-4 focus:ring-primary focus:ring-opacity-20 focus:border-primary focus:border-opacity-40 dark:bg-darkmode-800 dark:border-transparent dark:focus:ring-slate-700 dark:focus:ring-opacity-50 group-[.form-inline]:flex-1 mt-2 flex-1 w-32"
                                                 style="display:block; width: 120px;">
-                                                <option value="0,1">
+                                                <option value="">
                                                     All
                                                 </option>
                                                 <option value="0">

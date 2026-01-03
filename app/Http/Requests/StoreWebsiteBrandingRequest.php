@@ -9,7 +9,13 @@ class StoreWebsiteBrandingRequest extends FormRequest
     public function authorize(): bool
     {
         $user = $this->user();
-        return $user && ($user->role === 'admin' || (method_exists($user, 'can') && $user->can('manage-website')));
+
+        if (!$user) {
+            return false;
+        }
+
+        return $user->role === 'admin'
+            || (method_exists($user, 'can') && $user->can('manage-website'));
     }
 
     public function rules(): array
@@ -19,5 +25,11 @@ class StoreWebsiteBrandingRequest extends FormRequest
             'logo_square' => 'nullable|image|mimes:png,jpg,jpeg|max:4096',
             'favicon' => 'nullable|image|mimes:png,ico|max:1024',
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        // Tidak ada string input yang perlu disanitasi saat ini
+        // Method disiapkan untuk konsistensi & future extension
     }
 }

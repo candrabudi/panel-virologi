@@ -8,51 +8,47 @@ use Illuminate\Validation\Rule;
 
 class StoreCyberSecurityServiceRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
         $user = auth()->user();
-        // Adjust permission name if necessary based on existing convention
-        return $user && ($user->role === 'admin' || (method_exists($user, 'can') && $user->can('manage-cyber-security')));
+
+        return $user
+            && (
+                $user->role === 'admin'
+                || (method_exists($user, 'can') && $user->can('manage-cyber-security'))
+            );
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     */
     public function rules(): array
     {
-        $id = $this->route('cyberSecurityService') ? $this->route('cyberSecurityService')->id : null;
+        $id = $this->route('cyberSecurityService')
+            ? $this->route('cyberSecurityService')->id
+            : null;
 
         return [
-            'name'             => ['required', 'string', 'max:255', Rule::unique('cyber_security_services', 'name')->ignore($id)],
-            'short_name'       => ['nullable', 'string', 'max:255'],
-            'category'         => ['required', 'in:soc,pentest,audit,incident_response,cloud_security,governance,training,consulting'],
-            'summary'          => ['nullable', 'string'],
-            'description'      => ['nullable', 'string'],
-            'service_scope'    => ['nullable', 'array'],
-            'deliverables'     => ['nullable', 'array'],
-            'target_audience'  => ['nullable', 'array'],
-            'ai_keywords'      => ['nullable', 'array'],
-            'ai_domain'        => ['nullable', 'string'],
-            'is_ai_visible'    => ['boolean'],
-            'cta_label'        => ['nullable', 'string', 'max:255'],
-            'cta_url'          => ['nullable', 'string', 'max:255'],
-            'seo_title'        => ['nullable', 'string', 'max:255'],
-            'seo_description'  => ['nullable', 'string', 'max:300'],
-            'seo_keywords'     => ['nullable', 'array'],
-            'is_active'        => ['boolean'],
-            'sort_order'       => ['nullable', 'integer', 'min:0'],
+            'name' => ['required', 'string', 'max:255', Rule::unique('cyber_security_services', 'name')->ignore($id)],
+            'short_name' => ['nullable', 'string', 'max:255'],
+            'category' => ['required', 'in:soc,pentest,audit,incident_response,cloud_security,governance,training,consulting'],
+            'summary' => ['nullable', 'string'],
+            'description' => ['nullable', 'string'],
+            'service_scope' => ['nullable', 'array'],
+            'deliverables' => ['nullable', 'array'],
+            'target_audience' => ['nullable', 'array'],
+            'ai_keywords' => ['nullable', 'array'],
+            'ai_domain' => ['nullable', 'string'],
+            'is_ai_visible' => ['boolean'],
+            'cta_label' => ['nullable', 'string', 'max:255'],
+            'cta_url' => ['nullable', 'string', 'max:255'],
+            'seo_title' => ['nullable', 'string', 'max:255'],
+            'seo_description' => ['nullable', 'string', 'max:300'],
+            'seo_keywords' => ['nullable', 'array'],
+            'is_active' => ['boolean'],
+            'sort_order' => ['nullable', 'integer', 'min:0'],
         ];
     }
 
-    /**
-     * Prepare the data for validation.
-     */
     protected function prepareForValidation(): void
     {
-        // 1. Handle JSON-to-array normalization
         $jsonFields = [
             'service_scope',
             'deliverables',
@@ -73,25 +69,25 @@ class StoreCyberSecurityServiceRequest extends FormRequest
             }
         }
 
-        // 2. Sanitize inputs (only if present)
         $sanitizeMap = [
-            'name'            => 'cleanString',
-            'short_name'      => 'cleanString',
-            'summary'         => 'sanitizeHtml',
-            'description'     => 'sanitizeHtml',
-            'cta_label'       => 'cleanString',
-            'seo_title'       => 'cleanString',
+            'name' => 'cleanString',
+            'short_name' => 'cleanString',
+            'summary' => 'sanitizeHtml',
+            'description' => 'sanitizeHtml',
+            'cta_label' => 'cleanString',
+            'seo_title' => 'cleanString',
             'seo_description' => 'cleanString',
         ];
 
         $toMerge = [];
+
         foreach ($sanitizeMap as $field => $method) {
             if ($this->has($field)) {
                 $toMerge[$field] = SecurityHelper::$method($this->input($field));
             }
         }
 
-        if (!empty($toMerge)) {
+        if ($toMerge) {
             $this->merge($toMerge);
         }
     }

@@ -10,7 +10,13 @@ class StoreWebsiteContactRequest extends FormRequest
     public function authorize(): bool
     {
         $user = $this->user();
-        return $user && ($user->role === 'admin' || (method_exists($user, 'can') && $user->can('manage-website')));
+
+        if (!$user) {
+            return false;
+        }
+
+        return $user->role === 'admin'
+            || (method_exists($user, 'can') && $user->can('manage-website'));
     }
 
     public function rules(): array
@@ -23,8 +29,18 @@ class StoreWebsiteContactRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
-        $this->merge([
-            'phone' => SecurityHelper::cleanString($this->phone),
-        ]);
+        $toMerge = [];
+
+        if ($this->has('phone')) {
+            $toMerge['phone'] = SecurityHelper::cleanString($this->phone);
+        }
+
+        if ($this->has('email')) {
+            $toMerge['email'] = filter_var($this->email, FILTER_SANITIZE_EMAIL);
+        }
+
+        if (!empty($toMerge)) {
+            $this->merge($toMerge);
+        }
     }
 }
