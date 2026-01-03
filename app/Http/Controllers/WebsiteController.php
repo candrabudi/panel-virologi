@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 use Intervention\Image\Drivers\Gd\Driver;
+use Intervention\Image\Encoders\PngEncoder;
 use Intervention\Image\ImageManager;
 
 class WebsiteController extends Controller
@@ -150,10 +151,7 @@ class WebsiteController extends Controller
                         }
                     }
 
-                    $file = $request->file($field);
-                    $image = $manager->read($file->getPathname());
-
-                    $image->convert('png');
+                    $image = $manager->read($request->file($field)->getPathname());
 
                     match ($field) {
                         'favicon' => $image->resize(64, 64),
@@ -166,7 +164,7 @@ class WebsiteController extends Controller
                     $relativePath = 'website/'.$filename;
                     $absolutePath = $disk->path($relativePath);
 
-                    $image->save($absolutePath);
+                    $image->save($absolutePath, new PngEncoder());
 
                     $data[$field] = asset('storage/'.$relativePath);
                 }
