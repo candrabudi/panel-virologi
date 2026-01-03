@@ -28,6 +28,7 @@ class StoreCyberSecurityServiceRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255', Rule::unique('cyber_security_services', 'name')->ignore($id)],
             'short_name' => ['nullable', 'string', 'max:255'],
+            'thumbnail' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'category' => ['required', 'in:soc,pentest,audit,incident_response,cloud_security,governance,training,consulting'],
             'summary' => ['nullable', 'string'],
             'description' => ['nullable', 'string'],

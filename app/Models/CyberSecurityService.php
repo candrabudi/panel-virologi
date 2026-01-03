@@ -31,6 +31,7 @@ class CyberSecurityService extends Model
         'seo_keywords',
         'is_active',
         'sort_order',
+        'thumbnail',
     ];
 
     protected $casts = [
