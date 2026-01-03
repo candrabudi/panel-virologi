@@ -153,18 +153,18 @@ class WebsiteController extends Controller
 
                     $image = $manager->read($request->file($field)->getPathname());
 
-                    match ($field) {
-                        'favicon' => $image->resize(64, 64),
-                        'logo_square' => $image->resize(512, 512),
-                        'logo_rectangle' => $image->resize(800, 300),
-                        default => null,
-                    };
-
                     $filename = $field.'_'.Str::uuid().'.png';
                     $relativePath = 'website/'.$filename;
                     $absolutePath = $disk->path($relativePath);
 
-                    $image->save($absolutePath, new PngEncoder());
+                    $targetKb = match ($field) {
+                        'favicon' => 20,
+                        'logo_square' => 80,
+                        'logo_rectangle' => 120,
+                        default => 100,
+                    };
+
+                    $this->compressPngToTargetKb($image, $absolutePath, $targetKb);
 
                     $data[$field] = asset('storage/'.$relativePath);
                 }
@@ -178,6 +178,25 @@ class WebsiteController extends Controller
             Log::error($e->getMessage());
 
             return ResponseHelper::fail('Gagal menyimpan branding website', null, 500);
+        }
+    }
+
+    private function compressPngToTargetKb(
+        $image,
+        string $path,
+        int $targetKb,
+        int $startCompression = 6,
+        int $maxCompression = 9
+    ): void {
+        for ($compression = $startCompression; $compression <= $maxCompression; ++$compression) {
+            $image->save($path, new PngEncoder(compression: $compression));
+
+            clearstatcache(true, $path);
+            $sizeKb = filesize($path) / 1024;
+
+            if ($sizeKb <= $targetKb) {
+                break;
+            }
         }
     }
 }
