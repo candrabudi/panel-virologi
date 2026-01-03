@@ -3,18 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\ResponseHelper;
-use App\Http\Requests\StoreWebsiteGeneralRequest;
-use App\Http\Requests\StoreWebsiteContactRequest;
 use App\Http\Requests\StoreWebsiteBrandingRequest;
+use App\Http\Requests\StoreWebsiteContactRequest;
+use App\Http\Requests\StoreWebsiteGeneralRequest;
 use App\Models\Website;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Illuminate\View\View;
 use Intervention\Image\Drivers\Gd\Driver;
 use Intervention\Image\ImageManager;
-use Illuminate\View\View;
 
 class WebsiteController extends Controller
 {
@@ -34,7 +34,7 @@ class WebsiteController extends Controller
             return;
         }
 
-        Log::warning("Unauthorized attempt to manage website settings by User ID: " . (auth()->id() ?? 'Guest'));
+        Log::warning('Unauthorized attempt to manage website settings by User ID: '.(auth()->id() ?? 'Guest'));
         abort(403, 'Unauthorized access to website management');
     }
 
@@ -90,11 +90,12 @@ class WebsiteController extends Controller
                 $website->save();
             });
 
-            Log::info("Website general information updated by User ID " . auth()->id());
+            Log::info('Website general information updated by User ID '.auth()->id());
 
             return ResponseHelper::ok(null, 'Informasi website berhasil disimpan');
         } catch (\Throwable $e) {
-            Log::error("Failed to save website general info: " . $e->getMessage());
+            Log::error('Failed to save website general info: '.$e->getMessage());
+
             return ResponseHelper::fail('Gagal menyimpan informasi website', null, 500);
         }
     }
@@ -113,18 +114,16 @@ class WebsiteController extends Controller
                 $website->save();
             });
 
-            Log::info("Website contact information updated by User ID " . auth()->id());
+            Log::info('Website contact information updated by User ID '.auth()->id());
 
             return ResponseHelper::ok(null, 'Kontak website berhasil disimpan');
         } catch (\Throwable $e) {
-            Log::error("Failed to save website contact info: " . $e->getMessage());
+            Log::error('Failed to save website contact info: '.$e->getMessage());
+
             return ResponseHelper::fail('Gagal menyimpan kontak website', null, 500);
         }
     }
 
-    /**
-     * API: Save branding information (logos, favicon).
-     */
     public function saveBranding(StoreWebsiteBrandingRequest $request): JsonResponse
     {
         $this->authorizeManage();
@@ -144,7 +143,6 @@ class WebsiteController extends Controller
                         continue;
                     }
 
-                    // Delete old file
                     if ($website->$field) {
                         $oldPath = str_replace(asset('storage/'), '', $website->$field);
                         if ($disk->exists($oldPath)) {
@@ -155,32 +153,32 @@ class WebsiteController extends Controller
                     $file = $request->file($field);
                     $image = $manager->read($file->getPathname());
 
-                    $filename = $field . '_' . Str::uuid() . '.jpg';
-                    $relativePath = 'website/' . $filename;
-                    $absolutePath = $disk->path($relativePath);
+                    $image->convert('png');
 
-                    // TARGET FILE SIZE PER FIELD
-                    $targetKb = match ($field) {
-                        'favicon' => 20,
-                        'logo_square' => 80,
-                        'logo_rectangle' => 120,
-                        default => 100,
+                    match ($field) {
+                        'favicon' => $image->resize(64, 64),
+                        'logo_square' => $image->resize(512, 512),
+                        'logo_rectangle' => $image->resize(800, 300),
+                        default => null,
                     };
 
-                    $this->compressToTargetSize($image, $absolutePath, $targetKb);
+                    $filename = $field.'_'.Str::uuid().'.png';
+                    $relativePath = 'website/'.$filename;
+                    $absolutePath = $disk->path($relativePath);
 
-                    $data[$field] = asset('storage/' . $relativePath);
+                    $image->save($absolutePath);
+
+                    $data[$field] = asset('storage/'.$relativePath);
                 }
 
                 $website->fill($data);
                 $website->save();
             });
 
-            Log::info("Website branding information updated by User ID " . auth()->id());
-
             return ResponseHelper::ok(null, 'Branding website berhasil disimpan');
         } catch (\Throwable $e) {
-            Log::error("Failed to save website branding: " . $e->getMessage());
+            Log::error($e->getMessage());
+
             return ResponseHelper::fail('Gagal menyimpan branding website', null, 500);
         }
     }
