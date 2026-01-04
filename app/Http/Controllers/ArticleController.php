@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Helpers\ResponseHelper;
-use App\Helpers\SecurityHelper;
 use App\Http\Requests\StoreArticleRequest;
 use App\Models\Article;
 use App\Models\ArticleCategory;
@@ -23,18 +22,13 @@ class ArticleController extends Controller
         $this->middleware(['auth', 'throttle:100,1']);
     }
 
-    /**
-     * Display a listing of articles for CMS view.
-     */
     public function index(): View
     {
         $articles = Article::orderByDesc('id')->get();
+
         return view('articles.index', compact('articles'));
     }
 
-    /**
-     * Get paginated articles for API list.
-     */
     public function list(Request $request): JsonResponse
     {
         $query = Article::query()
@@ -54,12 +48,10 @@ class ArticleController extends Controller
         }
 
         $perPage = (int) $request->get('per_page', 10);
+
         return ResponseHelper::ok($query->paginate($perPage));
     }
 
-    /**
-     * Show the form for creating a new article.
-     */
     public function create(): View
     {
         return view('articles.form', [
@@ -69,9 +61,6 @@ class ArticleController extends Controller
         ]);
     }
 
-    /**
-     * Show the form for editing an existing article.
-     */
     public function edit(Article $article): View
     {
         return view('articles.form', [
@@ -81,19 +70,14 @@ class ArticleController extends Controller
         ]);
     }
 
-    /**
-     * Store a newly created article.
-     */
     public function store(StoreArticleRequest $request): JsonResponse
     {
         try {
             return DB::transaction(function () use ($request) {
                 $data = $request->validated();
-                
-                // Handle Thumbnail
+
                 if ($request->hasFile('thumbnail')) {
-                    // Store as relative path
-                    $data['thumbnail'] = $request->file('thumbnail')->store('articles', 'public');
+                    $data['thumbnail'] = asset('storage/'.$request->file('thumbnail')->store('articles', 'public'));
                 }
 
                 $data['slug'] = $this->generateUniqueSlug($data['title']);
@@ -104,35 +88,31 @@ class ArticleController extends Controller
                 $article->categories()->sync($request->categories);
                 $article->tags()->sync($request->tags ?? []);
 
-                Log::info("Article created: ID {$article->id} by User ID " . auth()->id());
+                Log::info("Article created: ID {$article->id} by User ID ".auth()->id());
 
                 return ResponseHelper::ok(['redirect' => '/articles'], 'Artikel berhasil disimpan');
             });
         } catch (\Throwable $e) {
-            Log::error("Failed to store article: " . $e->getMessage());
-            return ResponseHelper::fail('Gagal menyimpan artikel: ' . $e->getMessage(), null, 500);
+            Log::error('Failed to store article: '.$e->getMessage());
+
+            return ResponseHelper::fail('Gagal menyimpan artikel: '.$e->getMessage(), null, 500);
         }
     }
 
-    /**
-     * Update an existing article.
-     */
     public function update(StoreArticleRequest $request, Article $article): JsonResponse
     {
         try {
             return DB::transaction(function () use ($request, $article) {
                 $data = $request->validated();
 
-                // Handle Thumbnail Replacement
                 if ($request->hasFile('thumbnail')) {
-                    $oldPath = \Illuminate\Support\Facades\DB::table('articles')->where('id', $article->id)->value('thumbnail');
+                    $oldPath = DB::table('articles')->where('id', $article->id)->value('thumbnail');
                     if ($oldPath) {
                         Storage::disk('public')->delete($oldPath);
                     }
-                    $data['thumbnail'] = $request->file('thumbnail')->store('articles', 'public');
+                    $data['thumbnail'] = asset('storage/'.$request->file('thumbnail')->store('articles', 'public'));
                 }
 
-                // Update slug if title changed
                 if ($data['title'] !== $article->title) {
                     $data['slug'] = $this->generateUniqueSlug($data['title'], $article->id);
                 }
@@ -146,19 +126,17 @@ class ArticleController extends Controller
                 $article->categories()->sync($request->categories);
                 $article->tags()->sync($request->tags ?? []);
 
-                Log::info("Article updated: ID {$article->id} by User ID " . auth()->id());
+                Log::info("Article updated: ID {$article->id} by User ID ".auth()->id());
 
                 return ResponseHelper::ok(['redirect' => '/articles'], 'Artikel berhasil diperbarui');
             });
         } catch (\Throwable $e) {
-            Log::error("Failed to update article ID {$article->id}: " . $e->getMessage());
-            return ResponseHelper::fail('Gagal memperbarui artikel: ' . $e->getMessage(), null, 500);
+            Log::error("Failed to update article ID {$article->id}: ".$e->getMessage());
+
+            return ResponseHelper::fail('Gagal memperbarui artikel: '.$e->getMessage(), null, 500);
         }
     }
 
-    /**
-     * Remove an article.
-     */
     public function destroy(Article $article): JsonResponse
     {
         try {
@@ -169,18 +147,16 @@ class ArticleController extends Controller
             $articleId = $article->id;
             $article->delete();
 
-            Log::info("Article deleted: ID {$articleId} by User ID " . auth()->id());
+            Log::info("Article deleted: ID {$articleId} by User ID ".auth()->id());
 
             return ResponseHelper::ok(null, 'Artikel berhasil dihapus');
         } catch (\Throwable $e) {
-            Log::error("Failed to delete article: " . $e->getMessage());
+            Log::error('Failed to delete article: '.$e->getMessage());
+
             return ResponseHelper::fail('Gagal menghapus artikel', null, 500);
         }
     }
 
-    /**
-     * Dynamic image upload for Rich Text Editor.
-     */
     public function uploadImage(Request $request): JsonResponse
     {
         $request->validate([
@@ -189,17 +165,15 @@ class ArticleController extends Controller
 
         try {
             $path = $request->file('file')->store('articles/content', 'public');
+
             return response()->json([
-                'location' => asset('storage/' . $path),
+                'location' => asset('storage/'.$path),
             ]);
         } catch (\Throwable $e) {
             return response()->json(['error' => 'Upload failed'], 500);
         }
     }
 
-    /**
-     * Internal: Ensures slug is unique across the table.
-     */
     private function generateUniqueSlug(string $title, ?int $exceptId = null): string
     {
         $slug = Str::slug($title);
@@ -207,7 +181,7 @@ class ArticleController extends Controller
         $count = 1;
 
         while (Article::where('slug', $slug)->where('id', '!=', $exceptId)->exists()) {
-            $slug = $originalSlug . '-' . $count++;
+            $slug = $originalSlug.'-'.$count++;
         }
 
         return $slug;

@@ -19,9 +19,6 @@ class ArticleTagController extends Controller
         $this->middleware(['auth', 'throttle:120,1']);
     }
 
-    /**
-     * Otorisasi dasar untuk mengelola tag.
-     */
     private function authorizeManage(): void
     {
         $user = auth()->user();
@@ -33,18 +30,13 @@ class ArticleTagController extends Controller
         abort(403, 'Unauthorized access to tag management');
     }
 
-    /**
-     * Tampilan utama manajemen tag (CMS).
-     */
     public function index(): View
     {
         $this->authorizeManage();
+
         return view('articles.tags.index');
     }
 
-    /**
-     * List tag dengan paginasi (API).
-     */
     public function list(Request $request): JsonResponse
     {
         $this->authorizeManage();
@@ -52,16 +44,14 @@ class ArticleTagController extends Controller
         $query = ArticleTag::query()->orderBy('name');
 
         if ($request->filled('q')) {
-            $query->where('name', 'like', '%' . $request->q . '%');
+            $query->where('name', 'like', '%'.$request->q.'%');
         }
 
         $perPage = (int) $request->get('per_page', 10);
+
         return ResponseHelper::ok($query->paginate($perPage, ['id', 'name', 'slug']));
     }
 
-    /**
-     * Simpan tag baru.
-     */
     public function store(StoreArticleTagRequest $request): JsonResponse
     {
         $this->authorizeManage();
@@ -74,7 +64,7 @@ class ArticleTagController extends Controller
                 ]);
             });
 
-            Log::info("Tag created: ID {$tag->id} by User ID " . auth()->id());
+            Log::info("Tag created: ID {$tag->id} by User ID ".auth()->id());
 
             return ResponseHelper::ok([
                 'id' => $tag->id,
@@ -82,14 +72,12 @@ class ArticleTagController extends Controller
                 'slug' => $tag->slug,
             ], 'Tag berhasil dibuat', 201);
         } catch (\Throwable $e) {
-            Log::error("Failed to create tag: " . $e->getMessage());
+            Log::error('Failed to create tag: '.$e->getMessage());
+
             return ResponseHelper::fail('Gagal membuat tag', null, 500);
         }
     }
 
-    /**
-     * Perbarui tag yang ada.
-     */
     public function update(StoreArticleTagRequest $request, $id): JsonResponse
     {
         $this->authorizeManage();
@@ -107,7 +95,7 @@ class ArticleTagController extends Controller
                 ]);
             });
 
-            Log::info("Tag updated: ID {$tag->id} by User ID " . auth()->id());
+            Log::info("Tag updated: ID {$tag->id} by User ID ".auth()->id());
 
             return ResponseHelper::ok([
                 'id' => $tag->id,
@@ -115,14 +103,12 @@ class ArticleTagController extends Controller
                 'slug' => $tag->slug,
             ], 'Tag berhasil diperbarui');
         } catch (\Throwable $e) {
-            Log::error("Failed to update tag ID {$id}: " . $e->getMessage());
+            Log::error("Failed to update tag ID {$id}: ".$e->getMessage());
+
             return ResponseHelper::fail('Gagal memperbarui tag', null, 500);
         }
     }
 
-    /**
-     * Hapus tag.
-     */
     public function destroy($id): JsonResponse
     {
         $this->authorizeManage();
@@ -136,11 +122,12 @@ class ArticleTagController extends Controller
             $tagId = $tag->id;
             DB::transaction(fn () => $tag->delete());
 
-            Log::info("Tag deleted: ID {$tagId} by User ID " . auth()->id());
+            Log::info("Tag deleted: ID {$tagId} by User ID ".auth()->id());
 
             return ResponseHelper::ok(null, 'Tag berhasil dihapus');
         } catch (\Throwable $e) {
-            Log::error("Failed to delete tag ID {$id}: " . $e->getMessage());
+            Log::error("Failed to delete tag ID {$id}: ".$e->getMessage());
+
             return ResponseHelper::fail('Gagal menghapus tag', null, 500);
         }
     }
