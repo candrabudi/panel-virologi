@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class PageSeeder extends Seeder
@@ -72,6 +71,18 @@ class PageSeeder extends Seeder
                 'meta_description' => 'Reach out to our security command center for coordination and support.',
                 'primary_button_text' => 'Find Channels',
                 'primary_button_url' => '#channels',
+                'is_active' => true,
+            ],
+            [
+                'key' => 'leak_check',
+                'title' => 'Intelijen Kebocoran Data',
+                'hero_title' => 'Periksa <span class="bg-clip-text text-transparent bg-gradient-to-r from-emerald-400 to-cyan-400">Eksposur Data Anda.</span>',
+                'hero_subtitle' => 'Mesin Intelijen Pelanggaran',
+                'hero_description' => 'Cari miliaran rekam data yang bocor di dark web untuk mengamankan identitas digital Anda.',
+                'meta_title' => 'Intelijen Kebocoran Data | RD-VIROLOGI',
+                'meta_description' => 'Cari miliaran rekam data yang bocor di dark web untuk mengamankan identitas digital Anda.',
+                'primary_button_text' => 'Mulai Pemindaian Mendalam',
+                'primary_button_url' => '#scan',
                 'is_active' => true,
             ],
         ];

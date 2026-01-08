@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\HomeSection;
+use Illuminate\Database\Seeder;
 
 class HomeSectionSeeder extends Seeder
 {
@@ -24,7 +23,7 @@ class HomeSectionSeeder extends Seeder
                 'primary_button_text' => 'Access Grid',
                 'primary_button_url' => '#threat-map-section',
                 'secondary_button_text' => 'System Status',
-                'secondary_button_url' => url('/contact'),
+                'secondary_button_url' => route('contact'),
                 'settings' => [],
                 'is_active' => true,
                 'order' => 0,
@@ -88,7 +87,7 @@ class HomeSectionSeeder extends Seeder
                 'description' => null,
                 'badge_text' => null,
                 'primary_button_text' => 'All Publications',
-                'primary_button_url' => route('articles.index'),
+                'primary_button_url' => route('blog.index'),
                 'settings' => [
                     'show_featured' => true,
                     'featured_size' => 'large',
