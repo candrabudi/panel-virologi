@@ -7,13 +7,24 @@ use Illuminate\Database\Eloquent\Model;
 class FooterSetting extends Model
 {
     protected $fillable = [
-        'logo_path',
         'description',
+        'address',
+        'email',
+        'phone',
         'copyright_text',
-        'is_active',
+        'social_links',
+        'column_1_title',
+        'column_1_links',
+        'column_2_title',
+        'column_2_links',
+        'column_3_title',
+        'column_3_links',
     ];
 
     protected $casts = [
-        'is_active' => 'boolean',
+        'social_links' => 'array',
+        'column_1_links' => 'array',
+        'column_2_links' => 'array',
+        'column_3_links' => 'array',
     ];
 }

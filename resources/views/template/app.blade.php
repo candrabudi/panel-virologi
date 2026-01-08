@@ -1,6 +1,6 @@
 @php
-    use App\Models\Website;
-    $setting = Website::first();
+    use App\Models\WebsiteSetting;
+    $setting = WebsiteSetting::first();
 @endphp
 
 <!doctype html>
@@ -8,11 +8,11 @@
 
 <head>
     <meta charset="utf-8" />
-    <title>@yield('title') | {{ $setting ? $setting->name : 'default' }}</title>
+    <title>@yield('title') | {{ $setting ? $setting->site_name : 'default' }}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <link rel="shortcut icon" href="{{ $setting ? $setting->favicon : '' }}" />
+    <link rel="shortcut icon" href="{{ $setting ? $setting->site_favicon : '' }}" />
     <script src="{{ asset('assets/js/config.js') }}"></script>
 
     <link href="{{ asset('assets/css/vendors.min.css') }}" rel="stylesheet" type="text/css" />

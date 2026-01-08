@@ -2,13 +2,13 @@
     <!-- Brand Logo -->
     <a href="index.html" class="logo">
         <span class="logo logo-light">
-            <span class="logo-lg"><img src="{{ $setting ? $setting->logo_rectangle : '' }}" alt="logo" /></span>
-            <span class="logo-sm"><img src="{{ $setting ? $setting->logo_rectangle : '' }}" alt="small logo" /></span>
+            <span class="logo-lg"><img src="{{ $setting ? $setting->site_logo : '' }}" alt="logo" /></span>
+            <span class="logo-sm"><img src="{{ $setting ? $setting->site_logo : '' }}" alt="small logo" /></span>
         </span>
 
         <span class="logo logo-dark">
-            <span class="logo-lg"><img src="{{ $setting ? $setting->logo_rectangle : '' }}" alt="dark logo" /></span>
-            <span class="logo-sm"><img src="{{ $setting ? $setting->logo_rectangle : '' }}" alt="small logo" /></span>
+            <span class="logo-lg"><img src="{{ $setting ? $setting->site_logo : '' }}" alt="dark logo" /></span>
+            <span class="logo-sm"><img src="{{ $setting ? $setting->site_logo : '' }}" alt="small logo" /></span>
         </span>
     </a>
     <button class="button-on-hover">
@@ -172,6 +172,15 @@
                             <i class="ri ri-layout-bottom-line"></i>
                         </span>
                         <span class="menu-text">Footer Website</span>
+                    </a>
+                </li>
+
+                <li class="side-nav-item">
+                    <a href="{{ route('leak_check.index') }}" class="side-nav-link {{ request()->is('leak-check*') ? 'active' : '' }}">
+                        <span class="menu-icon">
+                            <i class="ri ri-radar-line"></i>
+                        </span>
+                        <span class="menu-text">Leak Intelligence</span>
                     </a>
                 </li>
 

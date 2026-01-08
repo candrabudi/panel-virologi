@@ -96,6 +96,16 @@ class DashboardController extends Controller
             );
         }
 
+        // General Site Stats
+        $generalStats = [
+            'total_articles' => DB::table('articles')->count(),
+            'total_ebooks'   => DB::table('ebooks')->count(),
+            'total_products' => DB::table('products')->count(),
+            'total_users'    => DB::table('users')->count(),
+            'total_services' => DB::table('cyber_security_services')->count(),
+            'total_chat_sessions' => DB::table('ai_chat_sessions')->count(),
+        ];
+
         return ResponseHelper::ok([
             'total_units'    => (int) ($current->total_units ?? 0),
             'total_requests' => (int) ($current->total_requests ?? 0),
@@ -104,6 +114,7 @@ class DashboardController extends Controller
                 ? round((($current->total_requests - $current->blocked) / $current->total_requests) * 100, 2)
                 : 100,
             'growth'         => $growth,
+            'site'           => $generalStats
         ]);
     }
 

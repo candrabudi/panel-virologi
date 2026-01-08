@@ -22,32 +22,6 @@
                      </a>
                  </li>
 
-
-                 <li class="side-menu__divider">
-                     HOMEPAGE
-                 </li>
-                 <li>
-                     <a href="/homepage-hero"
-                         class="side-menu__link {{ request()->is('homepage-hero') ? 'side-menu__link--active' : '' }}">
-                         <i data-tw-merge="" data-lucide="file" class="stroke-[1] w-5 h-5 side-menu__link__icon"></i>
-                         <div class="side-menu__link__title">Hero</div>
-                     </a>
-                 </li>
-                 <li>
-                     <a href="/homepage-blog-section"
-                         class="side-menu__link {{ request()->is('homepage-blog-section') ? 'side-menu__link--active' : '' }}">
-                         <i data-tw-merge="" data-lucide="book" class="stroke-[1] w-5 h-5 side-menu__link__icon"></i>
-                         <div class="side-menu__link__title">Blog Section</div>
-                     </a>
-                 </li>
-                 <li>
-                     <a href="/homepage-threat-map"
-                         class="side-menu__link {{ request()->is('homepage-threat-map') ? 'side-menu__link--active' : '' }}">
-                         <i data-tw-merge="" data-lucide="map" class="stroke-[1] w-5 h-5 side-menu__link__icon"></i>
-                         <div class="side-menu__link__title">Threat Map</div>
-                     </a>
-                 </li>
-
                  <li class="side-menu__divider">
                      Artikel
                  </li>
@@ -102,22 +76,49 @@
                  <li class="side-menu__divider">
                      Layanan
                  </li>
-                 <li>
-                     <a href="/cyber-security-services"
-                         class="side-menu__link {{ request()->is('cyber-security-services') ? 'side-menu__link--active' : '' }}">
-                         <i data-tw-merge="" data-lucide="file" class="stroke-[1] w-5 h-5 side-menu__link__icon"></i>
-                         <div class="side-menu__link__title">Cyber Security Services</div>
-                     </a>
-                 </li>
+                <li>
+                    <a href="/cyber-security-services"
+                        class="side-menu__link {{ request()->is('cyber-security-services*') ? 'side-menu__link--active' : '' }}">
+                        <i data-tw-merge="" data-lucide="shield" class="stroke-[1] w-5 h-5 side-menu__link__icon"></i>
+                        <div class="side-menu__link__title">Cyber Security Services</div>
+                    </a>
+                </li>
+                <li class="side-menu__divider">
+                    Leak Intelligence
+                </li>
+                <li>
+                    <a href="{{ route('leak_check.index') }}"
+                        class="side-menu__link {{ request()->is('leak-check') ? 'side-menu__link--active' : '' }}">
+                        <i data-tw-merge="" data-lucide="key" class="stroke-[1] w-5 h-5 side-menu__link__icon"></i>
+                        <div class="side-menu__link__title">Pengaturan API</div>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('leak_check.logs') }}"
+                        class="side-menu__link {{ request()->is('leak-check/logs*') ? 'side-menu__link--active' : '' }}">
+                        <i data-tw-merge="" data-lucide="database" class="stroke-[1] w-5 h-5 side-menu__link__icon"></i>
+                        <div class="side-menu__link__title">Data Leak Logs</div>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('leak_request.index') }}"
+                        class="side-menu__link {{ request()->is('leak-request*') ? 'side-menu__link--active' : '' }}">
+                        <i data-tw-merge="" data-lucide="inbox" class="stroke-[1] w-5 h-5 side-menu__link__icon"></i>
+                        <div class="side-menu__link__title">Data Access Requests</div>
+                    </a>
+                </li>
+                 <li class="side-menu__divider">
+                    System Monitor
+                </li>
+                <li>
+                    <a href="{{ route('traffic_logs.index') }}"
+                        class="side-menu__link {{ request()->is('traffic-logs*') ? 'side-menu__link--active' : '' }}">
+                        <i data-tw-merge="" data-lucide="radio" class="stroke-[1] w-5 h-5 side-menu__link__icon"></i>
+                        <div class="side-menu__link__title">Traffic Observatory</div>
+                    </a>
+                </li>
                  <li class="side-menu__divider">
                      Pengaturan
-                 </li>
-                 <li>
-                     <a href="/about-us"
-                         class="side-menu__link {{ request()->is('about-us') ? 'side-menu__link--active' : '' }}">
-                         <i data-tw-merge="" data-lucide="file" class="stroke-[1] w-5 h-5 side-menu__link__icon"></i>
-                         <div class="side-menu__link__title">Tentang Kami</div>
-                     </a>
                  </li>
                  <li>
                      <a href="/users"
@@ -126,13 +127,48 @@
                          <div class="side-menu__link__title">Manajemen Pengguna</div>
                      </a>
                  </li>
-                 <li>
-                     <a href="/website"
-                         class="side-menu__link {{ request()->is('website') ? 'side-menu__link--active' : '' }}">
-                         <i data-tw-merge="" data-lucide="globe" class="stroke-[1] w-5 h-5 side-menu__link__icon"></i>
-                         <div class="side-menu__link__title">Pengaturan Website</div>
+                   <li>
+                     <a href="/home-sections"
+                         class="side-menu__link {{ request()->is('home-sections*') ? 'side-menu__link--active' : '' }}">
+                         <i data-tw-merge="" data-lucide="layout-template" class="stroke-[1] w-5 h-5 side-menu__link__icon"></i>
+                         <div class="side-menu__link__title">Home Sections</div>
                      </a>
                  </li>
+                 <li>
+                     <a href="/pages"
+                         class="side-menu__link {{ request()->is('pages*') ? 'side-menu__link--active' : '' }}">
+                         <i data-tw-merge="" data-lucide="file-text" class="stroke-[1] w-5 h-5 side-menu__link__icon"></i>
+                         <div class="side-menu__link__title">Pages Management</div>
+                     </a>
+                 </li>
+                 <li>
+                     <a href="/footer-settings"
+                         class="side-menu__link {{ request()->is('footer-settings*') ? 'side-menu__link--active' : '' }}">
+                         <i data-tw-merge="" data-lucide="settings" class="stroke-[1] w-5 h-5 side-menu__link__icon"></i>
+                         <div class="side-menu__link__title">Footer Settings</div>
+                     </a>
+                 </li>
+                <li>
+                    <a href="/contact-settings"
+                        class="side-menu__link {{ request()->is('contact-settings*') ? 'side-menu__link--active' : '' }}">
+                        <i data-tw-merge="" data-lucide="phone" class="stroke-[1] w-5 h-5 side-menu__link__icon"></i>
+                        <div class="side-menu__link__title">Contact Settings</div>
+                    </a>
+                </li>
+                <li>
+                    <a href="/about-settings"
+                        class="side-menu__link {{ request()->is('about-settings*') ? 'side-menu__link--active' : '' }}">
+                        <i data-tw-merge="" data-lucide="info" class="stroke-[1] w-5 h-5 side-menu__link__icon"></i>
+                        <div class="side-menu__link__title">About Settings</div>
+                    </a>
+                </li>
+                <li>
+                    <a href="/website-settings"
+                        class="side-menu__link {{ request()->is('website-settings*') ? 'side-menu__link--active' : '' }}">
+                        <i data-tw-merge="" data-lucide="monitor" class="stroke-[1] w-5 h-5 side-menu__link__icon"></i>
+                        <div class="side-menu__link__title">Website Settings</div>
+                    </a>
+                </li>
              </ul>
          </div>
      </div>

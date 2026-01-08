@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\Website;
+use App\Models\WebsiteSetting;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -36,8 +36,8 @@ class WebsiteSecurityTest extends TestCase
             'status' => 'active'
         ]);
 
-        Website::create([
-            'name' => 'Original Web'
+        WebsiteSetting::create([
+            'site_name' => 'Original Web'
         ]);
 
         Storage::fake('public');
@@ -69,13 +69,13 @@ class WebsiteSecurityTest extends TestCase
 
         $response->assertStatus(200);
         
-        $website = Website::first();
+        $website = WebsiteSetting::first();
         $this->assertNotNull($website);
         
         // SecurityHelper::cleanString removes entire script blocks
-        $this->assertEquals('My Web ', $website->name);
-        $this->assertEquals('Tagline ', $website->tagline);
-        $this->assertEquals('Desc ', $website->description);
+        $this->assertEquals('My Web ', $website->site_name);
+        $this->assertEquals('Tagline ', $website->site_tagline);
+        $this->assertEquals('Desc ', $website->site_description);
     }
 
     /**
@@ -91,9 +91,9 @@ class WebsiteSecurityTest extends TestCase
         $response = $this->actingAs($this->admin)->postJson('/website/contact', $payload);
         $response->assertStatus(200);
 
-        $website = Website::first();
-        $this->assertEquals('contact@test.com', $website->email);
-        $this->assertEquals('+628123456789 ', $website->phone);
+        $website = WebsiteSetting::first();
+        $this->assertEquals('contact@test.com', $website->site_email);
+        $this->assertEquals('+628123456789 ', $website->site_phone);
     }
 
     /**
@@ -101,9 +101,9 @@ class WebsiteSecurityTest extends TestCase
      */
     public function test_it_saves_branding_and_deletes_old_files()
     {
-        $website = Website::first();
+        $website = WebsiteSetting::first();
         $website->update([
-            'logo_rectangle' => asset('storage/website/old_rect.jpg'),
+            'site_logo' => asset('storage/website/old_rect.jpg'),
         ]);
         
         Storage::disk('public')->put('website/old_rect.jpg', 'fake content');
@@ -118,9 +118,9 @@ class WebsiteSecurityTest extends TestCase
         $response->assertStatus(200);
 
         $website->refresh();
-        $this->assertStringContainsString('/storage/website/logo_rectangle_', $website->logo_rectangle);
-        $this->assertStringContainsString('/storage/website/logo_square_', $website->logo_square);
-        $this->assertStringContainsString('/storage/website/favicon_', $website->favicon);
+        $this->assertStringContainsString('/storage/website/site_logo_', $website->site_logo);
+        $this->assertStringContainsString('/storage/website/site_logo_footer_', $website->site_logo_footer);
+        $this->assertStringContainsString('/storage/website/site_favicon_', $website->site_favicon);
 
         Storage::disk('public')->assertMissing('website/old_rect.jpg');
     }

@@ -115,6 +115,8 @@ class CyberSecurityServiceController extends Controller
                     ->store('cyber_security_services', 'public'));
             }
 
+            $data['sort_order'] = 1;
+
             DB::transaction(fn () => $cyberSecurityService->update($data)
             );
 
@@ -124,7 +126,7 @@ class CyberSecurityServiceController extends Controller
         } catch (\Throwable $e) {
             Log::error("Failed to update Cyber Security Service ID {$cyberSecurityService->id}: ".$e->getMessage());
 
-            return ResponseHelper::fail('Gagal memperbarui layanan', null, 500);
+            return ResponseHelper::fail('Gagal memperbarui layanan '.$e->getMessage(), null, 500);
         }
     }
 

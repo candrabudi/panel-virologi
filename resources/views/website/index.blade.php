@@ -22,14 +22,14 @@
 
                     <div class="mt-3">
                         <label class="block mb-2 text-sm font-medium">Nama Website</label>
-                        <input type="text" name="name" value="{{ old('name', $website->name ?? '') }}"
+                        <input type="text" name="name" value="{{ old('name', $website->site_name ?? '') }}"
                             class="transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md form-control"
                             placeholder="Nama website">
                     </div>
 
                     <div class="mt-3">
                         <label class="block mb-2 text-sm font-medium">Tagline</label>
-                        <input type="text" name="tagline" value="{{ old('tagline', $website->tagline ?? '') }}"
+                        <input type="text" name="tagline" value="{{ old('tagline', $website->site_tagline ?? '') }}"
                             class="transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md form-control"
                             placeholder="Tagline singkat">
                     </div>
@@ -38,7 +38,7 @@
                         <label class="block mb-2 text-sm font-medium">Deskripsi</label>
                         <textarea name="description" rows="4"
                             class="transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md form-control"
-                            placeholder="Deskripsi singkat website">{{ old('description', $website->description ?? '') }}</textarea>
+                            placeholder="Deskripsi singkat website">{{ old('description', $website->site_description ?? '') }}</textarea>
                     </div>
                     <button type="submit" id="btn-save"
                         class="px-6 py-2.5 text-sm font-semibold text-white rounded-md bg-primary hover:bg-primary/90 flex items-center gap-2 mt-3">
@@ -67,14 +67,14 @@
 
                     <div class="mt-3">
                         <label class="block mb-2 text-sm font-medium">Nomor Telepon</label>
-                        <input type="text" name="phone" value="{{ old('phone', $website->phone ?? '') }}"
+                        <input type="text" name="phone" value="{{ old('phone', $website->site_phone ?? '') }}"
                             class="transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md form-control"
                             placeholder="+62xxxx">
                     </div>
 
                     <div class="mt-3">
                         <label class="block mb-2 text-sm font-medium">Email</label>
-                        <input type="email" name="email" value="{{ old('email', $website->email ?? '') }}"
+                        <input type="email" name="email" value="{{ old('email', $website->site_email ?? '') }}"
                             class="transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md form-control"
                             placeholder="admin@domain.com">
                     </div>
@@ -110,12 +110,12 @@
                         <input type="file" name="logo_rectangle"
                             class="transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md form-control">
 
-                        @if ($website?->logo_rectangle)
+                        @if ($website?->site_logo)
                             <div class="mt-2 flex items-center gap-2">
                                 <span class="text-xs px-2 py-1 rounded bg-slate-100 text-slate-600">
                                     Current
                                 </span>
-                                <img src="{{ $website->logo_rectangle }}" class="h-10 rounded border">
+                                <img src="{{ $website->site_logo }}" class="h-10 rounded border">
                             </div>
                         @endif
                     </div>
@@ -125,12 +125,12 @@
                         <input type="file" name="logo_square"
                             class="transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md form-control">
 
-                        @if ($website?->logo_square)
+                        @if ($website?->site_logo_footer)
                             <div class="mt-2 flex items-center gap-2">
                                 <span class="text-xs px-2 py-1 rounded bg-slate-100 text-slate-600">
                                     Current
                                 </span>
-                                <img src="{{ $website->logo_square }}" class="h-10 rounded border">
+                                <img src="{{ $website->site_logo_footer }}" class="h-10 rounded border">
                             </div>
                         @endif
                     </div>
@@ -140,12 +140,12 @@
                         <input type="file" name="favicon"
                             class="transition duration-200 ease-in-out w-full text-sm border-slate-200 shadow-sm rounded-md form-control">
 
-                        @if ($website?->favicon)
+                        @if ($website?->site_favicon)
                             <div class="mt-2 flex items-center gap-2">
                                 <span class="text-xs px-2 py-1 rounded bg-slate-100 text-slate-600">
                                     Current
                                 </span>
-                                <img src="{{ $website->favicon }}" class="h-6 rounded border">
+                                <img src="{{ $website->site_favicon }}" class="h-6 rounded border">
                             </div>
                         @endif
                     </div>

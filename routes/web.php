@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AboutSettingController;
 use App\Http\Controllers\AboutUsController;
 use App\Http\Controllers\AiChatController;
 use App\Http\Controllers\AiContextController;
@@ -15,13 +16,20 @@ use App\Http\Controllers\CyberSecurityServiceController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EbookController;
 use App\Http\Controllers\FooterController;
+use App\Http\Controllers\ContactSettingController;
+use App\Http\Controllers\FooterSettingController;
 use App\Http\Controllers\HomepageBlogSectionController;
 use App\Http\Controllers\HomepageHeroController;
 use App\Http\Controllers\HomepageThreatMapSectionController;
+use App\Http\Controllers\PageController;
+use App\Http\Controllers\WebsiteSettingController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductPageController;
+use App\Http\Controllers\HomeSectionController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\WebsiteController;
+use App\Http\Controllers\LeakCheckController;
+use App\Http\Controllers\SystemTrafficLogController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [AuthController::class, 'showLogin'])->name('login');
@@ -72,6 +80,64 @@ Route::middleware(['auth', 'throttle:300,1'])->group(function () {
 
     Route::get('/homepage-threat-map/show', [HomepageThreatMapSectionController::class, 'show']);
     Route::post('/homepage-threat-map', [HomepageThreatMapSectionController::class, 'store']);
+    Route::prefix('home-sections')->group(function () {
+        Route::get('/', [HomeSectionController::class, 'index'])->name('home_sections.index');
+        Route::get('/list', [HomeSectionController::class, 'list'])->name('home_sections.list');
+        Route::get('/{section}/edit', [HomeSectionController::class, 'edit'])->name('home_sections.edit');
+        Route::put('/{section}', [HomeSectionController::class, 'update'])->name('home_sections.update');
+    });
+
+    Route::prefix('pages')->group(function () {
+        Route::get('/', [PageController::class, 'index'])->name('pages.index');
+        Route::get('/list', [PageController::class, 'list'])->name('pages.list');
+        Route::get('/{page}/edit', [PageController::class, 'edit'])->name('pages.edit');
+        Route::put('/{page}', [PageController::class, 'update'])->name('pages.update');
+    });
+
+    Route::prefix('website-settings')->group(function () {
+        Route::get('/', [WebsiteSettingController::class, 'index'])->name('website_settings.index');
+        Route::put('/', [WebsiteSettingController::class, 'update'])->name('website_settings.update');
+    });
+
+    Route::prefix('footer-settings')->group(function () {
+        Route::get('/', [FooterSettingController::class, 'index'])->name('footer_settings.index');
+        Route::put('/', [FooterSettingController::class, 'update'])->name('footer_settings.update');
+    });
+
+    Route::prefix('contact-settings')->group(function () {
+        Route::get('/', [ContactSettingController::class, 'edit'])->name('contact_settings.edit');
+        Route::put('/', [ContactSettingController::class, 'update'])->name('contact_settings.update');
+    });
+
+    Route::prefix('about-settings')->group(function () {
+        Route::get('/', [AboutSettingController::class, 'edit'])->name('about_settings.edit');
+        Route::put('/', [AboutSettingController::class, 'update'])->name('about_settings.update');
+    });
+
+    Route::prefix('leak-check')->group(function () {
+        Route::get('/', [LeakCheckController::class, 'index'])->name('leak_check.index');
+        Route::post('/settings', [LeakCheckController::class, 'updateSettings'])->name('leak_check.update_settings');
+        Route::get('/export', [LeakCheckController::class, 'exportCsv'])->name('leak_check.export');
+        Route::get('/print', [LeakCheckController::class, 'printLogs'])->name('leak_check.print');
+        Route::get('/logs', [LeakCheckController::class, 'logs'])->name('leak_check.logs');
+        Route::get('/logs/{log}', [LeakCheckController::class, 'showLog'])->name('leak_check.show_log');
+        Route::get('/logs/{log}/json', [LeakCheckController::class, 'downloadJson'])->name('leak_check.download_json');
+        Route::post('/search', [LeakCheckController::class, 'search'])->name('leak_check.search');
+    });
+
+    Route::prefix('leak-request')->group(function () {
+        Route::get('/', [App\Http\Controllers\LeakDataRequestController::class, 'index'])->name('leak_request.index');
+        Route::get('/create', [App\Http\Controllers\LeakDataRequestController::class, 'create'])->name('leak_request.create');
+        Route::post('/', [App\Http\Controllers\LeakDataRequestController::class, 'store'])->name('leak_request.store');
+        Route::get('/{id}', [App\Http\Controllers\LeakDataRequestController::class, 'show'])->name('leak_request.show');
+        Route::post('/{id}/update-status', [App\Http\Controllers\LeakDataRequestController::class, 'updateStatus'])->name('leak_request.update_status');
+    });
+
+    Route::prefix('traffic-logs')->group(function () {
+        Route::get('/', [SystemTrafficLogController::class, 'index'])->name('traffic_logs.index');
+        Route::get('/{log}', [SystemTrafficLogController::class, 'show'])->name('traffic_logs.show');
+    });
+
     Route::prefix('footer')->group(function () {
         Route::get('/', [FooterController::class, 'index']);
         // SETTINGS

@@ -1,6 +1,6 @@
 @php
-    use App\Models\Website;
-    $setting = Website::first();
+    use App\Models\WebsiteSetting;
+    $setting = WebsiteSetting::first();
 @endphp
 
 <!DOCTYPE html>
@@ -12,7 +12,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>@yield('title') | {{ $setting ? $setting->name : 'default' }}</title>
+    <title>@yield('title') | {{ $setting ? $setting->site_name : 'default' }}</title>
     <!-- BEGIN: CSS Assets-->
     <link rel="stylesheet" href="{{ asset('dist/css/vendors/tippy.css') }}">
     <link rel="stylesheet" href="{{ asset('dist/css/vendors/simplebar.css') }}">

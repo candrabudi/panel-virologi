@@ -6,7 +6,7 @@ use App\Helpers\ResponseHelper;
 use App\Http\Requests\StoreWebsiteBrandingRequest;
 use App\Http\Requests\StoreWebsiteContactRequest;
 use App\Http\Requests\StoreWebsiteGeneralRequest;
-use App\Models\Website;
+use App\Models\WebsiteSetting;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -39,9 +39,9 @@ class WebsiteController extends Controller
         abort(403, 'Unauthorized access to website management');
     }
 
-    private function website(): Website
+    private function website(): WebsiteSetting
     {
-        return Website::first() ?? new Website();
+        return WebsiteSetting::first() ?? new WebsiteSetting();
     }
 
     /**
@@ -73,7 +73,7 @@ class WebsiteController extends Controller
         $this->authorizeManage();
 
         return view('website.index', [
-            'website' => Website::first(),
+            'website' => WebsiteSetting::first(),
         ]);
     }
 
@@ -87,7 +87,14 @@ class WebsiteController extends Controller
         try {
             DB::transaction(function () use ($request) {
                 $website = $this->website();
-                $website->fill($request->validated());
+                $data = $request->validated();
+                
+                $website->fill([
+                    'site_name' => $data['name'],
+                    'site_tagline' => $data['tagline'],
+                    'site_description' => $data['description'],
+                ]);
+
                 $website->save();
             });
 
@@ -111,7 +118,13 @@ class WebsiteController extends Controller
         try {
             DB::transaction(function () use ($request) {
                 $website = $this->website();
-                $website->fill($request->validated());
+                $data = $request->validated();
+
+                $website->fill([
+                    'site_email' => $data['email'],
+                    'site_phone' => $data['phone'],
+                ]);
+
                 $website->save();
             });
 
@@ -139,29 +152,35 @@ class WebsiteController extends Controller
 
                 $manager = new ImageManager(new Driver());
 
-                foreach (['logo_rectangle', 'logo_square', 'favicon'] as $field) {
-                    if (!$request->hasFile($field)) {
+                $fieldMap = [
+                    'logo_rectangle' => 'site_logo',
+                    'logo_square' => 'site_logo_footer',
+                    'favicon' => 'site_favicon',
+                ];
+
+                foreach ($fieldMap as $formField => $dbField) {
+                    if (!$request->hasFile($formField)) {
                         continue;
                     }
 
-                    if ($website->$field) {
-                        $oldPath = str_replace(asset('storage/'), '', $website->$field);
+                    if ($website->$dbField) {
+                        $oldPath = str_replace(asset('storage/'), '', $website->$dbField);
                         if ($disk->exists($oldPath)) {
                             $disk->delete($oldPath);
                         }
                     }
 
                     $image = $manager->read(
-                        $request->file($field)->getPathname()
+                        $request->file($formField)->getPathname()
                     );
 
-                    $filename = $field.'_'.Str::uuid().'.png';
+                    $filename = $dbField.'_'.Str::uuid().'.png';
                     $relativePath = 'website/'.$filename;
                     $absolutePath = $disk->path($relativePath);
 
                     $image->save($absolutePath, new PngEncoder());
 
-                    $data[$field] = asset('storage/'.$relativePath);
+                    $data[$dbField] = asset('storage/'.$relativePath);
                 }
 
                 $website->fill($data);
