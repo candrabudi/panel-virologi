@@ -17,7 +17,9 @@
     <link rel="stylesheet" href="{{ asset('dist/css/vendors/tippy.css') }}">
     <link rel="stylesheet" href="{{ asset('dist/css/vendors/simplebar.css') }}">
     <link rel="stylesheet" href="{{ asset('dist/css/themes/havoc.css') }}">
-    <link rel="stylesheet" href="{{ asset('dist/css/app.css') }}"> <!-- END: CSS Assets-->
+    <link rel="stylesheet" href="{{ asset('dist/css/app.css') }}"> 
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet">
+    <!-- END: CSS Assets-->
     <style>
         @keyframes toast-slide-in {
             from {

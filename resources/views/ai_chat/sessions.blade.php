@@ -1,225 +1,282 @@
-@extends('template.app')
+@extends('layouts.app')
 
 @section('title', 'AI Chat Sessions')
 
 @section('content')
-    <div class="container-fluid py-4">
-
-        <div class="card border-0 shadow-sm rounded-4 mb-4">
-            <div class="card-body px-4 py-4 d-flex flex-column flex-md-row align-items-md-center justify-content-between">
-                <div>
-                    <h3 class="fw-bold mb-1 d-flex align-items-center gap-2">
-                        <i class="bi bi-chat-dots text-primary fs-3"></i>
-                        AI Chat Sessions
-                    </h3>
-                    <p class="text-muted mb-0 fs-6">
-                        Riwayat percakapan AI & audit response
-                    </p>
-                </div>
+<div class="col-span-12">
+    <div class="p-6">
+        <!-- Header Section -->
+        <div class="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-slate-800">AI Chat Sessions</h1>
+                <p class="text-slate-500">Daftar riwayat sesi percakapan AI untuk audit dan monitoring.</p>
+            </div>
+            <div class="flex gap-3">
+                <button class="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50">
+                    <i class="ri-download-2-line"></i> Export
+                </button>
+                <button class="flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50">
+                    <i class="ri-filter-3-line"></i> Filters
+                </button>
             </div>
         </div>
 
-        <div id="alert-box" class="alert d-none rounded-3 shadow-sm fs-6"></div>
-
-        <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
-            <div class="card-header bg-white border-bottom px-4 py-3">
-                <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
-                    <h5 class="fw-bold mb-0 d-flex align-items-center gap-2">
-                        <i class="bi bi-list-ul text-secondary fs-5"></i>
-                        Daftar Session
-                    </h5>
-
-                    <div class="input-group shadow-sm" style="max-width: 380px;">
-                        <span class="input-group-text bg-light border-0 fs-5">
-                            <i class="bi bi-search text-muted"></i>
+        <!-- Table Card -->
+        <div class="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+            <div class="border-b border-slate-200 bg-slate-50/50 px-6 py-4">
+                <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div class="relative w-full md:w-96">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400">
+                            <i class="ri-search-line"></i>
                         </span>
-                        <input id="search-input" type="text" class="form-control border-0 fs-6"
-                            placeholder="Cari session...">
-                        <span class="input-group-text d-none bg-white" id="search-spinner">
-                            <span class="spinner-border spinner-border-sm"></span>
-                        </span>
+                        <input id="search-input" type="text" 
+                            class="w-full rounded-lg border border-slate-200 py-2 pl-10 pr-4 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary/20" 
+                            placeholder="Cari berdasarkan judul, model, atau IP...">
+                    </div>
+                    <div id="search-spinner" class="hidden">
+                        <div class="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
                     </div>
                 </div>
             </div>
 
-            <div class="card-body p-0">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-600">
+                    <thead class="bg-slate-50 text-xs font-semibold uppercase text-slate-500">
+                        <tr>
+                            <th class="px-6 py-4 font-medium tracking-wider">Session & User</th>
+                            <th class="px-6 py-4 font-medium tracking-wider">AI Model</th>
+                            <th class="px-6 py-4 font-medium tracking-wider">Source Network</th>
+                            <th class="px-6 py-4 font-medium tracking-wider">Aktivitas Terakhir</th>
+                            <th class="px-6 py-4 text-right font-medium tracking-wider">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body" class="divide-y divide-slate-200">
+                        <!-- Data handles by JS -->
+                    </tbody>
+                </table>
+            </div>
 
-                <div id="skeleton">
-                    @for ($i = 0; $i < 5; $i++)
-                        <div class="px-4 py-4 border-bottom placeholder-glow">
-                            <span class="placeholder col-4 mb-2"></span>
-                            <span class="placeholder col-2"></span>
+            <!-- Skeleton Loader -->
+            <div id="skeleton" class="divide-y divide-slate-200">
+                @for ($i = 0; $i < 5; $i++)
+                <div class="animate-pulse px-6 py-5">
+                    <div class="flex items-center gap-4">
+                        <div class="h-10 w-10 rounded-full bg-slate-200"></div>
+                        <div class="flex-1 space-y-2">
+                            <div class="h-4 w-1/4 rounded bg-slate-200"></div>
+                            <div class="h-3 w-1/3 rounded bg-slate-100"></div>
                         </div>
-                    @endfor
+                    </div>
                 </div>
-
-                <div class="table-responsive d-none" id="session-table">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="table-light fs-6">
-                            <tr>
-                                <th>Title</th>
-                                <th>Model</th>
-                                <th>Last Activity</th>
-                                <th width="160" class="text-end">Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody id="table-body" class="fs-6"></tbody>
-                    </table>
-                </div>
-
-                <div id="empty-state" class="text-center py-5 d-none">
-                    <i class="bi bi-chat fs-1 text-muted"></i>
-                    <p class="fw-semibold mt-3 mb-1 fs-5">Belum ada session</p>
-                    <p class="text-muted fs-6 mb-0">Session AI akan muncul di sini</p>
-                </div>
-
+                @endfor
             </div>
-        </div>
 
-    </div>
+            <!-- Empty State -->
+            <div id="empty-state" class="hidden px-6 py-20 text-center">
+                <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-slate-50 text-slate-400">
+                    <i class="ri-chat-history-line text-3xl"></i>
+                </div>
+                <h3 class="mt-4 text-lg font-semibold text-slate-700">Tidak ada sesi ditemukan</h3>
+                <p class="text-slate-500">Coba kata kunci lain atau periksa filter Anda.</p>
+            </div>
 
-    <div class="modal fade" id="deleteModal" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg rounded-4">
-                <div class="modal-header bg-danger text-white">
-                    <h5 class="modal-title">Hapus Session</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <p>Hapus session:</p>
-                    <p class="fw-bold text-danger mb-0" id="session-title-delete"></p>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-outline-secondary rounded-pill" data-bs-dismiss="modal">Batal</button>
-                    <button class="btn btn-danger rounded-pill" id="btn-confirm-delete">Hapus</button>
+            <!-- Pagination -->
+            <div class="border-t border-slate-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <p id="pagination-info" class="text-xs text-slate-500">Menampilkan 0 sampai 0 dari 0 data</p>
+                    <div id="pagination-links" class="flex gap-2">
+                        <!-- Pagination handles by JS -->
+                    </div>
                 </div>
             </div>
         </div>
     </div>
+</div>
+
+<!-- Delete Modal -->
+<div id="deleteModal" class="invisible fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 opacity-0 transition-all duration-300">
+    <div class="w-full max-w-md transform rounded-xl bg-white p-6 shadow-xl transition-all scale-95">
+        <div class="flex h-12 w-12 items-center justify-center rounded-full bg-red-100 text-red-600">
+            <i class="ri-error-warning-line text-2xl"></i>
+        </div>
+        <h3 class="mt-4 text-xl font-bold text-slate-800">Hapus Sesi?</h3>
+        <p class="mt-2 text-slate-600">Apakah Anda yakin ingin menghapus sesi "<span id="session-title-delete" class="font-semibold text-slate-900"></span>"? Tindakan ini tidak dapat dibatalkan.</p>
+        <div class="mt-8 flex justify-end gap-3">
+            <button onclick="closeModal()" class="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50">Batal</button>
+            <button id="btn-confirm-delete" class="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-red-700">Ya, Hapus Sesi</button>
+        </div>
+    </div>
+</div>
+
 @endsection
+
 @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script>
-        axios.defaults.headers.common['X-CSRF-TOKEN'] =
-            document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+<script>
+    const tableBody = document.getElementById('table-body')
+    const skeleton = document.getElementById('skeleton')
+    const emptyState = document.getElementById('empty-state')
+    const searchInput = document.getElementById('search-input')
+    const searchSpinner = document.getElementById('search-spinner')
+    const paginationLinks = document.getElementById('pagination-links')
+    const paginationInfo = document.getElementById('pagination-info')
+    
+    const deleteModal = document.getElementById('deleteModal')
+    const btnConfirmDelete = document.getElementById('btn-confirm-delete')
+    const sessionTitleDelete = document.getElementById('session-title-delete')
 
-        const tableBody = document.getElementById('table-body')
-        const table = document.getElementById('session-table')
-        const skeleton = document.getElementById('skeleton')
-        const emptyState = document.getElementById('empty-state')
-        const searchInput = document.getElementById('search-input')
-        const searchSpinner = document.getElementById('search-spinner')
-        const alertBox = document.getElementById('alert-box')
+    let deleteId = null
+    let currentPage = 1
+    let debounceTimer = null
 
-        const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'))
-        const btnConfirmDelete = document.getElementById('btn-confirm-delete')
-        const sessionTitleDelete = document.getElementById('session-title-delete')
+    function loadSessions(query = '', page = 1) {
+        skeleton.classList.remove('hidden')
+        tableBody.innerHTML = ''
+        emptyState.classList.add('hidden')
+        searchSpinner.classList.remove('hidden')
+        currentPage = page
 
-        let deleteId = null
-        let debounceTimer = null
-
-        function alertMsg(type, msg) {
-            alertBox.className = `alert alert-${type} rounded-3 shadow-sm`
-            alertBox.innerHTML = msg
-            alertBox.classList.remove('d-none')
-            setTimeout(() => alertBox.classList.add('d-none'), 4000)
-        }
-
-        function renderSessions(sessions) {
-            tableBody.innerHTML = ''
-            skeleton.classList.add('d-none')
-            table.classList.add('d-none')
-            emptyState.classList.add('d-none')
-
-            if (!sessions || sessions.length === 0) {
-                emptyState.classList.remove('d-none')
-                return
-            }
-
-            table.classList.remove('d-none')
-
-            sessions.forEach(s => {
-                const row = document.createElement('tr')
-                row.dataset.id = s.id
-                row.innerHTML = `
-            <td>
-                <div class="fw-semibold">${s.title ?? 'Untitled Session'}</div>
-                <div class="text-muted fs-6">${s.session_token}</div>
-            </td>
-            <td>
-                <span class="badge bg-light text-dark rounded-pill">${s.model}</span>
-            </td>
-            <td class="text-muted">
-                ${s.last_activity_at ?? '-'}
-            </td>
-            <td class="text-end">
-                <a href="/ai-chat/sessions/${s.id}"
-                   class="btn btn-sm btn-outline-primary rounded-pill me-1">
-                    <i class="bi bi-eye"></i>
-                </a>
-                <button class="btn btn-sm btn-outline-danger rounded-pill btn-delete">
-                    <i class="bi bi-trash3"></i>
-                </button>
-            </td>
-        `
-                tableBody.appendChild(row)
+        axios.get('{{ route("ai_chat.list") }}', { params: { q: query, page: page } })
+            .then(res => {
+                const data = res.data.data
+                renderSessions(data.data)
+                renderPagination(data)
             })
+            .catch(err => {
+                console.error(err)
+                Swal.fire('Error', 'Gagal memuat data sesi', 'error')
+            })
+            .finally(() => {
+                skeleton.classList.add('hidden')
+                searchSpinner.classList.add('hidden')
+            })
+    }
+
+    function renderSessions(sessions) {
+        tableBody.innerHTML = ''
+        if (!sessions || sessions.length === 0) {
+            emptyState.classList.remove('hidden')
+            return
         }
 
-        function loadSessions(query = '') {
-            skeleton.classList.remove('d-none')
-            table.classList.add('d-none')
-            emptyState.classList.add('d-none')
-            searchSpinner.classList.remove('d-none')
+        sessions.forEach(s => {
+            const date = new Date(s.last_activity_at)
+            const row = document.createElement('tr')
+            row.className = 'hover:bg-slate-50/80 transition-colors group'
+            
+            const initials = s.user ? (s.user.email.substring(0,2).toUpperCase()) : 'AN'
+            const avatarColor = s.user ? 'bg-primary/10 text-primary' : 'bg-slate-100 text-slate-500'
 
-            axios.get('/ai-chat/list', {
-                    params: {
-                        q: query
-                    }
-                })
-                .then(res => renderSessions(res.data.data))
-                .catch(() => {
-                    alertMsg('danger', 'Gagal memuat session')
-                    emptyState.classList.remove('d-none')
-                })
-                .finally(() => {
-                    skeleton.classList.add('d-none')
-                    searchSpinner.classList.add('d-none')
-                })
-        }
-
-        searchInput.addEventListener('input', e => {
-            clearTimeout(debounceTimer)
-            debounceTimer = setTimeout(() => loadSessions(e.target.value), 500)
+            row.innerHTML = `
+                <td class="px-6 py-4">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-full text-xs font-bold ${avatarColor}">
+                            ${initials}
+                        </div>
+                        <div class="min-w-0">
+                            <div class="font-bold text-slate-800 truncate">${s.title || 'Untitled Session'}</div>
+                            <div class="text-xs text-slate-500 truncate">${s.user ? s.user.email : 'Guest User'}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="px-6 py-4">
+                    <span class="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                        ${s.model}
+                    </span>
+                </td>
+                <td class="px-6 py-4">
+                    <div class="flex flex-col">
+                        <span class="text-xs font-semibold text-slate-700">${s.ip_address || '-'}</span>
+                        <span class="text-[10px] text-slate-400">${s.messages_count || s.messages?.length || 0} messages</span>
+                    </div>
+                </td>
+                <td class="px-6 py-4">
+                    <div class="flex items-center gap-2">
+                        <div class="h-2 w-2 rounded-full bg-emerald-500"></div>
+                        <span class="text-xs font-medium text-slate-700">${date.toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                    </div>
+                </td>
+                <td class="px-6 py-4 text-right">
+                    <div class="flex justify-end gap-2 transition-all duration-200">
+                        <a href="/ai/chat/sessions/${s.id}" class="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:border-primary hover:text-primary hover:bg-primary/5 transition-all shadow-sm" title="Lihat Detail Chat">
+                            <i class="ri-eye-line"></i>
+                        </a>
+                        <button onclick="confirmDelete(${s.id}, \`${s.title || 'Untitled'}\`)" class="flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-500 hover:border-red-500 hover:text-red-500 hover:bg-red-50 transition-all shadow-sm" title="Hapus Sesi">
+                            <i class="ri-delete-bin-line"></i>
+                        </button>
+                    </div>
+                </td>
+            `
+            tableBody.appendChild(row)
         })
+    }
 
-        tableBody.addEventListener('click', e => {
-            if (e.target.closest('.btn-delete')) {
-                const row = e.target.closest('tr')
-                deleteId = row.dataset.id
-                sessionTitleDelete.textContent = row.querySelector('.fw-semibold').textContent
-                deleteModal.show()
+    function renderPagination(data) {
+        paginationLinks.innerHTML = ''
+        paginationInfo.textContent = `Menampilkan ${data.from || 0} sampai ${data.to || 0} dari ${data.total} data`
+
+        if (data.last_page <= 1) return
+
+        data.links.forEach(link => {
+            if (link.url === null && link.label.includes('...')) return
+
+            const btn = document.createElement('button')
+            btn.className = `flex h-9 min-w-[36px] items-center justify-center rounded-lg border px-3 text-sm font-medium transition-all ${link.active ? 'border-primary bg-primary text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}`
+            btn.innerHTML = link.label.replace('&laquo;', '<').replace('&raquo;', '>')
+            
+            if (link.url) {
+                const pageNum = new URL(link.url).searchParams.get('page')
+                btn.onclick = () => loadSessions(searchInput.value, pageNum)
+            } else {
+                btn.disabled = true
+                btn.classList.add('opacity-50', 'cursor-not-allowed')
             }
+            
+            paginationLinks.appendChild(btn)
         })
+    }
 
-        btnConfirmDelete.addEventListener('click', () => {
-            if (!deleteId) return
+    searchInput.addEventListener('input', e => {
+        clearTimeout(debounceTimer)
+        debounceTimer = setTimeout(() => loadSessions(e.target.value, 1), 400)
+    })
 
-            btnConfirmDelete.disabled = true
+    function confirmDelete(id, title) {
+        deleteId = id
+        sessionTitleDelete.textContent = title
+        deleteModal.classList.remove('invisible', 'opacity-0')
+        deleteModal.querySelector('div').classList.remove('scale-95')
+        deleteModal.querySelector('div').classList.add('scale-100')
+    }
 
-            axios.delete(`/ai-chat/sessions/${deleteId}`)
-                .then(res => {
-                    alertMsg('success', res.data.message)
-                    loadSessions(searchInput.value)
-                })
-                .catch(() => alertMsg('danger', 'Gagal menghapus session'))
-                .finally(() => {
-                    deleteModal.hide()
-                    btnConfirmDelete.disabled = false
-                    deleteId = null
-                })
-        })
+    function closeModal() {
+        deleteModal.classList.add('opacity-0')
+        deleteModal.querySelector('div').classList.remove('scale-100')
+        deleteModal.querySelector('div').classList.add('scale-95')
+        setTimeout(() => deleteModal.classList.add('invisible'), 300)
+    }
 
-        window.onload = () => loadSessions()
-    </script>
+    btnConfirmDelete.addEventListener('click', () => {
+        if (!deleteId) return
+        btnConfirmDelete.disabled = true
+        btnConfirmDelete.innerHTML = '<span class="animate-spin mr-2">...</span> Deleting'
+
+        axios.delete(`/ai/chat/sessions/${deleteId}`)
+            .then(res => {
+                closeModal()
+                Swal.fire({ icon: 'success', title: 'Deleted!', text: res.data.message, timer: 1500, showConfirmButton: false })
+                loadSessions(searchInput.value, currentPage)
+            })
+            .catch(err => {
+                console.error(err)
+                Swal.fire('Error', 'Gagal menghapus sesi', 'error')
+            })
+            .finally(() => {
+                btnConfirmDelete.disabled = false
+                btnConfirmDelete.textContent = 'Ya, Hapus Sesi'
+                deleteId = null
+            })
+    })
+
+    window.onload = () => loadSessions()
+</script>
 @endpush

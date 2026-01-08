@@ -3,6 +3,7 @@
 use App\Http\Controllers\AboutSettingController;
 use App\Http\Controllers\AboutUsController;
 use App\Http\Controllers\AiChatController;
+use App\Http\Controllers\AiChatSessionController;
 use App\Http\Controllers\AiContextController;
 use App\Http\Controllers\AiPromptBindingController;
 use App\Http\Controllers\AiPromptTemplateController;
@@ -295,12 +296,13 @@ Route::middleware(['auth', 'throttle:300,1'])->group(function () {
     });
 
     Route::prefix('ai/chat')->group(function () {
-        Route::get('/', [AiChatController::class, 'index']);
-        Route::get('/sessions/{session}', [AiChatController::class, 'show']);
+        Route::get('/', [AiChatSessionController::class, 'index'])->name('ai_chat.index');
+        Route::get('/sessions/{session}', [AiChatSessionController::class, 'show'])->name('ai_chat.show');
+        Route::get('/list', [AiChatSessionController::class, 'list'])->name('ai_chat.list');
+        Route::get('/detail/{session}', [AiChatSessionController::class, 'detail'])->name('ai_chat.detail');
+        Route::delete('/sessions/{session}', [AiChatSessionController::class, 'destroy'])->name('ai_chat.destroy');
 
-        Route::get('/list', [AiChatController::class, 'list']);
-        Route::get('/detail/{session}', [AiChatController::class, 'detail']);
-        Route::post('/send', [AiChatController::class, 'store']);
-        Route::delete('/sessions/{session}', [AiChatController::class, 'destroy']);
+        // Keep the send route in AiChatController if it exists for interactive use
+        Route::post('/send', [AiChatController::class, 'store'])->name('ai_chat.send');
     });
 });

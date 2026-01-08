@@ -117,6 +117,21 @@
                         <div class="side-menu__link__title">Traffic Observatory</div>
                     </a>
                 </li>
+                <li class="side-nav-title side-menu__divider">
+                    AI
+                </li>
+                <li>
+                    <a href="/ai/chat" class="side-menu__link {{ request()->is('ai/chat') ? 'side-menu__link--active' : '' }}">
+                        <i data-tw-merge="" data-lucide="message-square" class="stroke-[1] w-5 h-5 side-menu__link__icon"></i>
+                        <div class="side-menu__link__title">AI Chat</div>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('ai_chat.index') }}" class="side-menu__link {{ request()->is('ai/chat/sessions*') ? 'side-menu__link--active' : '' }}">
+                        <i data-tw-merge="" data-lucide="history" class="stroke-[1] w-5 h-5 side-menu__link__icon"></i>
+                        <div class="side-menu__link__title">AI Sessions</div>
+                    </a>
+                </li>
                  <li class="side-menu__divider">
                      Pengaturan
                  </li>

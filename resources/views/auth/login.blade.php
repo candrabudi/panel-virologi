@@ -143,116 +143,98 @@
     <script src="{{ asset('dist/js/components/base/tippy.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-        axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest'
-        axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute(
-            'content')
-        axios.defaults.withCredentials = true
+        axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+        axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').content;
+        axios.defaults.withCredentials = true;
 
-        const alertBox = document.getElementById('alert-box')
-        const formLogin = document.getElementById('form-login')
-        const formOtp = document.getElementById('form-otp')
-        const otpInputs = formOtp.querySelectorAll('.otp-input')
+        const alertBox = document.getElementById('alert-box');
+        const formLogin = document.getElementById('form-login');
+        const formOtp = document.getElementById('form-otp');
+        const otpInputs = formOtp.querySelectorAll('.otp-input');
 
         const showAlert = (type, message) => {
             alertBox.innerHTML = `
-<div role="alert"
-    class="alert relative border rounded-md px-5 py-4 border-${type} text-${type} dark:border-${type} my-7 flex items-center rounded-[0.6rem] border-${type}/20 bg-${type}/5 px-4 py-3 leading-[1.7]">
-    <div>
-        <i data-tw-merge="" data-lucide="lightbulb" class="mr-2 h-7 w-7 fill-${type}/10 stroke-[0.8]"></i>
-    </div>
-    <div class="ml-1 mr-8">${message}</div>
-    <button data-tw-dismiss="alert" type="button" aria-label="Close"
-        class="py-2 px-3 absolute right-0 my-auto mr-2 btn-close text-${type}">
-        <i data-tw-merge="" data-lucide="x" class="stroke-[1] w-5 h-5"></i>
-    </button>
-</div>`
+            <div class="alert flex items-center rounded-lg border border-${type}/20 bg-${type}/5 px-4 py-3 text-${type} my-7 shadow-sm">
+                <div class="ml-1 mr-8">${message}</div>
+            </div>`;
         }
 
         const setLoading = (btn, loading) => {
-            btn.disabled = loading
-            btn.querySelector('.btn-text').classList.toggle('hidden', loading)
-            btn.querySelector('.spinner-border').classList.toggle('hidden', !loading)
+            btn.disabled = loading;
+            btn.querySelector('.btn-text').classList.toggle('hidden', loading);
+            btn.querySelector('.spinner-border').classList.toggle('hidden', !loading);
         }
 
-        // Auto-focus OTP inputs & paste support
+        // Logic Fokus OTP
         otpInputs.forEach((input, index) => {
             input.addEventListener('input', () => {
-                if (input.value.length > 0 && index < otpInputs.length - 1) {
-                    otpInputs[index + 1].focus()
-                }
-            })
+                if (input.value.length > 0 && index < otpInputs.length - 1) otpInputs[index + 1].focus();
+            });
             input.addEventListener('keydown', (e) => {
-                if (e.key === 'Backspace' && input.value === '' && index > 0) {
-                    otpInputs[index - 1].focus()
-                }
-            })
+                if (e.key === 'Backspace' && input.value === '' && index > 0) otpInputs[index - 1].focus();
+            });
             input.addEventListener('paste', (e) => {
-                e.preventDefault()
-                const pasteData = e.clipboardData.getData('text').slice(0, 6).split('')
-                pasteData.forEach((char, i) => {
-                    if (otpInputs[i]) otpInputs[i].value = char
-                })
-                otpInputs[Math.min(pasteData.length, 5)].focus()
-            })
-        })
+                e.preventDefault();
+                const pasteData = e.clipboardData.getData('text').slice(0, 6).split('');
+                pasteData.forEach((char, i) => { if (otpInputs[i]) otpInputs[i].value = char; });
+                otpInputs[Math.min(pasteData.length, 5)].focus();
+            });
+        });
 
         if (sessionStorage.getItem('otp_step') === '1') {
-            formLogin.classList.add('hidden')
-            formOtp.classList.remove('hidden')
+            formLogin.classList.add('hidden');
+            formOtp.classList.remove('hidden');
         }
 
         formLogin.addEventListener('submit', async (e) => {
-            e.preventDefault()
-            const btn = document.getElementById('btn-login')
-            setLoading(btn, true)
+            e.preventDefault();
+            const btn = document.getElementById('btn-login');
+            setLoading(btn, true);
             try {
+                // STEP 1: Cek Login
                 await axios.post('{{ route('login.process') }}', {
-                    identity: document.getElementById('identity').value.trim(),
+                    identity: document.getElementById('identity').value,
                     password: document.getElementById('password').value
-                })
-                await axios.post('{{ route('login.sendOtp') }}')
-                sessionStorage.setItem('otp_step', '1')
-                showAlert('primary', 'Login berhasil. Kode OTP telah dikirim ke email Anda.')
-                formLogin.classList.add('hidden')
-                formOtp.classList.remove('hidden')
-                otpInputs[0].focus()
-            } catch (e) {
-                showAlert('danger', e.response?.data?.message || 'Login gagal')
-            }
-            setLoading(btn, false)
-        })
+                });
+                
+                // STEP 2: Kirim OTP
+                await axios.post('{{ route('login.sendOtp') }}');
+                
+                sessionStorage.setItem('otp_step', '1');
+                showAlert('primary', 'Kredensial valid, kode OTP dikirim.');
+                formLogin.classList.add('hidden');
+                formOtp.classList.remove('hidden');
+                otpInputs[0].focus();
+            } catch (err) {
+                let msg = err.response?.data?.message || 'Terjadi kesalahan sistem';
+                if (err.response?.status === 419) msg = 'Sesi berakhir, silakan refresh halaman.';
+                showAlert('danger', msg);
+            } finally { setLoading(btn, false); }
+        });
 
         formOtp.addEventListener('submit', async (e) => {
-            e.preventDefault()
-            const otp = Array.from(otpInputs).map(i => i.value).join('')
-            if (otp.length !== 6) {
-                showAlert('warning', 'Kode OTP harus 6 digit')
-                return
-            }
-            const btn = document.getElementById('btn-verify')
-            setLoading(btn, true)
+            e.preventDefault();
+            const otp = Array.from(otpInputs).map(i => i.value).join('');
+            if (otp.length !== 6) return showAlert('warning', 'Input 6 digit OTP');
+            
+            const btn = document.getElementById('btn-verify');
+            setLoading(btn, true);
             try {
-                await axios.post('{{ route('login.verify') }}', {
-                    otp
-                })
-                sessionStorage.removeItem('otp_step')
-                showAlert('success', 'Verifikasi berhasil, mengalihkan ke dashboard...')
-                setTimeout(() => {
-                    window.location.href = '/dashboard'
-                }, 800)
-            } catch (e) {
-                showAlert('danger', e.response?.data?.message || 'Kode OTP salah atau sudah kedaluwarsa')
-            }
-            setLoading(btn, false)
-        })
+                await axios.post('{{ route('login.verify') }}', { otp });
+                sessionStorage.removeItem('otp_step');
+                showAlert('success', 'Sukses, mengalihkan...');
+                setTimeout(() => location.href = '/dashboard', 800);
+            } catch (err) {
+                showAlert('danger', err.response?.data?.message || 'OTP Salah');
+            } finally { setLoading(btn, false); }
+        });
 
         document.getElementById('btn-back-login').onclick = () => {
-            sessionStorage.removeItem('otp_step')
-            formOtp.classList.add('hidden')
-            formLogin.classList.remove('hidden')
-            alertBox.innerHTML = ''
-            document.getElementById('identity').focus()
-        }
+            sessionStorage.removeItem('otp_step');
+            formOtp.classList.add('hidden');
+            formLogin.classList.remove('hidden');
+            alertBox.innerHTML = '';
+        };
     </script>
 </body>
 
