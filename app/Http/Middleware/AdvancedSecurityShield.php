@@ -76,8 +76,8 @@ class AdvancedSecurityShield
             $stringToScan = is_array($data) ? json_encode($data) : $data;
 
             foreach ($this->patterns as $attackType => $regex) {
-                // EXCEPTION: Allow Rich Text and URLs for AI Knowledge Base
-                if ($request->is('ai/knowledge*') && in_array($attackType, ['rfi', 'sqli', 'xss'])) {
+                // EXCEPTION: Allow Rich Text and URLs for AI Knowledge Base and Articles
+                if (($request->is('ai/knowledge*') || $request->is('articles*')) && in_array($attackType, ['rfi', 'sqli', 'xss'])) {
                     continue;
                 }
 
