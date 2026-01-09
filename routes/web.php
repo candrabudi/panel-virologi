@@ -156,7 +156,9 @@ Route::middleware(['auth', 'throttle:300,1'])->group(function () {
         Route::prefix('articles')->group(function () {
             Route::get('/', [ArticleController::class, 'index'])->name('articles.index');
             Route::get('/list', [ArticleController::class, 'list'])->name('articles.list');
+            Route::get('/create', [ArticleController::class, 'create'])->name('articles.create');
             Route::post('/', [ArticleController::class, 'store'])->name('articles.store');
+            Route::get('/{article}/edit', [ArticleController::class, 'edit'])->name('articles.edit');
             Route::put('/{article}', [ArticleController::class, 'update'])->name('articles.update');
             Route::delete('/{article}/delete', [ArticleController::class, 'destroy'])->name('articles.destroy');
         });
