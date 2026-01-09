@@ -60,13 +60,6 @@
                      Produk
                  </li>
                  <li>
-                     <a href="/product-page"
-                         class="side-menu__link {{ request()->is('product-page') ? 'side-menu__link--active' : '' }}">
-                         <i data-tw-merge="" data-lucide="cog" class="stroke-[1] w-5 h-5 side-menu__link__icon"></i>
-                         <div class="side-menu__link__title">Pengaturan Halaman</div>
-                     </a>
-                 </li>
-                 <li>
                      <a href="/products"
                          class="side-menu__link {{ request()->is('products') ? 'side-menu__link--active' : '' }}">
                          <i data-tw-merge="" data-lucide="file" class="stroke-[1] w-5 h-5 side-menu__link__icon"></i>
