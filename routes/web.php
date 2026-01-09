@@ -192,7 +192,9 @@ Route::middleware(['auth', 'throttle:300,1'])->group(function () {
         Route::prefix('ebooks')->name('ebooks.')->group(function () {
             Route::get('/', [EbookController::class, 'index'])->name('index');
             Route::get('/list', [EbookController::class, 'list'])->name('list');
+            Route::get('/create', [EbookController::class, 'create'])->name('create');
             Route::post('/', [EbookController::class, 'store'])->name('store');
+            Route::get('/{ebook}/edit', [EbookController::class, 'edit'])->name('edit');
             Route::put('/{ebook}', [EbookController::class, 'update'])->name('update');
             Route::delete('/{ebook}/delete', [EbookController::class, 'destroy'])->name('destroy');
         });
