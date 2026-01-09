@@ -132,6 +132,18 @@
                         <div class="side-menu__link__title">AI Sessions</div>
                     </a>
                 </li>
+                <li>
+                    <a href="{{ route('ai.performance.index') }}" class="side-menu__link {{ request()->is('ai/performance*') ? 'side-menu__link--active' : '' }}">
+                        <i data-tw-merge="" data-lucide="bar-chart-2" class="stroke-[1] w-5 h-5 side-menu__link__icon"></i>
+                        <div class="side-menu__link__title">Performance Metrics</div>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('ai.knowledge.index') }}" class="side-menu__link {{ request()->is('ai/knowledge*') ? 'side-menu__link--active' : '' }}">
+                        <i data-tw-merge="" data-lucide="database" class="stroke-[1] w-5 h-5 side-menu__link__icon"></i>
+                        <div class="side-menu__link__title">Knowledge Base</div>
+                    </a>
+                </li>
                  <li class="side-menu__divider">
                      Pengaturan
                  </li>

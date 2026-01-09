@@ -19,6 +19,7 @@ class LeakCheckController extends Controller
 
     public function updateSettings(Request $request)
     {
+        $user = auth()->user();
         $data = $request->validate([
             'api_endpoint' => 'nullable|url',
             'api_token' => 'nullable|string',
@@ -29,6 +30,13 @@ class LeakCheckController extends Controller
         ]);
 
         $setting = LeakCheckSetting::first() ?? new LeakCheckSetting();
+
+        // Security: Only admin can change critical API configuration
+        if ($user->role !== 'admin') {
+            unset($data['api_token']);
+            unset($data['api_endpoint']);
+        }
+
         $setting->fill($data);
         $setting->save();
 
@@ -88,12 +96,25 @@ class LeakCheckController extends Controller
         return view('leak_check.logs', compact('logs'));
     }
 
+    private function authorizeLogAccess(LeakCheckLog $log): void
+    {
+        $user = auth()->user();
+        if ($user->role === 'admin' || $user->id === $log->user_id) {
+            return;
+        }
+
+        Log::warning("Unauthorized LeakCheck log access attempt: Log ID {$log->id} by User ID " . auth()->id());
+        abort(403, 'Anda tidak memiliki akses ke log ini.');
+    }
+
     public function showLog(Request $request, LeakCheckLog $log)
     {
+        $this->authorizeLogAccess($log);
+
         // 1. Flatten the hierarchical JSON data into a clean collection
         $allItems = collect();
         $raw = $log->raw_response;
-
+        // ... (rest of the code remains the same)
         if (isset($raw['List']) && is_array($raw['List'])) {
             foreach ($raw['List'] as $dbName => $dbData) {
                 if (isset($dbData['Data']) && is_array($dbData['Data'])) {
@@ -162,6 +183,7 @@ class LeakCheckController extends Controller
 
     public function exportCsv()
     {
+        $user = auth()->user();
         $filename = 'leak-audit-logs-' . date('Y-m-d-His') . '.csv';
         $headers = [
             "Content-type" => "text/csv",
@@ -171,12 +193,19 @@ class LeakCheckController extends Controller
             "Expires" => "0"
         ];
 
-        $callback = function() {
+        $callback = function() use ($user) {
             $file = fopen('php://output', 'w');
             fputcsv($file, ['ID', 'Initiator', 'Target Query', 'Breach Count', 'IP Address', 'Status', 'Date', 'Time']);
 
             // Use cursor for memory efficiency with large datasets
-            $logs = LeakCheckLog::with('user')->latest()->cursor();
+            $query = LeakCheckLog::with('user')->latest();
+            
+            // If not admin, only export own logs
+            if ($user->role !== 'admin') {
+                $query->where('user_id', $user->id);
+            }
+
+            $logs = $query->cursor();
 
             foreach ($logs as $log) {
                 fputcsv($file, [
@@ -198,13 +227,24 @@ class LeakCheckController extends Controller
 
     public function printLogs()
     {
-        // Fetch all logs or a reasonable limit for printing (e.g., last 500)
-        $logs = LeakCheckLog::with('user')->latest()->limit(500)->get();
+        $user = auth()->user();
+        $query = LeakCheckLog::with('user')->latest();
+        
+        if ($user->role !== 'admin') {
+            $query->where('user_id', $user->id);
+        }
+
+        $logs = $query->limit(500)->get();
         return view('leak_check.print', compact('logs'));
     }
 
     public function downloadJson(LeakCheckLog $log)
     {
+        // Strictly Admin Only for raw JSON export due to sensitive data
+        if (auth()->user()->role !== 'admin') {
+            abort(403, 'Aksi ini hanya untuk Administrator.');
+        }
+
         $filename = 'leak-raw-data-' . $log->id . '-' . date('Ymd-His') . '.json';
         
         return response()->streamDownload(function () use ($log) {

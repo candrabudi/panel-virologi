@@ -1,0 +1,304 @@
+@extends('layouts.app')
+@section('title', 'Edit Knowledge Base')
+
+@section('content')
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <div class="col-span-12">
+        {{-- Header --}}
+        <div class="flex flex-col gap-1 mb-8">
+            <h2 class="text-xl font-semibold group-[.mode--light]:text-white">
+                Edit Knowledge
+            </h2>
+            <a href="{{ route('ai.knowledge.index') }}" class="text-primary hover:underline">
+                &larr; Back to List
+            </a>
+        </div>
+
+        <div class="mt-3.5 grid grid-cols-12 gap-x-6 gap-y-10">
+            <div class="relative col-span-12 flex flex-col gap-y-7">
+                <div class="box box--stacked flex flex-col p-5">
+
+                    <form id="knowledge-form">
+                        @method('PUT')
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                            {{-- LEFT: Content --}}
+                            <div class="space-y-8 p-5">
+                                <div class="pb-3 border-b border-slate-200/70">
+                                    <h3 class="text-sm font-semibold text-slate-700">Knowledge Content</h3>
+                                </div>
+                                <div class="space-y-6">
+                                    <div>
+                                        <label class="block mb-3 text-sm font-medium mt-5">Topic / Subject <span class="text-danger">*</span></label>
+                                        <input type="text" name="topic" value="{{ $knowledge->topic }}" required class="form-control w-full rounded-md border-slate-200" placeholder="e.g., How to reset password">
+                                    </div>
+                                    <div>
+                                        <label class="block mb-3 text-sm font-medium mt-5">Main Content / Answer <span class="text-danger">*</span></label>
+                                        <textarea name="content" rows="15" required class="form-control w-full rounded-md border-slate-200" placeholder=" The core information the AI should know...">{{ $knowledge->content }}</textarea>
+                                        <div class="text-xs text-slate-500 mt-1">This is the primary knowledge the AI will retrieve.</div>
+                                    </div>
+                                    
+                                    <div class="pt-6 border-t border-slate-200/50">
+                                        <label class="block mb-3 text-sm font-medium mt-5">Context / Scenarios</label>
+                                        <textarea name="context" rows="10" class="form-control w-full rounded-md border-slate-200" placeholder="When does this apply?">{{ $knowledge->context }}</textarea>
+                                    </div>
+                                    <div>
+                                        <label class="block mb-3 text-sm font-medium mt-5">Examples / Variations</label>
+                                        <textarea name="examples" rows="10" class="form-control w-full rounded-md border-slate-200" placeholder="Example user queries matching this...">{{ $knowledge->examples }}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- RIGHT: Settings --}}
+                            <div class="space-y-8 p-5">
+                                <div class="pb-3 border-b border-slate-200/70">
+                                    <h3 class="text-sm font-semibold text-slate-700">Settings & Metadata</h3>
+                                </div>
+                                <div class="space-y-6">
+                                    <div>
+                                        <label class="block mb-3 text-sm font-medium mt-5">Category <span class="text-danger">*</span></label>
+                                        <select name="category" required class="form-select w-full rounded-md border-slate-200">
+                                            <option value="">Select Category...</option>
+                                            @foreach(['General', 'Technical Support', 'Billing', 'Security', 'Policy'] as $cat)
+                                                <option value="{{ $cat }}" {{ $knowledge->category == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <label class="block mb-3 text-sm font-medium mt-5">Source</label>
+                                        <input type="text" name="source" value="{{ $knowledge->source }}" class="form-control w-full rounded-md border-slate-200" placeholder="e.g., Documentation">
+                                    </div>
+
+                                     {{-- TAGS MANAGER --}}
+                                    <div>
+                                        <label class="block mb-3 text-sm font-medium mt-5">Tags (Keywords)</label>
+                                        <div class="p-2 border border-slate-200 rounded-md bg-white flex flex-wrap gap-2 items-center focus-within:ring-1 focus-within:ring-primary focus-within:border-primary">
+                                            <div id="tags-container" class="flex flex-wrap gap-2"></div>
+                                            <input type="text" id="tag-input" class="border-none focus:ring-0 text-sm p-1 min-w-[100px] flex-1" placeholder="Type & Hit Enter...">
+                                        </div>
+                                        <input type="hidden" name="tags" id="tags-hidden">
+                                    </div>
+                                    
+                                     {{-- REFERENCES MANAGER --}}
+                                    <div>
+                                        <div class="flex items-center justify-between mt-5 mb-3">
+                                            <label class="block text-sm font-medium">References</label>
+                                            <button type="button" onclick="addReferenceRow()" class="text-xs text-primary font-bold hover:underline">+ Add Link</button>
+                                        </div>
+                                        <div id="references-container" class="space-y-2">
+                                            {{-- Rows will be injected here --}}
+                                        </div>
+                                        <input type="hidden" name="references" id="references-hidden">
+                                    </div>
+
+                                    <div class="pt-6 border-t border-slate-200/50">
+                                        <label class="block mb-3 text-sm font-medium mt-5">Relevance Score Override</label>
+                                        <input type="number" step="0.01" name="relevance_score" value="{{ $knowledge->relevance_score }}" class="form-control w-full rounded-md border-slate-200">
+                                        <div class="text-xs text-slate-500 mt-1">Manually adjust priority (0-100)</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end pt-8 mt-10 border-t border-slate-200/70">
+                            <button type="submit" id="btn-save" class="px-8 py-2.5 text-sm font-semibold text-white rounded-md bg-primary hover:bg-primary/90">
+                                Update Changes
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        axios.defaults.headers.common['X-CSRF-TOKEN'] = document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        axios.defaults.headers.common['Accept'] = 'application/json';
+        
+        // --- HELPER: Decode HTML Entities ---
+        const decodeHtml = (str) => {
+            if (!str) return '';
+            const txt = document.createElement("textarea");
+            txt.innerHTML = str;
+            return txt.value;
+        };
+
+        // --- TAGS INITIALIZATION ---
+        let tags = [];
+        try {
+            let rawTags = {!! json_encode($knowledge->tags) !!};
+            if (rawTags) {
+                // Decode potentially escaped JSON (e.g. &quot;)
+                rawTags = decodeHtml(rawTags);
+
+                if (rawTags.trim().startsWith('[')) {
+                    try {
+                        tags = JSON.parse(rawTags);
+                    } catch (e) {
+                        console.warn("Tags JSON parse failed, trying manual clean", e);
+                        tags = rawTags.replace(/[\[\]"]/g, '').split(',').map(s => s.trim()).filter(a => a);
+                    }
+                } else {
+                    tags = rawTags.split(',').map(s => s.trim()).filter(a => a);
+                }
+            }
+        } catch(e) { console.error("Tags parse error", e); }
+
+        const tagInput = document.getElementById('tag-input');
+        const tagsContainer = document.getElementById('tags-container');
+        const tagsHidden = document.getElementById('tags-hidden');
+
+        function renderTags() {
+            tagsContainer.innerHTML = '';
+            tags.forEach((tag, index) => {
+                const badge = document.createElement('div');
+                badge.className = 'px-3 py-1 text-xs font-semibold bg-primary/10 text-primary rounded-full flex items-center gap-2 border border-primary/20 animate-fadeIn';
+                badge.innerHTML = `
+                    ${tag}
+                    <button type="button" onclick="removeTag(${index})" class="hover:text-danger"><i data-lucide="x" class="w-3 h-3"></i></button>
+                `;
+                tagsContainer.appendChild(badge);
+            });
+            tagsHidden.value = JSON.stringify(tags); 
+            if(window.lucide) lucide.createIcons();
+        }
+
+        tagInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const val = e.target.value.trim();
+                // Prevent empty and duplicates
+                if (val && !tags.includes(val)) {
+                    tags.push(val);
+                    renderTags();
+                    e.target.value = '';
+                }
+            } else if (e.key === 'Backspace' && !e.target.value && tags.length > 0) {
+                tags.pop();
+                renderTags();
+            }
+        });
+
+        window.removeTag = (index) => {
+            tags.splice(index, 1);
+            renderTags();
+        }
+        
+        // Initial Render
+        renderTags();
+
+
+        // --- REFERENCES INITIALIZATION ---
+        const refContainer = document.getElementById('references-container');
+        const refHidden = document.getElementById('references-hidden');
+
+        window.addReferenceRow = (label = '', url = '') => {
+            const row = document.createElement('div');
+            row.className = 'grid grid-cols-12 gap-2 animate-fadeIn ref-row';
+            row.innerHTML = `
+                <div class="col-span-4">
+                    <input type="text" class="ref-label form-control w-full text-xs rounded-md border-slate-200" placeholder="Title/Label" value="${label.replace(/"/g, '&quot;')}">
+                </div>
+                <div class="col-span-7">
+                    <input type="text" class="ref-url form-control w-full text-xs rounded-md border-slate-200" placeholder="https://example.com" value="${url.replace(/"/g, '&quot;')}">
+                </div>
+                <div class="col-span-1 flex items-center justify-center">
+                    <button type="button" onclick="this.closest('.ref-row').remove()" class="text-slate-400 hover:text-danger"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                </div>
+            `;
+            refContainer.appendChild(row);
+             if(window.lucide) lucide.createIcons();
+        }
+
+        function serializeReferences() {
+            const refs = {};
+            document.querySelectorAll('.ref-row').forEach(row => {
+                const label = row.querySelector('.ref-label').value.trim();
+                const url = row.querySelector('.ref-url').value.trim();
+                if (label && url) {
+                    refs[label] = url;
+                }
+            });
+            return JSON.stringify(refs);
+        }
+
+        // Hydrate References
+        try {
+            let rawRefs = {!! json_encode($knowledge->references) !!};
+            if(rawRefs) {
+                rawRefs = decodeHtml(rawRefs); // Decode Entities
+
+                if (rawRefs.trim().startsWith('{')) {
+                    try {
+                        const parsed = JSON.parse(rawRefs);
+                        Object.entries(parsed).forEach(([k, v]) => {
+                           addReferenceRow(k, v); 
+                        });
+                    } catch(e) {
+                         console.warn("Ref JSON parse failed", e);
+                         addReferenceRow(rawRefs, '');
+                    }
+                } else if (rawRefs.length > 0) {
+                     // Assume legacy content
+                     addReferenceRow(rawRefs, '');
+                }
+            }
+        } catch(e) { console.error("Refs parse error", e); }
+
+
+        // --- FORM SUBMIT ---
+        const form = document.getElementById('knowledge-form')
+        const btn = document.getElementById('btn-save')
+        const id = "{{ $knowledge->id }}";
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault()
+            const originalText = btn.innerText;
+            btn.disabled = true;
+            btn.innerText = 'Saving...';
+            
+            // Sync
+            tagsHidden.value = JSON.stringify(tags);
+            refHidden.value = serializeReferences();
+
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const res = await axios.put(`/ai/knowledge/${id}`, data);
+                
+                if (typeof showToast === 'function') {
+                    showToast('success', 'Success', 'Knowledge item updated successfully');
+                } else {
+                    alert('Knowledge item updated successfully');
+                }
+                
+                setTimeout(() => {
+                    window.location.href = "{{ route('ai.knowledge.index') }}";
+                }, 1000);
+
+            } catch (err) {
+                 console.error(err);
+                 if (err.response && err.response.data && err.response.data.errors) {
+                    const errors = Object.values(err.response.data.errors).flat().join('\n');
+                     if (typeof showToast === 'function') {
+                        showToast('failed', 'Validation Error', errors);
+                    } else {
+                        alert('Validation Error:\n' + errors);
+                    }
+                } else {
+                     if (typeof showToast === 'function') {
+                        showToast('failed', 'Error', 'Failed to update knowledge item');
+                    } else {
+                        alert('Failed to update knowledge item');
+                    }
+                }
+                btn.disabled = false;
+                btn.innerText = originalText;
+            }
+        });
+    </script>
+@endsection

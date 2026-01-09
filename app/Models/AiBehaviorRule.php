@@ -2,19 +2,21 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class AiBehaviorRule extends Model
 {
-    protected $fillable = [
-        'intent_code', 'pattern', 'decision',
-        'priority', 'success_count', 'fail_count', 'is_active',
-    ];
+    use HasFactory;
 
-    protected $casts = [
-        'priority' => 'integer',
-        'success_count' => 'integer',
-        'fail_count' => 'integer',
-        'is_active' => 'boolean',
+    protected $fillable = [
+        'rule_name',
+        'trigger_condition',
+        'rule_description',
+        'action',
+        'examples',
+        'priority',
+        'is_active',
+        'scope',
     ];
 }

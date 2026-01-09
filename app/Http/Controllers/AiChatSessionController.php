@@ -16,6 +16,17 @@ class AiChatSessionController extends Controller
         $this->middleware(['auth']);
     }
 
+    private function authorizeSession(AiChatSession $session): void
+    {
+        $user = auth()->user();
+        if ($user->role === 'admin' || $user->id === $session->user_id) {
+            return;
+        }
+
+        Log::warning("Unauthorized AiChat session access attempt: Session ID {$session->id} by User ID " . auth()->id());
+        abort(403, 'Anda tidak memiliki hak akses untuk sesi chat ini.');
+    }
+
     public function index(): View
     {
         return view('ai_chat.sessions');
@@ -23,6 +34,7 @@ class AiChatSessionController extends Controller
 
     public function show(AiChatSession $session): View
     {
+        $this->authorizeSession($session);
         $session->load(['user', 'messages' => fn ($q) => $q->orderBy('created_at')]);
         return view('ai_chat.session_detail', compact('session'));
     }
@@ -32,7 +44,13 @@ class AiChatSessionController extends Controller
      */
     public function list(Request $request): JsonResponse
     {
+        $user = auth()->user();
         $query = AiChatSession::with(['user', 'messages'])->orderByDesc('last_activity_at');
+
+        // If not admin, only show own sessions
+        if ($user->role !== 'admin') {
+            $query->where('user_id', $user->id);
+        }
 
         if ($request->filled('q')) {
             $search = $request->q;
@@ -56,6 +74,7 @@ class AiChatSessionController extends Controller
      */
     public function detail(AiChatSession $session): JsonResponse
     {
+        $this->authorizeSession($session);
         $session->load(['user', 'messages' => fn ($q) => $q->orderBy('created_at')]);
         return ResponseHelper::ok($session);
     }
@@ -65,6 +84,7 @@ class AiChatSessionController extends Controller
      */
     public function destroy(AiChatSession $session): JsonResponse
     {
+        $this->authorizeSession($session);
         try {
             $session->messages()->delete();
             $session->delete();

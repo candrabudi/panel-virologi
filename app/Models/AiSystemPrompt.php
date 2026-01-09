@@ -2,25 +2,22 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class AiSystemPrompt extends Model
 {
-    protected $table = 'ai_system_prompts';
+    use HasFactory;
 
     protected $fillable = [
-        'scope_code',
-        'code',
-        'intent_code',
-        'behavior',
-        'resource_type',
-        'content',
-        'priority',
+        'name',
+        'version',
+        'base_prompt',
+        'personality_traits',
+        'capabilities',
+        'response_templates',
+        'custom_rules',
         'is_active',
-    ];
-
-    protected $casts = [
-        'priority' => 'integer',
-        'is_active' => 'boolean',
+        'priority',
     ];
 }
