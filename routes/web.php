@@ -163,6 +163,15 @@ Route::middleware(['auth', 'throttle:300,1'])->group(function () {
                 Route::delete('/{category}', [ArticleCategoryController::class, 'destroy'])->name('articles.categories.destroy');
             });
 
+            // Tags
+            Route::prefix('tags')->group(function () {
+                Route::get('/', [ArticleTagController::class, 'index'])->name('articles.tags.index');
+                Route::get('/list', [ArticleTagController::class, 'list'])->name('articles.tags.list');
+                Route::post('/', [ArticleTagController::class, 'store'])->name('articles.tags.store');
+                Route::put('/{tag}', [ArticleTagController::class, 'update'])->name('articles.tags.update');
+                Route::delete('/{tag}', [ArticleTagController::class, 'destroy'])->name('articles.tags.destroy');
+            });
+
             Route::get('/', [ArticleController::class, 'index'])->name('articles.index');
             Route::get('/list', [ArticleController::class, 'list'])->name('articles.list');
             Route::get('/create', [ArticleController::class, 'create'])->name('articles.create');
