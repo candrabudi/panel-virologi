@@ -76,8 +76,22 @@ class AdvancedSecurityShield
             $stringToScan = is_array($data) ? json_encode($data) : $data;
 
             foreach ($this->patterns as $attackType => $regex) {
-                // EXCEPTION: Allow Rich Text and URLs for AI Knowledge Base and Articles
-                if (($request->is('ai/knowledge*') || $request->is('articles*')) && in_array($attackType, ['rfi', 'sqli', 'xss'])) {
+                // EXCEPTION: Whitelist CMS & Content Management Routes
+                // These routes legitimately receive HTML, SQL-like text, code snippets, and URLs.
+                $cmsRoutes = [
+                    'ai/knowledge*',
+                    'articles*', 
+                    'products*', 
+                    'ebooks*', 
+                    'pages*', 
+                    'home-sections*', 
+                    'website*',
+                    'homepage*',
+                    '*settings*',
+                    'leak-request*' // Work items might contain proofs/urls
+                ];
+
+                if ($request->is($cmsRoutes) && in_array($attackType, ['sqli', 'xss', 'rfi', 'lfi_traversal'])) {
                     continue;
                 }
 
