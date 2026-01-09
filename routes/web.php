@@ -154,6 +154,15 @@ Route::middleware(['auth', 'throttle:300,1'])->group(function () {
 
         // Content: Articles, Ebooks, Products
         Route::prefix('articles')->group(function () {
+            // Categories
+            Route::prefix('categories')->group(function () {
+                Route::get('/', [ArticleCategoryController::class, 'index'])->name('articles.categories.index');
+                Route::get('/list', [ArticleCategoryController::class, 'list'])->name('articles.categories.list');
+                Route::post('/', [ArticleCategoryController::class, 'store'])->name('articles.categories.store');
+                Route::put('/{category}', [ArticleCategoryController::class, 'update'])->name('articles.categories.update');
+                Route::delete('/{category}', [ArticleCategoryController::class, 'destroy'])->name('articles.categories.destroy');
+            });
+
             Route::get('/', [ArticleController::class, 'index'])->name('articles.index');
             Route::get('/list', [ArticleController::class, 'list'])->name('articles.list');
             Route::get('/create', [ArticleController::class, 'create'])->name('articles.create');
