@@ -40,7 +40,7 @@ class Kernel extends HttpKernel
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\SanitizeInputMiddleware::class,
             \App\Http\Middleware\AdvancedSecurityShield::class,
-            \App\Http\Middleware\LogSuspiciousRequests::class,
+            // \App\Http\Middleware\LogSuspiciousRequests::class,
         ],
 
         'api' => [
@@ -49,7 +49,7 @@ class Kernel extends HttpKernel
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
             \App\Http\Middleware\SanitizeInputMiddleware::class,
             \App\Http\Middleware\AdvancedSecurityShield::class,
-            \App\Http\Middleware\LogSuspiciousRequests::class,
+            // \App\Http\Middleware\LogSuspiciousRequests::class,
         ],
     ];
 

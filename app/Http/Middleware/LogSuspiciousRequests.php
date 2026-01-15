@@ -78,7 +78,7 @@ class LogSuspiciousRequests
         $patterns = [
             'sqli_attempt' => '/(union\s+select|information_schema|drop\s+table|or\s+1=1|--)/i',
             'xss_attempt' => '/(<script>|javascript:|onerror=|onload=|alert\()/i',
-            'path_traversal' => '/(\.\.\/|\.\.\\)/',
+            'path_traversal' => '/(\.\.\/|\.\.\\\\)/',
         ];
 
         // Check Input
