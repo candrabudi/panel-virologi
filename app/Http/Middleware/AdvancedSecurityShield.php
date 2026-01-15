@@ -140,7 +140,7 @@ class AdvancedSecurityShield
     protected function validateSessionFingerprint(Request $request)
     {
         $session = $request->session();
-        $fingerprint = sha1($request->ip() . $request->userAgent());
+        $fingerprint = sha1($request->ip());
 
         if (!$session->has('security_fingerprint')) {
             $session->put('security_fingerprint', $fingerprint);
