@@ -9,6 +9,7 @@ use App\Http\Controllers\ArticleCategoryController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\ArticleTagController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CyberAttackController;
 use App\Http\Controllers\CyberSecurityServiceController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EbookController;
@@ -197,6 +198,18 @@ Route::middleware(['auth', 'throttle:300,1'])->group(function () {
             Route::get('/{ebook}/edit', [EbookController::class, 'edit'])->name('edit');
             Route::put('/{ebook}', [EbookController::class, 'update'])->name('update');
             Route::delete('/{ebook}/delete', [EbookController::class, 'destroy'])->name('destroy');
+        });
+
+        Route::prefix('cyber-attacks')->name('cyber_attacks.')->group(function () {
+            Route::get('/', [CyberAttackController::class, 'index'])->name('index');
+            Route::get('/list', [CyberAttackController::class, 'list'])->name('list');
+            Route::get('/import', [CyberAttackController::class, 'import'])->name('import');
+            Route::post('/import', [CyberAttackController::class, 'processImport'])->name('process_import');
+            Route::post('/insert-single', [CyberAttackController::class, 'insertSingle'])->name('insert_single');
+            Route::delete('/{cyberAttack}', [CyberAttackController::class, 'destroy'])->name('destroy');
+            Route::get('/statistics', [CyberAttackController::class, 'statistics'])->name('statistics');
+            Route::get('/download-template', [CyberAttackController::class, 'downloadTemplate'])->name('download_template');
+            Route::get('/download-sample', [CyberAttackController::class, 'downloadSample'])->name('download_sample');
         });
     });
 

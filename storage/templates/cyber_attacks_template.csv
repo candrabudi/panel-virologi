@@ -1,0 +1,6 @@
+attack_id,source_ip,destination_ip,source_country,destination_country,protocol,source_port,destination_port,attack_type,payload_size_bytes,detection_label,confidence_score,ml_model,affected_system,port_type
+ATK001,192.168.1.100,10.0.0.50,United States,Indonesia,TCP,45123,80,DDoS,2048,Malicious,0.95,RandomForest,WebServer,HTTP
+ATK002,203.122.45.89,172.16.0.10,China,Singapore,UDP,53212,443,Malware,4096,Suspicious,0.87,NeuralNet,Database,HTTPS
+ATK003,45.76.123.99,192.168.0.1,Russia,Malaysia,HTTP,8080,3306,SQL Injection,1024,Malicious,0.92,SVM,MySQL,Database
+ATK004,198.51.100.23,10.10.10.10,Brazil,Thailand,HTTPS,443,22,Brute Force,512,Suspicious,0.78,DecisionTree,SSH,SSH
+ATK005,104.28.15.78,172.31.255.1,Germany,Vietnam,TCP,12345,21,FTP Attack,8192,Malicious,0.89,RandomForest,FTPServer,FTP
