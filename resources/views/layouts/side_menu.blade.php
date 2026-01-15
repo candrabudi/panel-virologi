@@ -137,6 +137,12 @@
                         <div class="side-menu__link__title">Knowledge Base</div>
                     </a>
                 </li>
+                <li>
+                    <a href="/ai/settings" class="side-menu__link {{ request()->is('ai/settings*') ? 'side-menu__link--active' : '' }}">
+                        <i data-tw-merge="" data-lucide="settings" class="stroke-[1] w-5 h-5 side-menu__link__icon"></i>
+                        <div class="side-menu__link__title">AI Settings</div>
+                    </a>
+                </li>
                  <li class="side-menu__divider">
                      Pengaturan
                  </li>
@@ -147,11 +153,18 @@
                          <div class="side-menu__link__title">Manajemen Pengguna</div>
                      </a>
                  </li>
-                   <li>
+                 <li>
                      <a href="/home-sections"
                          class="side-menu__link {{ request()->is('home-sections*') ? 'side-menu__link--active' : '' }}">
                          <i data-tw-merge="" data-lucide="layout-template" class="stroke-[1] w-5 h-5 side-menu__link__icon"></i>
                          <div class="side-menu__link__title">Home Sections</div>
+                     </a>
+                 </li>
+                 <li>
+                     <a href="/about-us"
+                         class="side-menu__link {{ request()->is('about-us*') ? 'side-menu__link--active' : '' }}">
+                         <i data-tw-merge="" data-lucide="info" class="stroke-[1] w-5 h-5 side-menu__link__icon"></i>
+                         <div class="side-menu__link__title">About Us Content</div>
                      </a>
                  </li>
                  <li>
