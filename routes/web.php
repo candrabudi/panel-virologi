@@ -225,7 +225,7 @@ Route::middleware(['auth', 'throttle:300,1'])->group(function () {
             Route::post('/', [UserManagementController::class, 'store'])->name('store');
             Route::get('/{user}/edit', [UserManagementController::class, 'edit'])->name('edit');
             Route::put('/{user}/update', [UserManagementController::class, 'update'])->name('update');
-            Route::delete('/{user}', [UserManagementController::class, 'destroy'])->name('destroy');
+            Route::delete('/{user}/delete', [UserManagementController::class, 'destroy'])->name('destroy');
         });
 
         Route::prefix('traffic-logs')->group(function () {

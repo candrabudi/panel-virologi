@@ -164,14 +164,10 @@
                         Batal
                     </button>
 
-                    <form id="delete-form" method="POST">
-                        @csrf
-                        @method('DELETE')
-
-                        <button id="confirm-delete" class="px-4 py-2 rounded-lg bg-danger text-white hover:bg-danger/90">
+                    <form id="delete-form" onsubmit="return false;">
+                        <button type="button" id="confirm-delete" class="px-4 py-2 rounded-lg bg-danger text-white hover:bg-danger/90">
                             Hapus
                         </button>
-
                     </form>
                 </div>
 
@@ -452,6 +448,8 @@
 
             const confirmBtn = e.target.closest('#confirm-delete')
             if (!confirmBtn || !deleteId) return
+
+            e.preventDefault()
 
             confirmBtn.disabled = true
             confirmBtn.textContent = 'Menghapus...'
