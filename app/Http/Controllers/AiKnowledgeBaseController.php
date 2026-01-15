@@ -10,30 +10,36 @@ class AiKnowledgeBaseController extends Controller
 {
     public function index(Request $request)
     {
-        $query = AiKnowledgeBase::query();
-
-        if ($request->has('search') && $request->search) {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('topic', 'like', "%{$search}%")
-                  ->orWhere('content', 'like', "%{$search}%")
-                  ->orWhere('tags', 'like', "%{$search}%");
-            });
-        }
-
-        if ($request->has('category') && $request->category) {
-            $query->where('category', $request->category);
-        }
-
-        $knowledge = $query->latest()->paginate(10);
-        
         // Stats for cards
         $totalItems = AiKnowledgeBase::count();
         $totalCategories = AiKnowledgeBase::distinct('category')->count();
         $totalUsage = AiKnowledgeBase::sum('usage_count');
         $avgRelevance = AiKnowledgeBase::avg('relevance_score');
 
-        return view('ai.knowledge.index', compact('knowledge', 'totalItems', 'totalCategories', 'totalUsage', 'avgRelevance'));
+        return view('ai.knowledge.index', compact('totalItems', 'totalCategories', 'totalUsage', 'avgRelevance'));
+    }
+
+    public function list(Request $request)
+    {
+        $query = AiKnowledgeBase::query()->latest();
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('topic', 'like', "%{$search}%")
+                  ->orWhere('category', 'like', "%{$search}%")
+                  ->orWhere('tags', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('category')) {
+            $query->where('category', $request->category);
+        }
+
+        $perPage = (int) $request->get('per_page', 10);
+        $data = $query->paginate($perPage);
+
+        return response()->json(['data' => $data]);
     }
 
     public function create()
@@ -116,10 +122,17 @@ class AiKnowledgeBaseController extends Controller
             ->with('success', 'Knowledge item updated successfully.');
     }
 
-    public function destroy($id)
+    public function destroy(Request $request, $id)
     {
         $knowledge = AiKnowledgeBase::findOrFail($id);
         $knowledge->delete();
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Knowledge item deleted successfully.'
+            ]);
+        }
 
         return redirect()->route('ai.knowledge.index')
             ->with('success', 'Knowledge item deleted successfully.');

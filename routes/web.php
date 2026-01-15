@@ -228,6 +228,7 @@ Route::middleware(['auth', 'throttle:300,1'])->group(function () {
             Route::get('/settings', [AiSettingController::class, 'index']);
             Route::post('/settings', [AiSettingController::class, 'store']);
             Route::resource('performance', \App\Http\Controllers\AiPerformanceMetricController::class);
+            Route::get('knowledge/list', [\App\Http\Controllers\AiKnowledgeBaseController::class, 'list'])->name('knowledge.list');
             Route::resource('knowledge', \App\Http\Controllers\AiKnowledgeBaseController::class);
         });
     });
