@@ -11,7 +11,7 @@
             </p>
         </div>
 
-        <form id="ajax-form" data-url="{{ route('users.store') }}" onsubmit="return false;" class="grid grid-cols-12 gap-6">
+        <form id="ajax-form" data-url="{{ route('users.store') }}" onsubmit="return false;" autocomplete="off" class="grid grid-cols-12 gap-6">
 
             <div class="col-span-12 lg:col-span-12 space-y-6">
 

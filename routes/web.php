@@ -221,7 +221,9 @@ Route::middleware(['auth', 'throttle:300,1'])->group(function () {
         Route::prefix('users')->name('users.')->group(function () {
             Route::get('/', [UserManagementController::class, 'index'])->name('index');
             Route::get('/list', [UserManagementController::class, 'list'])->name('list');
+            Route::get('/create', [UserManagementController::class, 'create'])->name('create');
             Route::post('/', [UserManagementController::class, 'store'])->name('store');
+            Route::get('/{user}/edit', [UserManagementController::class, 'edit'])->name('edit');
             Route::put('/{user}/update', [UserManagementController::class, 'update'])->name('update');
             Route::delete('/{user}', [UserManagementController::class, 'destroy'])->name('destroy');
         });
