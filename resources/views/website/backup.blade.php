@@ -1,4 +1,4 @@
-@extends('template.app')
+@extends('layouts.app')
 @section('title', 'Pengaturan Website')
 @section('content')
 <div class="container-fluid">

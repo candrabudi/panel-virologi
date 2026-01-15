@@ -1,4 +1,4 @@
-@extends('template.app')
+@extends('layouts.app')
 
 @section('title', 'Tentang Kami')
 

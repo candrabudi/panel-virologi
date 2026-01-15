@@ -46,7 +46,7 @@
                 <div data-tw-merge="" data-tw-placement="bottom-end" class="dropdown relative ml-5">
                     <button data-tw-toggle="dropdown" aria-expanded="false"
                         class="cursor-pointer image-fit h-[36px] w-[36px] overflow-hidden rounded-full border-[3px] border-white/[0.15]"><img
-                            src="dist/images/users/user7-50x50.jpg" alt="Tailwise - Admin Dashboard Template">
+                            src="{{ asset('dist/images/users/user7-50x50.jpg') }}" alt="Tailwise - Admin Dashboard Template">
                     </button>
                     <div data-transition="" data-selector=".show" data-enter="transition-all ease-linear duration-150"
                         data-enter-from="absolute !mt-5 invisible opacity-0 translate-y-1"

@@ -56,8 +56,19 @@ Route::post('/logout', [AuthController::class, 'logout'])
 /**
  * AUTHENTICATED ROUTES (Shared)
  */
+use App\Http\Controllers\SecurityController;
+
 Route::middleware(['auth', 'throttle:300,1'])->group(function () {
     Route::get('/dashboard', fn () => view('dashboard.index'))->name('dashboard');
+    Route::get('/dashboard/summary', [DashboardController::class, 'aiAnalyticsSummary']);
+    Route::get('/dashboard/ai-traffic-daily', [DashboardController::class, 'aiTrafficDaily']);
+
+    // Security Center Routes
+    Route::get('/security-center', [SecurityController::class, 'index'])->name('security.index');
+    Route::get('/security-center/stats', [SecurityController::class, 'getStats']);
+    Route::post('/security-center/update-settings', [SecurityController::class, 'updateSettings']);
+    Route::get('/security-center/map', [\App\Http\Controllers\SecurityMapController::class, 'index'])->name('security.map');
+    Route::get('/security-center/map/data', [\App\Http\Controllers\SecurityMapController::class, 'getAttackData']);
 
     // AI Chat for Users (Self Ownership Check in Controller)
     Route::prefix('ai/chat')->group(function () {

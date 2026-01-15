@@ -11,7 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('leak_data_requests', function (Blueprint $table) {
+        if (!Schema::hasTable('leak_data_requests')) {
+            Schema::create('leak_data_requests', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->foreignId('leak_check_log_id')->nullable()->constrained('leak_check_logs')->onDelete('cascade');
@@ -26,7 +27,8 @@ return new class extends Migration
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-        });
+            });
+        }
     }
 
     /**

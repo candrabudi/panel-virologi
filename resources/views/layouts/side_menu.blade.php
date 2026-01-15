@@ -111,6 +111,20 @@
                     </a>
                 </li>
                 <li>
+                    <a href="/security-center"
+                        class="side-menu__link {{ request()->is('security-center*') && !request()->routeIs('security.map') ? 'side-menu__link--active' : '' }}">
+                        <i data-tw-merge="" data-lucide="shield-alert" class="stroke-[1] w-5 h-5 side-menu__link__icon"></i>
+                        <div class="side-menu__link__title">Cyber Command Center</div>
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ route('security.map') }}"
+                        class="side-menu__link {{ request()->routeIs('security.map') ? 'side-menu__link--active' : '' }}">
+                        <i data-tw-merge="" data-lucide="globe" class="stroke-[1] w-5 h-5 side-menu__link__icon"></i>
+                        <div class="side-menu__link__title">Global Threat Map</div>
+                    </a>
+                </li>
+                <li>
                     <a href="/cyber-attacks"
                         class="side-menu__link {{ request()->is('cyber-attacks*') ? 'side-menu__link--active' : '' }}">
                         <i data-tw-merge="" data-lucide="alert-triangle" class="stroke-[1] w-5 h-5 side-menu__link__icon"></i>
