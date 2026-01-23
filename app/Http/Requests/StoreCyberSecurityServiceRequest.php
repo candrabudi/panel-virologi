@@ -30,7 +30,7 @@ class StoreCyberSecurityServiceRequest extends FormRequest
             'short_name' => ['nullable', 'string', 'max:255'],
             'thumbnail' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'category' => ['required', 'in:soc,pentest,audit,incident_response,cloud_security,governance,training,consulting'],
-            'summary' => ['nullable', 'string'],
+            'summary' => ['required', 'string'],
             'description' => ['nullable', 'string'],
             'service_scope' => ['nullable', 'array'],
             'deliverables' => ['nullable', 'array'],
@@ -44,7 +44,7 @@ class StoreCyberSecurityServiceRequest extends FormRequest
             'seo_description' => ['nullable', 'string', 'max:300'],
             'seo_keywords' => ['nullable', 'array'],
             'is_active' => ['boolean'],
-            'sort_order' => ['nullable', 'integer', 'min:0'],
+            'sort_order' => ['required', 'integer', 'min:0'],
         ];
     }
 
@@ -91,5 +91,26 @@ class StoreCyberSecurityServiceRequest extends FormRequest
         if ($toMerge) {
             $this->merge($toMerge);
         }
+
+        // Ensure defaults for optional numeric/boolean fields
+        $this->merge([
+            'is_active' => $this->boolean('is_active'),
+            'is_ai_visible' => $this->boolean('is_ai_visible'),
+            'sort_order' => $this->input('sort_order') ?? 0,
+        ]);
+    }
+
+    public function messages(): array
+    {
+        return [
+            'name.required' => 'Nama layanan wajib diisi.',
+            'name.unique' => 'Nama layanan ini sudah digunakan.',
+            'category.required' => 'Kategori layanan wajib dipilih.',
+            'category.in' => 'Kategori yang dipilih tidak valid.',
+            'summary.required' => 'Ringkasan eksekutif wajib diisi.',
+            'sort_order.integer' => 'Urutan tampilan harus berupa angka.',
+            'thumbnail.image' => 'File harus berupa gambar.',
+            'thumbnail.max' => 'Ukuran gambar maksimal adalah 2MB.',
+        ];
     }
 }

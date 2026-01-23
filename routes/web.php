@@ -56,10 +56,11 @@ Route::post('/logout', [AuthController::class, 'logout'])
 /**
  * AUTHENTICATED ROUTES (Shared)
  */
+
 use App\Http\Controllers\SecurityController;
 
 Route::middleware(['auth', 'throttle:300,1'])->group(function () {
-    Route::get('/dashboard', fn () => view('dashboard.index'))->name('dashboard');
+    Route::get('/dashboard', fn() => view('dashboard.index'))->name('dashboard');
     Route::get('/dashboard/summary', [DashboardController::class, 'aiAnalyticsSummary']);
     Route::get('/dashboard/ai-traffic-daily', [DashboardController::class, 'aiTrafficDaily']);
 
@@ -193,12 +194,14 @@ Route::middleware(['auth', 'throttle:300,1'])->group(function () {
             Route::delete('/{article}/delete', [ArticleController::class, 'destroy'])->name('articles.destroy');
         });
 
-        Route::prefix('products')->group(function () {
-            Route::get('/', [ProductController::class, 'index'])->name('products.index');
-            Route::get('/list', [ProductController::class, 'list'])->name('products.list');
-            Route::post('/store', [ProductController::class, 'store'])->name('products.store');
-            Route::put('/{product}/update', [ProductController::class, 'update'])->name('products.update');
-            Route::delete('/{product}/delete', [ProductController::class, 'destroy'])->name('products.destroy');
+        Route::prefix('products')->name('products.')->group(function () {
+            Route::get('/', [ProductController::class, 'index'])->name('index');
+            Route::get('/list', [ProductController::class, 'list'])->name('list');
+            Route::get('/create', [ProductController::class, 'create'])->name('create');
+            Route::post('/store', [ProductController::class, 'store'])->name('store');
+            Route::get('/{product}/edit', [ProductController::class, 'edit'])->name('edit');
+            Route::put('/{product}/update', [ProductController::class, 'update'])->name('update');
+            Route::delete('/{product}/delete', [ProductController::class, 'destroy'])->name('destroy');
         });
 
         Route::prefix('ebooks')->name('ebooks.')->group(function () {
@@ -221,6 +224,16 @@ Route::middleware(['auth', 'throttle:300,1'])->group(function () {
             Route::get('/statistics', [CyberAttackController::class, 'statistics'])->name('statistics');
             Route::get('/download-template', [CyberAttackController::class, 'downloadTemplate'])->name('download_template');
             Route::get('/download-sample', [CyberAttackController::class, 'downloadSample'])->name('download_sample');
+        });
+
+        Route::prefix('cyber-security-services')->name('cyber_security_services.')->group(function () {
+            Route::get('/', [CyberSecurityServiceController::class, 'index'])->name('index');
+            Route::get('/list', [CyberSecurityServiceController::class, 'list'])->name('list');
+            Route::get('/create', [CyberSecurityServiceController::class, 'create'])->name('create');
+            Route::post('/store', [CyberSecurityServiceController::class, 'store'])->name('store');
+            Route::get('/{cyberSecurityService}/edit', [CyberSecurityServiceController::class, 'edit'])->name('edit');
+            Route::put('/{cyberSecurityService}', [CyberSecurityServiceController::class, 'update'])->name('update');
+            Route::delete('/{cyberSecurityService}/delete', [CyberSecurityServiceController::class, 'destroy'])->name('destroy');
         });
     });
 

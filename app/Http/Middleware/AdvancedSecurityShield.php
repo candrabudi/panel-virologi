@@ -80,15 +80,17 @@ class AdvancedSecurityShield
                 // These routes legitimately receive HTML, SQL-like text, code snippets, and URLs.
                 $cmsRoutes = [
                     'ai/knowledge*',
-                    'articles*', 
-                    'products*', 
-                    'ebooks*', 
-                    'pages*', 
-                    'home-sections*', 
+                    'articles*',
+                    'products*',
+                    'ebooks*',
+                    'pages*',
+                    'home-sections*',
                     'website*',
                     'homepage*',
                     '*settings*',
-                    'leak-request*' // Work items might contain proofs/urls
+                    'leak-request*', // Work items might contain proofs/urls
+                    'cyber-security-services*',
+                    'cyber-attacks*'
                 ];
 
                 if ($request->is($cmsRoutes) && in_array($attackType, ['sqli', 'xss', 'rfi', 'lfi_traversal'])) {
@@ -110,7 +112,7 @@ class AdvancedSecurityShield
         $ip = $request->ip();
         $incidentId = 'INC-' . strtoupper(uniqid());
         $counterKey = "incident_count:$ip";
-        
+
         $count = Cache::increment($counterKey);
         if ($count === 1) Cache::put($counterKey, 1, now()->addHour());
 
@@ -127,7 +129,7 @@ class AdvancedSecurityShield
         if ($count >= 5) {
             Cache::put("shunned_ip:$ip", $incidentId, now()->addDays(1));
             Log::emergency("IP $ip HAS BEEN SHUNNED for repeated attacks. Final Incident: $incidentId");
-            
+
             abort(403, "Sistem keamanan mendeteksi serangan. IP Anda diblokir sementara. Incident ID: $incidentId");
         }
 
@@ -156,7 +158,7 @@ class AdvancedSecurityShield
 
             auth()->logout();
             $session->invalidate();
-            
+
             abort(403, 'Sesi tidak valid. Aktivitas mencurigakan terdeteksi, silakan login kembali.');
         }
     }

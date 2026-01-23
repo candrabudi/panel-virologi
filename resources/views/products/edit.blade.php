@@ -14,7 +14,6 @@
         <form id="product-form" class="grid grid-cols-12 gap-6" method="POST"
             action="{{ route('products.update', $product->id) }}" enctype="multipart/form-data">
             @csrf
-            @method('PUT')
             <div class="col-span-12 lg:col-span-8 space-y-6">
 
                 <div class="bg-white rounded-lg border border-slate-200 p-6 space-y-6 p-5">
@@ -218,8 +217,8 @@
 
                     <div class="mt-3">
                         @if ($product->thumbnail)
-                            <img id="thumb-preview" src="{{ $product->thumbnail }}"
-                                class="img-fluid rounded" style="max-height:180px">
+                            <img id="thumb-preview" src="{{ $product->thumbnail }}" class="img-fluid rounded"
+                                style="max-height:180px">
                         @else
                             <img id="thumb-preview" class="img-fluid rounded d-none" style="max-height:180px">
                         @endif
@@ -382,7 +381,6 @@
                         .forEach(v => fd.append('seo_keywords[]', v));
                 }
 
-                // Submit ke endpoint update produk (sesuaikan route dengan ID produk)
                 const res = await axios.post(`/products/{{ $product->id }}/update`, fd);
 
                 if (res.data.status === true) {

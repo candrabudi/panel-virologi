@@ -77,6 +77,8 @@ class StoreProductRequest extends FormRequest
             'seo_description' => 'nullable|string|max:300',
             'seo_keywords' => 'nullable|array',
             'canonical_url' => 'nullable|string|max:255',
+            'is_active' => 'boolean',
+            'sort_order' => 'nullable|integer|min:0',
         ];
     }
 
@@ -124,7 +126,7 @@ class StoreProductRequest extends FormRequest
             $toMerge['content'] = SecurityHelper::sanitizeHtml($payload['content']);
         }
 
-        foreach (['is_ai_visible', 'is_ai_recommended', 'ai_priority'] as $boolField) {
+        foreach (['is_ai_visible', 'is_ai_recommended', 'ai_priority', 'is_active'] as $boolField) {
             if (isset($payload[$boolField])) {
                 $toMerge[$boolField] = filter_var(
                     $payload[$boolField],
@@ -133,7 +135,26 @@ class StoreProductRequest extends FormRequest
             }
         }
 
+        if ($this->has('sort_order')) {
+            $toMerge['sort_order'] = (int) $this->input('sort_order');
+        } else {
+            $payload['sort_order'] = 0;
+        }
+
         $this->merge($payload);
         $this->merge($toMerge);
+    }
+
+    public function messages(): array
+    {
+        return [
+            'product_name.required' => 'Nama produk wajib diisi.',
+            'product_type.required' => 'Tipe produk wajib dipilih.',
+            'product_type.in' => 'Tipe produk yang dipilih tidak valid.',
+            'thumbnail.image' => 'File harus berupa gambar.',
+            'thumbnail.max' => 'Ukuran thumbnail maksimal adalah 2MB.',
+            'images.*.image' => 'Salah satu file galeri bukan gambar.',
+            'images.*.max' => 'Ukuran salah satu gambar galeri melebihi 4MB.',
+        ];
     }
 }

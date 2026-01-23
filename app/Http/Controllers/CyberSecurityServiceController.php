@@ -28,7 +28,7 @@ class CyberSecurityServiceController extends Controller
             return;
         }
 
-        Log::warning('Unauthorized attempt to access Cyber Security Service management by User ID: '.(auth()->id() ?? 'Guest'));
+        Log::warning('Unauthorized attempt to access Cyber Security Service management by User ID: ' . (auth()->id() ?? 'Guest'));
         abort(403, 'Unauthorized access to cyber security service management');
     }
 
@@ -61,8 +61,9 @@ class CyberSecurityServiceController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(fn ($q) => $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('short_name', 'like', "%{$search}%")
+            $query->where(
+                fn($q) => $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('short_name', 'like', "%{$search}%")
             );
         }
 
@@ -81,20 +82,18 @@ class CyberSecurityServiceController extends Controller
             $data['slug'] = Str::slug($data['name']);
 
             if ($request->hasFile('thumbnail')) {
-                $data['thumbnail'] = asset('storage/'.$request->file('thumbnail')
-                    ->store('cyber_security_services', 'public'));
+                $path = $request->file('thumbnail')->store('cyber_security_services', 'public');
+                $data['thumbnail'] = asset('storage/' . $path);
             }
 
-            $service = DB::transaction(fn () => CyberSecurityService::create($data)
-            );
+            $service = CyberSecurityService::create($data);
 
-            Log::info("Cyber Security Service created: ID {$service->id} by User ID ".auth()->id());
+            Log::info("Cyber Security Service created: ID {$service->id} by User ID " . auth()->id());
 
             return ResponseHelper::ok($service, 'Layanan berhasil disimpan', 201);
         } catch (\Throwable $e) {
-            Log::error('Failed to create Cyber Security Service: '.$e->getMessage());
-
-            return ResponseHelper::fail('Gagal menyimpan layanan', null, 500);
+            Log::error('Failed to create Cyber Security Service: ' . $e->getMessage());
+            return ResponseHelper::fail('Gagal menyimpan layanan. Cek kembali kelengkapan data Anda.', null, 500);
         }
     }
 
@@ -108,25 +107,22 @@ class CyberSecurityServiceController extends Controller
 
             if ($request->hasFile('thumbnail')) {
                 if ($cyberSecurityService->thumbnail) {
-                    Storage::disk('public')->delete($cyberSecurityService->thumbnail);
+                    $oldPath = Str::after($cyberSecurityService->thumbnail, 'storage/');
+                    Storage::disk('public')->delete($oldPath);
                 }
 
-                $data['thumbnail'] = asset('storage/'.$request->file('thumbnail')
-                    ->store('cyber_security_services', 'public'));
+                $path = $request->file('thumbnail')->store('cyber_security_services', 'public');
+                $data['thumbnail'] = asset('storage/' . $path);
             }
 
-            $data['sort_order'] = 1;
+            $cyberSecurityService->update($data);
 
-            DB::transaction(fn () => $cyberSecurityService->update($data)
-            );
-
-            Log::info("Cyber Security Service updated: ID {$cyberSecurityService->id} by User ID ".auth()->id());
+            Log::info("Cyber Security Service updated: ID {$cyberSecurityService->id} by User ID " . auth()->id());
 
             return ResponseHelper::ok($cyberSecurityService, 'Layanan berhasil diperbarui');
         } catch (\Throwable $e) {
-            Log::error("Failed to update Cyber Security Service ID {$cyberSecurityService->id}: ".$e->getMessage());
-
-            return ResponseHelper::fail('Gagal memperbarui layanan '.$e->getMessage(), null, 500);
+            Log::error("Failed to update Cyber Security Service ID {$cyberSecurityService->id}: " . $e->getMessage());
+            return ResponseHelper::fail('Gagal memperbarui layanan. Silakan coba beberapa saat lagi.', null, 500);
         }
     }
 
@@ -136,19 +132,21 @@ class CyberSecurityServiceController extends Controller
 
         try {
             if ($cyberSecurityService->thumbnail) {
-                Storage::disk('public')->delete($cyberSecurityService->thumbnail);
+                $oldPath = Str::after($cyberSecurityService->thumbnail, 'storage/');
+                Storage::disk('public')->delete($oldPath);
             }
 
             $serviceId = $cyberSecurityService->id;
 
-            DB::transaction(fn () => $cyberSecurityService->delete()
+            DB::transaction(
+                fn() => $cyberSecurityService->delete()
             );
 
-            Log::info("Cyber Security Service deleted: ID {$serviceId} by User ID ".auth()->id());
+            Log::info("Cyber Security Service deleted: ID {$serviceId} by User ID " . auth()->id());
 
             return ResponseHelper::ok(null, 'Layanan berhasil dihapus');
         } catch (\Throwable $e) {
-            Log::error("Failed to delete Cyber Security Service ID {$cyberSecurityService->id}: ".$e->getMessage());
+            Log::error("Failed to delete Cyber Security Service ID {$cyberSecurityService->id}: " . $e->getMessage());
 
             return ResponseHelper::fail('Gagal menghapus layanan', null, 500);
         }
