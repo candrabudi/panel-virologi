@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -240,6 +241,7 @@ class OsinIntegrationLogService
 
         $request = Http::acceptJson()
             ->withHeaders(['x-api-key' => $apiKey])
+            ->retry(2, 250, fn ($exception) => $exception instanceof ConnectionException)
             ->connectTimeout(5)
             ->timeout(20);
 
