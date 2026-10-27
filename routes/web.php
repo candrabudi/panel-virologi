@@ -29,6 +29,7 @@ use App\Http\Controllers\WebsiteController;
 use App\Http\Controllers\LeakCheckController;
 use App\Http\Controllers\LeakDataRequestController;
 use App\Http\Controllers\SystemTrafficLogController;
+use App\Http\Controllers\OsinIntegrationLogController;
 use Illuminate\Support\Facades\Route;
 
 /**
@@ -255,6 +256,13 @@ Route::middleware(['auth', 'throttle:300,1'])->group(function () {
         Route::prefix('traffic-logs')->group(function () {
             Route::get('/', [SystemTrafficLogController::class, 'index'])->name('traffic_logs.index');
             Route::get('/{log}', [SystemTrafficLogController::class, 'show'])->name('traffic_logs.show');
+        });
+
+        Route::prefix('integrations')->name('integrations.')->middleware('throttle:30,1')->group(function () {
+            Route::get('/osin/logs', [OsinIntegrationLogController::class, 'index'])->name('osin.logs');
+            Route::get('/osin/leakcheck/{id}', [OsinIntegrationLogController::class, 'leakcheckDetail'])
+                ->whereNumber('id')
+                ->name('osin.leakcheck.detail');
         });
 
         // Global Configuration (High Risk)

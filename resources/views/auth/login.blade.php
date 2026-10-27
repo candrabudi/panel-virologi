@@ -181,7 +181,13 @@
             });
         });
 
-        if (sessionStorage.getItem('otp_step') === '1') {
+        const otpBypassedLocally = @json(app()->environment('local'));
+
+        if (otpBypassedLocally) {
+            sessionStorage.removeItem('otp_step');
+            formOtp.classList.add('hidden');
+            formLogin.classList.remove('hidden');
+        } else if (sessionStorage.getItem('otp_step') === '1') {
             formLogin.classList.add('hidden');
             formOtp.classList.remove('hidden');
         }
@@ -191,11 +197,18 @@
             const btn = document.getElementById('btn-login');
             setLoading(btn, true);
             try {
-                // STEP 1: Cek Login
-                await axios.post('{{ route('login.process') }}', {
+                // STEP 1: Check credentials. Local environment completes login without email OTP.
+                const response = await axios.post('{{ route('login.process') }}', {
                     identity: document.getElementById('identity').value,
                     password: document.getElementById('password').value
                 });
+
+                if (response.data?.data?.otp_required === false) {
+                    sessionStorage.removeItem('otp_step');
+                    showAlert('success', 'Login berhasil, mengalihkan...');
+                    setTimeout(() => location.href = '/dashboard', 500);
+                    return;
+                }
                 
                 // STEP 2: Kirim OTP
                 await axios.post('{{ route('login.sendOtp') }}');

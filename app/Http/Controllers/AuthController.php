@@ -49,6 +49,19 @@ class AuthController extends Controller
             return ResponseHelper::fail('Username, email, atau kata sandi tidak valid', null, 401);
         }
 
+        if (app()->environment('local')) {
+            Auth::login($user, true);
+            $request->session()->regenerate();
+            $user->update(['last_login_at' => Carbon::now()]);
+
+            session()->forget(['step1_user_id', 'step1_user_ip']);
+            RateLimiter::clear($ipKey);
+
+            Log::info('Local login success without OTP', ['user_id' => $user->id]);
+
+            return ResponseHelper::ok(['otp_required' => false], 'Login berhasil');
+        }
+
         session([
             'step1_user_id' => $user->id,
             'step1_user_ip' => $request->ip(),
@@ -56,11 +69,15 @@ class AuthController extends Controller
 
         Log::info('Login step 1 success', ['user_id' => $user->id]);
 
-        return ResponseHelper::ok(null, 'Kredensial valid, silakan verifikasi OTP');
+        return ResponseHelper::ok(['otp_required' => true], 'Kredensial valid, silakan verifikasi OTP');
     }
 
     public function sendOtp(Request $request): JsonResponse
     {
+        if (app()->environment('local')) {
+            return ResponseHelper::fail('OTP tidak diperlukan di environment local', null, 400);
+        }
+
         $userId = session('step1_user_id');
         $sessionIp = session('step1_user_ip');
 
@@ -109,6 +126,10 @@ class AuthController extends Controller
 
     public function verifyOtp(Request $request): JsonResponse
     {
+        if (app()->environment('local')) {
+            return ResponseHelper::fail('OTP tidak diperlukan di environment local', null, 400);
+        }
+
         $request->validate([
             'otp' => 'required|digits:6',
         ]);

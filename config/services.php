@@ -31,4 +31,10 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'osin' => [
+        'base_url' => env('OSIN_API_BASE_URL', 'https://osin.virologi.info/api/integration'),
+        'api_key' => env('OSIN_API_KEY'),
+        'ca_bundle' => env('OSIN_CA_BUNDLE'),
+    ],
+
 ];

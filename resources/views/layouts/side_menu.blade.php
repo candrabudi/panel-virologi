@@ -131,6 +131,18 @@
                         <div class="side-menu__link__title">Data Serangan Cyber</div>
                     </a>
                 </li>
+                @if (auth()->user()?->role === 'admin')
+                    <li class="side-menu__divider">
+                        External Integrations
+                    </li>
+                    <li>
+                        <a href="{{ route('integrations.osin.logs') }}"
+                            class="side-menu__link {{ request()->routeIs('integrations.osin.logs') ? 'side-menu__link--active' : '' }}">
+                            <i data-tw-merge="" data-lucide="webhook" class="stroke-[1] w-5 h-5 side-menu__link__icon"></i>
+                            <div class="side-menu__link__title">OSIN API Logs</div>
+                        </a>
+                    </li>
+                @endif
                 <li class="side-nav-title side-menu__divider">
                     AI
                 </li>
