@@ -1,169 +1,168 @@
 @extends('layouts.app')
 @section('title', 'Leak Intelligence: Request Logs')
+
 @section('content')
+    @php
+        $pageLogs = $logs->getCollection();
+        $pageBreaches = $pageLogs->filter(fn ($log) => (int) $log->leak_count > 0)->count();
+        $pageFailures = $pageLogs->filter(fn ($log) => $log->status !== 'success')->count();
+        $rangeStart = $logs->firstItem() ?? 0;
+        $rangeEnd = $logs->lastItem() ?? 0;
+    @endphp
+
     <div class="col-span-12">
-        <div class="flex flex-col gap-y-3 md:h-10 md:flex-row md:items-center">
-            <div class="text-base font-medium group-[.mode--light]:text-white flex items-center gap-2">
-                <i data-lucide="database" class="w-5 h-5 text-rose-500"></i>
-                Intelligence Audit Trail
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div class="max-w-2xl">
+                <h1 class="text-2xl font-semibold text-slate-800 dark:text-slate-100">
+                    Leak check logs
+                </h1>
+                <p class="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
+                    Review scan requests, detected results, and processing status.
+                </p>
             </div>
-            <div class="flex flex-col gap-x-3 gap-y-2 md:ml-auto md:flex-row">
-                <a href="{{ route('leak_check.print') }}" target="_blank" class="transition-all active:scale-95 inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-slate-600 bg-white dark:bg-darkmode-600 dark:text-slate-300 rounded-lg shadow-sm hover:bg-slate-50 dark:hover:bg-darkmode-500 border border-slate-200 dark:border-darkmode-400">
-                    <i data-lucide="printer" class="w-4 h-4 mr-2"></i>
+
+            <div class="flex flex-wrap items-center gap-2 sm:justify-end">
+                <a href="{{ route('leak_check.print') }}" target="_blank" rel="noopener"
+                    class="inline-flex min-h-10 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:border-darkmode-400 dark:bg-darkmode-600 dark:text-slate-200 dark:hover:bg-darkmode-500">
+                    <i data-lucide="printer" class="h-4 w-4" aria-hidden="true"></i>
                     Print / PDF
                 </a>
-                <a href="{{ route('leak_check.export') }}" class="transition-all active:scale-95 inline-flex items-center justify-center px-4 py-2 text-sm font-semibold text-white bg-primary rounded-lg shadow-lg shadow-primary/20 hover:bg-primary/90">
-                    <i data-lucide="file-spreadsheet" class="w-4 h-4 mr-2"></i>
+                <a href="{{ route('leak_check.export') }}"
+                    class="inline-flex min-h-10 items-center justify-center gap-2 rounded-md bg-primary px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2">
+                    <i data-lucide="download" class="h-4 w-4" aria-hidden="true"></i>
                     Export CSV
                 </a>
             </div>
         </div>
 
-        {{-- AUDIT STATS --}}
-        <div class="grid grid-cols-12 gap-6 mt-5">
-            <div class="col-span-12 sm:col-span-4 box p-6 border-none shadow-sm dark:bg-darkmode-600 p-5">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
-                        <i data-lucide="activity" class="w-6 h-6"></i>
-                    </div>
-                    <div class="ml-4">
-                        <div class="text-2xl font-bold dark:text-slate-200">{{ number_format($logs->total()) }}</div>
-                        <div class="text-xs text-slate-500 font-medium uppercase tracking-wider">Total Scans</div>
-                    </div>
-                </div>
+        <dl class="mt-6 grid grid-cols-1 overflow-hidden rounded-lg border border-slate-200/70 bg-white sm:grid-cols-3 dark:border-darkmode-400 dark:bg-darkmode-600">
+            <div class="px-5 py-4">
+                <dt class="text-sm text-slate-500 dark:text-slate-400">Total scans</dt>
+                <dd class="mt-1 text-2xl font-semibold tabular-nums text-slate-800 dark:text-slate-100">
+                    {{ number_format($logs->total()) }}
+                </dd>
+                <p class="mt-0.5 text-xs text-slate-400 dark:text-slate-500">Across all pages</p>
             </div>
-            <div class="col-span-12 sm:col-span-4 box p-6 border-none shadow-sm dark:bg-darkmode-600 p-5">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 bg-rose-500/10 rounded-xl flex items-center justify-center text-rose-500">
-                        <i data-lucide="alert-octagon" class="w-6 h-6 text-rose-500"></i>
-                    </div>
-                    <div class="ml-4">
-                        <div class="text-2xl font-bold dark:text-slate-200">{{ number_format($logs->where('leak_count', '>', 0)->count()) }}</div>
-                        <div class="text-xs text-slate-500 font-medium uppercase tracking-wider">Breaches Detected</div>
-                    </div>
-                </div>
+            <div class="border-t border-slate-200/70 px-5 py-4 sm:border-l sm:border-t-0 dark:border-darkmode-400">
+                <dt class="text-sm text-slate-500 dark:text-slate-400">Breaches detected</dt>
+                <dd class="mt-1 text-2xl font-semibold tabular-nums text-rose-600 dark:text-rose-400">
+                    {{ number_format($pageBreaches) }}
+                </dd>
+                <p class="mt-0.5 text-xs text-slate-400 dark:text-slate-500">On this page</p>
             </div>
-            <div class="col-span-12 sm:col-span-4 box p-6 border-none shadow-sm bg-slate-900 text-white p-5">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 bg-white/10 rounded-xl flex items-center justify-center text-white">
-                        <i data-lucide="shield-check" class="w-6 h-6"></i>
-                    </div>
-                    <div class="ml-4">
-                        <div class="text-2xl font-bold">100%</div>
-                        <div class="text-xs text-white/60 font-medium uppercase tracking-wider">Authorized Feed</div>
-                    </div>
-                </div>
+            <div class="border-t border-slate-200/70 px-5 py-4 sm:border-l sm:border-t-0 dark:border-darkmode-400">
+                <dt class="text-sm text-slate-500 dark:text-slate-400">Failed requests</dt>
+                <dd class="mt-1 text-2xl font-semibold tabular-nums text-slate-800 dark:text-slate-100">
+                    {{ number_format($pageFailures) }}
+                </dd>
+                <p class="mt-0.5 text-xs text-slate-400 dark:text-slate-500">On this page</p>
             </div>
-        </div>
+        </dl>
 
-        <div class="box box--stacked mt-6 p-0 overflow-hidden bg-white dark:bg-darkmode-600 p-5">
-            <div class="flex flex-col sm:flex-row items-center p-6 border-b border-slate-100 dark:border-darkmode-400">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-slate-50 dark:bg-darkmode-400 rounded-lg flex items-center justify-center text-slate-400">
-                        <i data-lucide="list" class="w-5 h-5"></i>
-                    </div>
-                    <div>
-                        <div class="text-base font-bold text-slate-700 dark:text-slate-200">Security Event Logs</div>
-                        <div class="text-[10px] text-slate-400 font-medium uppercase tracking-[0.2em] mt-0.5">Real-time Intelligence Stream</div>
-                    </div>
+        <section class="mt-6 overflow-hidden rounded-lg border border-slate-200/70 bg-white dark:border-darkmode-400 dark:bg-darkmode-600"
+            aria-labelledby="request-history-title">
+            <div class="flex flex-col gap-1 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h2 id="request-history-title" class="text-base font-semibold text-slate-800 dark:text-slate-100">
+                        Request history
+                    </h2>
+                    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                        Showing {{ number_format($rangeStart) }}–{{ number_format($rangeEnd) }} of {{ number_format($logs->total()) }} scans
+                    </p>
                 </div>
             </div>
 
-            <div class="overflow-auto xl:overflow-visible">
-                <table class="w-full text-left border-b border-slate-200/60">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left" style="min-width: 920px">
                     <thead>
-                        <tr>
-                            <td class="px-5 border-b dark:border-darkmode-300 border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500">
+                        <tr class="text-sm text-slate-500 dark:text-slate-400">
+                            <th scope="col" class="whitespace-nowrap border-y border-slate-200/70 px-5 py-3 font-medium dark:border-darkmode-400">
                                 Initiator
-                            </td>
-                            <td class="px-5 border-b dark:border-darkmode-300 border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500">
-                                Target Query
-                            </td>
-                            <td class="px-5 border-b dark:border-darkmode-300 border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500 text-center">
+                            </th>
+                            <th scope="col" class="border-y border-slate-200/70 px-5 py-3 font-medium dark:border-darkmode-400">
+                                Target query / source IP
+                            </th>
+                            <th scope="col" class="whitespace-nowrap border-y border-slate-200/70 px-5 py-3 text-right font-medium dark:border-darkmode-400">
                                 Results
-                            </td>
-                            <td class="px-5 border-b dark:border-darkmode-300 border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500">
-                                Date Created
-                            </td>
-                            <td class="px-5 border-b dark:border-darkmode-300 border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500 text-center">
+                            </th>
+                            <th scope="col" class="whitespace-nowrap border-y border-slate-200/70 px-5 py-3 font-medium dark:border-darkmode-400">
+                                Date created
+                            </th>
+                            <th scope="col" class="whitespace-nowrap border-y border-slate-200/70 px-5 py-3 font-medium dark:border-darkmode-400">
                                 Status
-                            </td>
-                            <td class="px-5 border-b dark:border-darkmode-300 border-t border-slate-200/60 bg-slate-50 py-4 font-medium text-slate-500 text-center">
-                                Action
-                            </td>
+                            </th>
+                            <th scope="col" class="whitespace-nowrap border-y border-slate-200/70 px-5 py-3 text-right font-medium dark:border-darkmode-400">
+                                Details
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($logs as $log)
-                            <tr class="[&_td]:last:border-b-0">
-                                <td class="px-5 border-b border-dashed py-4 dark:bg-darkmode-600">
-                                    <div class="flex items-center">
-                                        <div class="w-10 h-10 image-fit zoom-in -ml-5 first:ml-0">
-                                            <div class="rounded-full bg-slate-100 dark:bg-darkmode-400 flex items-center justify-center w-full h-full text-primary border border-slate-200 dark:border-darkmode-400 font-bold text-xs">
-                                                {{ substr($log->user->username ?? 'GS', 0, 2) }}
+                        @forelse ($logs as $log)
+                            @php
+                                $initiator = $log->user->username ?? 'Guest';
+                            @endphp
+                            <tr class="text-sm text-slate-700 dark:text-slate-200">
+                                <td class="border-b border-slate-100 px-5 py-3.5 dark:border-darkmode-400">
+                                    <div class="flex min-w-0 items-center gap-3">
+                                        <span class="flex h-8 w-8 flex-none items-center justify-center rounded-full bg-slate-100 text-xs font-semibold text-slate-600 dark:bg-darkmode-400 dark:text-slate-200" aria-hidden="true">
+                                            {{ strtoupper(substr($initiator, 0, 2)) }}
+                                        </span>
+                                        <div class="min-w-0">
+                                            <div class="truncate font-medium" title="{{ $initiator }}">{{ $initiator }}</div>
+                                            <div class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                                                {{ $log->user ? 'Account' : 'Guest request' }}
                                             </div>
                                         </div>
-                                        <div class="ml-3.5">
-                                            <div class="whitespace-nowrap font-medium text-slate-700 dark:text-slate-200">
-                                                {{ $log->user->username ?? 'Guest' }}
-                                            </div>
-                                            <div class="mt-0.5 whitespace-nowrap text-xs text-slate-500">
-                                                Internal User
-                                            </div>
-                                        </div>
                                     </div>
                                 </td>
-                                <td class="px-5 border-b border-dashed py-4 dark:bg-darkmode-600">
-                                    <div class="whitespace-nowrap font-medium text-slate-700 dark:text-slate-200">
-                                        {{ $log->query }}
+                                <td class="border-b border-slate-100 px-5 py-3.5 dark:border-darkmode-400">
+                                    <div class="max-w-sm truncate font-medium" title="{{ $log->query }}">
+                                        {{ $log->query ?: '—' }}
                                     </div>
-                                    <div class="mt-0.5 whitespace-nowrap text-xs text-slate-500">
-                                        {{ $log->ip_address }}
-                                    </div>
-                                </td>
-                                <td class="px-5 border-b border-dashed py-4 dark:bg-darkmode-600 text-center">
-                                    <div class="flex items-center justify-center">
-                                        @if($log->leak_count > 0)
-                                            <div class="text-rose-500 font-medium text-sm flex items-center">
-                                                <i data-lucide="alert-circle" class="w-3.5 h-3.5 mr-1.5"></i>
-                                                {{ number_format($log->leak_count) }}
-                                            </div>
-                                        @else
-                                            <div class="text-slate-400 font-medium text-sm">
-                                                0
-                                            </div>
-                                        @endif
+                                    <div class="mt-0.5 whitespace-nowrap text-xs text-slate-500 dark:text-slate-400">
+                                        {{ $log->ip_address ?: '—' }}
                                     </div>
                                 </td>
-                                <td class="px-5 border-b border-dashed py-4 dark:bg-darkmode-600">
-                                    <div class="whitespace-nowrap text-slate-500 text-sm">
-                                        {{ $log->created_at->format('M d, Y') }}
-                                    </div>
-                                    <div class="mt-0.5 whitespace-nowrap text-xs text-slate-400">
+                                <td class="border-b border-slate-100 px-5 py-3.5 text-right tabular-nums dark:border-darkmode-400">
+                                    <span class="font-medium {{ $log->leak_count > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-slate-500 dark:text-slate-400' }}">
+                                        {{ number_format($log->leak_count) }}
+                                    </span>
+                                </td>
+                                <td class="whitespace-nowrap border-b border-slate-100 px-5 py-3.5 dark:border-darkmode-400">
+                                    <div>{{ $log->created_at->format('M d, Y') }}</div>
+                                    <div class="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                                         {{ $log->created_at->format('H:i:s') }}
                                     </div>
                                 </td>
-                                <td class="px-5 border-b border-dashed py-4 dark:bg-darkmode-600 text-center">
-                                    @if($log->status == 'success')
-                                        <div class="flex items-center justify-center text-success">
-                                            <i data-lucide="check-square" class="w-4 h-4 mr-2 stroke-[1.3]"></i> OK
-                                        </div>
+                                <td class="border-b border-slate-100 px-5 py-3.5 dark:border-darkmode-400">
+                                    @if ($log->status === 'success')
+                                        <span class="inline-flex flex-none items-center gap-1.5 whitespace-nowrap rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300">
+                                            <span class="h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400" aria-hidden="true"></span>
+                                            Success
+                                        </span>
                                     @else
-                                        <div class="flex items-center justify-center text-danger">
-                                            <i data-lucide="x-square" class="w-4 h-4 mr-2 stroke-[1.3]"></i> Failed
-                                        </div>
+                                        <span class="inline-flex flex-none items-center gap-1.5 whitespace-nowrap rounded-full bg-rose-50 px-2.5 py-1 text-xs font-medium text-rose-800 dark:bg-rose-900/30 dark:text-rose-300">
+                                            <span class="h-1.5 w-1.5 rounded-full bg-rose-600 dark:bg-rose-400" aria-hidden="true"></span>
+                                            Failed
+                                        </span>
                                     @endif
                                 </td>
-                                <td class="px-5 border-b border-dashed py-4 dark:bg-darkmode-600 relative text-center">
-                                    <a href="{{ route('leak_check.show_log', $log->id) }}" class="flex items-center justify-center text-slate-500 hover:text-primary transition-colors">
-                                        <i data-lucide="check-square" class="w-4 h-4 stroke-[1.3]"></i>
+                                <td class="border-b border-slate-100 px-5 py-3.5 text-right dark:border-darkmode-400">
+                                    <a href="{{ route('leak_check.show_log', $log->id) }}"
+                                        class="inline-flex h-8 items-center justify-center gap-1.5 rounded px-2 text-sm font-medium text-slate-600 transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary dark:text-slate-300"
+                                        aria-label="View details for scan {{ $log->id }}" title="View details">
+                                        View
+                                        <i data-lucide="arrow-up-right" class="h-4 w-4" aria-hidden="true"></i>
                                     </a>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="px-5 py-4 text-center text-slate-500">
-                                    No logs found.
+                                <td colspan="6" class="px-5 py-12 text-center">
+                                    <p class="font-medium text-slate-700 dark:text-slate-200">No scans recorded yet</p>
+                                    <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                        Leak check requests will appear here after the first scan.
+                                    </p>
                                 </td>
                             </tr>
                         @endforelse
@@ -171,18 +170,11 @@
                 </table>
             </div>
 
-            @if($logs->hasPages())
-                <div class="p-6 border-t border-slate-100 dark:border-darkmode-400 bg-slate-50/30">
+            @if ($logs->hasPages())
+                <div class="border-t border-slate-200/70 px-5 py-4 dark:border-darkmode-400">
                     {{ $logs->links() }}
                 </div>
             @endif
-        </div>
+        </section>
     </div>
 @endsection
-
-@push('scripts')
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <script>
-        lucide.createIcons();
-    </script>
-@endpush
