@@ -34,6 +34,7 @@ return [
     'osin' => [
         'base_url' => env('OSIN_API_BASE_URL', 'https://osin.virologi.info/api/integration'),
         'api_key' => env('OSIN_API_KEY'),
+        'resolve_ips' => env('OSIN_RESOLVE_IPS'),
         'ca_bundle' => env('OSIN_CA_BUNDLE'),
     ],
 

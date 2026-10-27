@@ -245,6 +245,21 @@ class OsinIntegrationLogService
             ->connectTimeout(5)
             ->timeout(20);
 
+        $resolveIps = array_values(array_filter(
+            array_map('trim', explode(',', (string) config('services.osin.resolve_ips'))),
+            fn (string $ip) => filter_var($ip, FILTER_VALIDATE_IP) !== false,
+        ));
+        $host = parse_url($baseUrl, PHP_URL_HOST);
+        if ($resolveIps !== [] && is_string($host) && $host !== '' && defined('CURLOPT_RESOLVE')) {
+            $scheme = parse_url($baseUrl, PHP_URL_SCHEME);
+            $port = parse_url($baseUrl, PHP_URL_PORT) ?: ($scheme === 'http' ? 80 : 443);
+            $request = $request->withOptions([
+                'curl' => [
+                    CURLOPT_RESOLVE => [sprintf('%s:%d:%s', $host, $port, implode(',', $resolveIps))],
+                ],
+            ]);
+        }
+
         $caBundle = trim((string) config('services.osin.ca_bundle'));
         if ($caBundle !== '') {
             $request = $request->withOptions(['verify' => $caBundle]);
